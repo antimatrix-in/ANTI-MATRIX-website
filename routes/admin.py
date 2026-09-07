@@ -752,8 +752,7 @@ def download_application_offer_letter(app_id):
 @admin_required
 def preview_application_offer_letter_file(app_id):
     """
-    Admin-only endpoint: serves the raw candidate generated Offer Letter DOCX binary
-    for client-side rendering in docx-preview.
+    Admin-only endpoint: serves the raw candidate generated Offer Letter DOCX binary.
     Strictly enforces admin authentication and read-only access.
     """
     application = db.session.get(JobApplication, app_id) or abort(404)
@@ -780,14 +779,58 @@ def preview_application_offer_letter_file(app_id):
     )
 
 
+@admin_bp.route('/applications/<int:app_id>/offer-letter/preview/pdf', methods=['GET'])
+@admin_required
+def preview_application_offer_letter_pdf(app_id):
+    """
+    Admin-only endpoint: converts the candidate's generated Offer Letter DOCX to PDF
+    using LibreOffice headless and streams the PDF for inline browser preview.
+    """
+    from services.document_preview_service import convert_docx_to_pdf
+
+    application = db.session.get(JobApplication, app_id) or abort(404)
+    offer_doc = application.offer_letter_doc
+
+    if not offer_doc:
+        abort(404)
+
+    fpath = offer_doc.file_path
+    if not fpath or not os.path.exists(fpath):
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            abort(404)
+
+    success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
+    if not success or not pdf_path or not os.path.exists(pdf_path):
+        current_app.logger.error(f"Offer letter PDF conversion failed for app {app_id}: {err_msg}")
+        return jsonify({
+            'status': 'error',
+            'error_code': 'CONVERSION_FAILED',
+            'message': err_msg or 'Preview is temporarily unavailable. Please use Download DOCX.'
+        }), 503
+
+    pdf_filename = f"{os.path.splitext(offer_doc.file_name)[0]}.pdf"
+    return send_from_directory(
+        os.path.dirname(pdf_path),
+        os.path.basename(pdf_path),
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=pdf_filename
+    )
+
+
 @admin_bp.route('/applications/<int:app_id>/offer-letter/preview', methods=['GET'])
 @admin_required
 def preview_application_offer_letter(app_id):
     """
     Admin-only endpoint:
+    - If format=pdf: redirects/serves the PDF preview.
     - If format=raw/file/docx: serves the raw DOCX binary.
-    - If format=json (or AJAX): returns metadata (candidate name, app code, file_url, download_url).
-    - If direct browser GET: renders standalone document_preview.html with docx-preview.
+    - If format=json (or AJAX): returns metadata (candidate name, app code, pdf_url, file_url, download_url).
+    - If direct browser GET: renders standalone document_preview.html with embedded PDF viewer.
     Does NOT modify the original DOCX or database records.
     """
     from services.document_preview_service import get_application_offer_letter_preview
@@ -822,6 +865,10 @@ def preview_application_offer_letter(app_id):
             flash('Offer Letter file not found on server.', 'warning')
             return redirect(url_for('admin.application_detail', app_id=app_id))
 
+    # Serve PDF if requested
+    if request.args.get('format') == 'pdf':
+        return redirect(url_for('admin.preview_application_offer_letter_pdf', app_id=app_id))
+
     # Serve raw binary if requested
     if request.args.get('format') in ['raw', 'file', 'docx', 'binary']:
         return send_from_directory(
@@ -832,6 +879,7 @@ def preview_application_offer_letter(app_id):
             download_name=offer_doc.file_name
         )
 
+    pdf_url = url_for('admin.preview_application_offer_letter_pdf', app_id=app_id)
     file_url = url_for('admin.preview_application_offer_letter_file', app_id=app_id)
     download_url = url_for('admin.download_application_offer_letter', app_id=app_id)
     preview_data = get_application_offer_letter_preview(app_id)
@@ -851,6 +899,7 @@ def preview_application_offer_letter(app_id):
         preview=preview_data,
         app=application,
         offer_doc=offer_doc,
+        pdf_url=pdf_url,
         file_url=file_url,
         download_url=download_url,
         back_url=url_for('admin.application_detail', app_id=app_id)
@@ -861,7 +910,7 @@ def preview_application_offer_letter(app_id):
 @admin_required
 def preview_document_file_by_id(doc_id):
     """
-    Admin-only endpoint: serves raw EmployeeDocument DOCX binary for client-side rendering.
+    Admin-only endpoint: serves raw EmployeeDocument DOCX binary.
     """
     document = db.session.get(EmployeeDocument, doc_id) or abort(404)
     fpath = document.file_path
@@ -874,6 +923,38 @@ def preview_document_file_by_id(doc_id):
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         as_attachment=False,
         download_name=document.file_name
+    )
+
+
+@admin_bp.route('/documents/<int:doc_id>/preview/pdf', methods=['GET'])
+@admin_required
+def preview_document_pdf_by_id(doc_id):
+    """
+    Admin-only endpoint: converts EmployeeDocument DOCX to PDF using LibreOffice headless
+    and streams PDF for inline viewing.
+    """
+    from services.document_preview_service import convert_docx_to_pdf
+
+    document = db.session.get(EmployeeDocument, doc_id) or abort(404)
+    fpath = document.file_path
+    if not fpath or not os.path.exists(fpath):
+        abort(404)
+
+    success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
+    if not success or not pdf_path or not os.path.exists(pdf_path):
+        return jsonify({
+            'status': 'error',
+            'error_code': 'CONVERSION_FAILED',
+            'message': err_msg or 'Preview is temporarily unavailable. Please download the document to view it.'
+        }), 503
+
+    pdf_filename = f"{os.path.splitext(document.file_name)[0]}.pdf"
+    return send_from_directory(
+        os.path.dirname(pdf_path),
+        os.path.basename(pdf_path),
+        mimetype='application/pdf',
+        as_attachment=False,
+        download_name=pdf_filename
     )
 
 

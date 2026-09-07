@@ -26,64 +26,16 @@
       </div>
     </div>
 
-    <!-- Real DOCX Render Area -->
-    <div id="standalone-docx-container" style="background: #475569; border-radius: 12px; padding: 2.5rem 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.25); min-height: 700px; margin-bottom: var(--space-2xl); overflow-x: auto;">
-      <div id="standalone-loading" class="docx-preview-loading">
+    <!-- Real PDF Render Area -->
+    <div id="standalone-pdf-container" style="background: #0f172a; border-radius: 12px; position: relative; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); min-height: 80vh; height: 85vh; margin-bottom: var(--space-2xl); overflow: hidden; display: flex; flex-direction: column;">
+      <div id="standalone-loading" class="docx-preview-loading" style="position: absolute; inset: 0; z-index: 10; background: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <div class="docx-spinner"></div>
-        <div style="font-weight: 600; color: #f8fafc; font-size: 1rem;">Rendering actual Word document...</div>
-        <div style="font-size: 0.85rem; color: #cbd5e1;">Loading official DOCX page layout, graphics &amp; typography</div>
+        <div style="font-weight: 600; color: #f8fafc; font-size: 1rem; margin-top: 1rem;">Rendering document preview...</div>
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">Generating authentic PDF from candidate Word document</div>
       </div>
-      <div id="standalone-render-target" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+      <iframe id="standalone-pdf-frame" src="{{ pdf_url or url_for('admin.preview_application_offer_letter_pdf', app_id=app.id) }}#toolbar=1&navpanes=0" style="width: 100%; height: 100%; min-height: 80vh; border: none; flex: 1;" title="Offer Letter Preview" onload="var sp = document.getElementById('standalone-loading'); if (sp) sp.style.display='none';"></iframe>
     </div>
 
   </div>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/vendor/jszip.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/vendor/docx-preview.min.js') }}"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var fileUrl = "{{ file_url or url_for('admin.preview_application_offer_letter_file', app_id=app.id) }}";
-  var container = document.getElementById('standalone-render-target');
-  var loadingEl = document.getElementById('standalone-loading');
-
-  fetch(fileUrl, {
-    credentials: 'same-origin'
-  })
-  .then(function(res) {
-    if (!res.ok) throw new Error('Could not fetch DOCX file from server.');
-    return res.blob();
-  })
-  .then(function(blob) {
-    if (loadingEl) loadingEl.style.display = 'none';
-    return docx.renderAsync(blob, container, null, {
-      className: 'docx-preview',
-      inWrapper: true,
-      breakPages: true,
-      ignoreWidth: false,
-      ignoreHeight: false,
-      ignoreFonts: false,
-      renderHeaders: true,
-      renderFooters: true,
-      renderFootnotes: true,
-      renderEndnotes: true,
-      useBase64URL: true,
-      trimXmlDeclaration: true
-    });
-  })
-  .catch(function(err) {
-    console.error('Standalone render error:', err);
-    if (loadingEl) {
-      loadingEl.innerHTML = 
-        '<div class="docx-preview-error">' +
-          '<h4>Document Preview Unavailable</h4>' +
-          '<p>' + (err.message || 'Unable to render Word document.') + '</p>' +
-        '</div>';
-    }
-  });
-});
-</script>
 {% endblock %}

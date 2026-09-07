@@ -10,19 +10,19 @@ from models import (
     db, User, JobPosting, JobApplication, Employee, EmployeeDocument, DocumentTemplate
 )
 from services.offer_letter_service import generate_offer_letter_docx
-from services.document_preview_service import get_application_offer_letter_preview
+from services.document_preview_service import get_application_offer_letter_preview, convert_docx_to_pdf
 
 class DocumentPreviewFeatureTestCase(unittest.TestCase):
     """
-    Comprehensive test suite for the High-Fidelity DOCX Preview feature:
+    Comprehensive test suite for the High-Fidelity DOCX -> PDF Preview feature:
     TEST 1: Show Preview button visible when generated Offer Letter exists
-    TEST 2: Preview binary endpoint serves actual raw DOCX binary without forcing download
-    TEST 3: Preview JSON endpoint returns metadata and valid file_url
-    TEST 4: Download endpoint still returns attachment file
+    TEST 2: Preview PDF endpoint converts and serves valid application/pdf binary inline
+    TEST 3: Preview JSON endpoint returns metadata and valid pdf_url
+    TEST 4: Download endpoint still returns authentic DOCX as attachment
     TEST 5: Admin access is strictly enforced (unauthorized / non-admin receives 302/403)
-    TEST 6: Original DOCX file remains byte-for-byte untouched after preview
+    TEST 6: Original DOCX file remains byte-for-byte untouched after multiple preview calls
     TEST 7: Non-existent application / missing document returns clean error / 404
-    TEST 8: Vendor libraries (jszip, docx-preview) exist in static assets
+    TEST 8: PDF cache is created and subsequent requests reuse cached PDF
     """
 
     @classmethod
@@ -136,33 +136,29 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         self.assertIn(b'openOfferLetterPreview', res.data)
         self.logout_user()
 
-    def test_02_preview_file_endpoint_serves_raw_docx_binary(self):
-        """TEST 2: Verify /preview/file endpoint serves the exact raw candidate DOCX binary without forcing attachment."""
+    def test_02_preview_pdf_endpoint_serves_valid_pdf(self):
+        """TEST 2: Verify /preview/pdf endpoint serves valid application/pdf binary without forcing attachment."""
         app_rec, doc_record = self._create_test_app_with_offer_letter()
 
         self.login_admin()
 
-        # Fetch binary file
-        res_file = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/file')
-        self.assertEqual(res_file.status_code, 200)
-        self.assertEqual(
-            res_file.mimetype,
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        )
+        # Fetch PDF file
+        res_pdf = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/pdf')
+        self.assertEqual(res_pdf.status_code, 200)
+        self.assertEqual(res_pdf.mimetype, 'application/pdf')
 
         # Must NOT force attachment download header
-        cd_header = res_file.headers.get('Content-Disposition', '')
+        cd_header = res_pdf.headers.get('Content-Disposition', '')
         self.assertNotIn('attachment', cd_header)
 
-        # Verify bytes match the exact file on disk
-        with open(doc_record.file_path, 'rb') as f:
-            disk_bytes = f.read()
-        self.assertEqual(res_file.data, disk_bytes)
+        # PDF magic bytes %PDF-
+        self.assertTrue(res_pdf.data.startswith(b'%PDF-'))
+        self.assertGreater(len(res_pdf.data), 1000)
 
         self.logout_user()
 
     def test_03_preview_json_metadata_endpoint(self):
-        """TEST 3: Verify preview endpoint returns JSON metadata with file_url and candidate details."""
+        """TEST 3: Verify preview endpoint returns JSON metadata with pdf_url and candidate details."""
         app_rec, doc_record = self._create_test_app_with_offer_letter()
 
         self.login_admin()
@@ -175,11 +171,11 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         self.assertEqual(data.get('status'), 'success')
         self.assertIn('Aarav Sharma', data.get('candidate_name', ''))
         self.assertIn(app_rec.application_code, data.get('application_code', ''))
-        self.assertEqual(data.get('file_url'), f"/admin/applications/{app_rec.id}/offer-letter/preview/file")
+        self.assertEqual(data.get('pdf_url'), f"/admin/applications/{app_rec.id}/offer-letter/preview/pdf")
         self.logout_user()
 
     def test_04_download_endpoint_continues_to_work_as_attachment(self):
-        """TEST 4: Verify existing download endpoint still returns file as attachment."""
+        """TEST 4: Verify existing download endpoint still returns DOCX file as attachment."""
         app_rec, doc_record = self._create_test_app_with_offer_letter()
 
         self.login_admin()
@@ -190,14 +186,14 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         self.logout_user()
 
     def test_05_admin_authorization_enforced(self):
-        """TEST 5: Verify unauthenticated users and non-admin candidates cannot access preview or file."""
+        """TEST 5: Verify unauthenticated users and non-admin candidates cannot access preview or PDF."""
         app_rec, doc_record = self._create_test_app_with_offer_letter()
 
-        # 1. Unauthenticated request to preview page and file
+        # 1. Unauthenticated request to preview page and PDF
         res_unauth1 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview')
         self.assertEqual(res_unauth1.status_code, 302)  # Redirects to login
 
-        res_unauth2 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/file')
+        res_unauth2 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/pdf')
         self.assertEqual(res_unauth2.status_code, 302)
 
         # 2. Candidate role (non-admin) request
@@ -205,12 +201,12 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         res_cand1 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview')
         self.assertEqual(res_cand1.status_code, 403)  # Forbidden
 
-        res_cand2 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/file')
+        res_cand2 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/pdf')
         self.assertEqual(res_cand2.status_code, 403)
         self.logout_user()
 
     def test_06_original_docx_byte_for_byte_untouched(self):
-        """TEST 6: Verify preview generation is strictly read-only and does not modify the DOCX file."""
+        """TEST 6: Verify PDF conversion is strictly read-only and does not modify the DOCX file."""
         app_rec, doc_record = self._create_test_app_with_offer_letter()
         docx_path = doc_record.file_path
         self.assertTrue(os.path.exists(docx_path))
@@ -221,12 +217,11 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         original_size = os.path.getsize(docx_path)
 
         self.login_admin()
-        # Request preview and preview file multiple times
+        # Request PDF preview multiple times
         for _ in range(3):
-            res1 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview?format=json')
+            res1 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/pdf')
             self.assertEqual(res1.status_code, 200)
-            res2 = self.client.get(f'/admin/applications/{app_rec.id}/offer-letter/preview/file')
-            self.assertEqual(res2.status_code, 200)
+            self.assertEqual(res1.mimetype, 'application/pdf')
 
         # Re-verify DOCX bytes
         with open(docx_path, 'rb') as f:
@@ -266,17 +261,25 @@ class DocumentPreviewFeatureTestCase(unittest.TestCase):
         data = res_err.get_json()
         self.assertEqual(data.get('status'), 'error')
         self.assertIn('not been generated', data.get('message', ''))
+
+        res_pdf_err = self.client.get(f'/admin/applications/{app_no_doc.id}/offer-letter/preview/pdf')
+        self.assertEqual(res_pdf_err.status_code, 404)
         self.logout_user()
 
-    def test_08_vendor_libraries_present(self):
-        """TEST 8: Verify jszip and docx-preview vendor JS libraries exist in static folder."""
-        static_dir = os.path.join(self.app.root_path, 'static', 'js', 'vendor')
-        jszip_path = os.path.join(static_dir, 'jszip.min.js')
-        docx_path = os.path.join(static_dir, 'docx-preview.min.js')
-        self.assertTrue(os.path.exists(jszip_path), f"Missing {jszip_path}")
-        self.assertTrue(os.path.exists(docx_path), f"Missing {docx_path}")
-        self.assertGreater(os.path.getsize(jszip_path), 10000)
-        self.assertGreater(os.path.getsize(docx_path), 10000)
+    def test_08_pdf_cache_reuse(self):
+        """TEST 8: Verify cached PDF is reused on subsequent requests."""
+        app_rec, doc_record = self._create_test_app_with_offer_letter()
+        docx_path = doc_record.file_path
+
+        with self.app.app_context():
+            success1, pdf_path1, err1 = convert_docx_to_pdf(docx_path)
+            self.assertTrue(success1)
+            self.assertTrue(os.path.exists(pdf_path1))
+
+            # Second call should return identical path immediately from cache
+            success2, pdf_path2, err2 = convert_docx_to_pdf(docx_path)
+            self.assertTrue(success2)
+            self.assertEqual(pdf_path1, pdf_path2)
 
 
 if __name__ == '__main__':

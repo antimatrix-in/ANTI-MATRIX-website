@@ -913,12 +913,14 @@
       </div>
     </div>
 
-    <!-- Body (Page-Like Presentation Container) -->
-    <div id="docx-preview-modal-body" class="docx-preview-body">
-      <div class="docx-preview-loading">
+    <!-- Body (Native High-Fidelity PDF Preview Container) -->
+    <div id="docx-preview-modal-body" class="docx-preview-body" style="padding: 0; background: #0f172a; position: relative; min-height: 75vh; height: 75vh; display: flex; flex-direction: column;">
+      <div id="docx-preview-loading" class="docx-preview-loading" style="position: absolute; inset: 0; z-index: 10; background: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <div class="docx-spinner"></div>
-        <div>Rendering document preview...</div>
+        <div style="font-weight: 600; color: #f8fafc; font-size: 0.95rem; margin-top: 1rem;">Rendering document preview...</div>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Generating authentic PDF from candidate Word document</div>
       </div>
+      <iframe id="docx-preview-iframe" class="docx-pdf-frame" style="width: 100%; height: 100%; min-height: 75vh; border: none; flex: 1;" title="Offer Letter Preview"></iframe>
     </div>
 
     <!-- Footer -->
@@ -932,7 +934,7 @@
           Close Preview
         </button>
         <a id="docx-preview-footer-download-btn" href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 6px; font-weight: 700;">
-          {{ icon('download', size=14) }} Download
+          {{ icon('download', size=14) }} Download DOCX
         </a>
       </div>
     </div>
@@ -941,107 +943,74 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- High-fidelity client-side DOCX renderer scripts -->
-<script src="{{ url_for('static', filename='js/vendor/jszip.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/vendor/docx-preview.min.js') }}"></script>
-
 <script>
 function openOfferLetterPreview(appId) {
   var overlay = document.getElementById('docx-preview-modal-overlay');
   var body = document.getElementById('docx-preview-modal-body');
-  var titleEl = document.getElementById('docx-preview-modal-title');
-  var badgeEl = document.getElementById('docx-preview-modal-badge');
+  var loadingEl = document.getElementById('docx-preview-loading');
+  var iframe = document.getElementById('docx-preview-iframe');
   var downloadBtn = document.getElementById('docx-preview-download-btn');
   var footerDownloadBtn = document.getElementById('docx-preview-footer-download-btn');
 
-  if (!overlay || !body) return;
+  if (!overlay || !iframe) return;
 
   var downloadUrl = '/admin/applications/' + appId + '/offer-letter/download';
-  var fileUrl = '/admin/applications/' + appId + '/offer-letter/preview/file';
+  var pdfUrl = '/admin/applications/' + appId + '/offer-letter/preview/pdf#toolbar=1&navpanes=0';
 
   if (downloadBtn) downloadBtn.href = downloadUrl;
   if (footerDownloadBtn) footerDownloadBtn.href = downloadUrl;
 
-  // Reset body with loading spinner
-  body.innerHTML = 
-    '<div class="docx-preview-loading">' +
+  // Show loading spinner and open overlay
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
+    loadingEl.innerHTML = 
       '<div class="docx-spinner"></div>' +
-      '<div style="font-weight: 600; color: #f8fafc; font-size: 0.95rem;">Rendering actual Word document...</div>' +
-      '<div style="font-size: 0.8rem; color: #94a3b8;">Loading authentic DOCX layout, fonts, borders &amp; graphics</div>' +
-    '</div>';
+      '<div style="font-weight: 600; color: #f8fafc; font-size: 0.95rem; margin-top: 1rem;">Rendering document preview...</div>' +
+      '<div style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Generating authentic PDF from candidate Word document</div>';
+  }
   
   overlay.style.display = 'flex';
   overlay.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 
-  // Fetch actual DOCX binary
-  fetch(fileUrl, {
-    credentials: 'same-origin',
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest'
+  // Set iframe source
+  iframe.onload = function() {
+    if (loadingEl) {
+      loadingEl.style.display = 'none';
     }
-  })
-  .then(function(res) {
-    if (!res.ok) {
-      throw new Error('Offer Letter file could not be retrieved from server storage.');
-    }
-    return res.blob();
-  })
-  .then(function(blob) {
-    body.innerHTML = '';
-    var renderTarget = document.createElement('div');
-    renderTarget.className = 'docx-preview-render-target';
-    renderTarget.style.width = '100%';
-    renderTarget.style.display = 'flex';
-    renderTarget.style.flexDirection = 'column';
-    renderTarget.style.alignItems = 'center';
-    body.appendChild(renderTarget);
+  };
 
-    if (typeof docx === 'undefined' || typeof docx.renderAsync !== 'function') {
-      throw new Error('DOCX preview renderer engine is loading or unavailable.');
+  iframe.onerror = function() {
+    if (loadingEl) {
+      loadingEl.style.display = 'flex';
+      loadingEl.innerHTML = 
+        '<div class="docx-preview-error">' +
+          '<h4>Document Preview Unavailable</h4>' +
+          '<p>Preview is temporarily unavailable. Please use Download DOCX.</p>' +
+          '<div style="display: flex; justify-content: center; gap: 10px; margin-top: 1rem;">' +
+            '<a href="' + downloadUrl + '" class="btn btn-primary btn-sm" style="gap: 6px;">' +
+              'Download Document' +
+            '</a>' +
+            '<button type="button" class="btn btn-outline btn-sm" onclick="closeOfferLetterPreview()">' +
+              'Close' +
+            '</button>' +
+          '</div>' +
+        '</div>';
     }
+  };
 
-    return docx.renderAsync(blob, renderTarget, null, {
-      className: 'docx-preview',
-      inWrapper: true,
-      breakPages: true,
-      ignoreWidth: false,
-      ignoreHeight: false,
-      ignoreFonts: false,
-      renderHeaders: true,
-      renderFooters: true,
-      renderFootnotes: true,
-      renderEndnotes: true,
-      useBase64URL: true,
-      trimXmlDeclaration: true
-    });
-  })
-  .then(function() {
-    // Successfully rendered
-  })
-  .catch(function(err) {
-    console.error('Error rendering DOCX preview:', err);
-    body.innerHTML = 
-      '<div class="docx-preview-error">' +
-        '<h4>Document Preview Unavailable</h4>' +
-        '<p>' + (err.message || 'Unable to render the Word document preview.') + '</p>' +
-        '<div style="display: flex; justify-content: center; gap: 10px;">' +
-          '<a href="' + downloadUrl + '" class="btn btn-primary btn-sm" style="gap: 6px;">' +
-            'Download Document' +
-          '</a>' +
-          '<button type="button" class="btn btn-outline btn-sm" onclick="closeOfferLetterPreview()">' +
-            'Close' +
-          '</button>' +
-        '</div>' +
-      '</div>';
-  });
+  iframe.src = pdfUrl;
 }
 
 function closeOfferLetterPreview() {
   var overlay = document.getElementById('docx-preview-modal-overlay');
+  var iframe = document.getElementById('docx-preview-iframe');
   if (overlay) {
     overlay.style.display = 'none';
     overlay.setAttribute('aria-hidden', 'true');
+  }
+  if (iframe) {
+    iframe.src = 'about:blank';
   }
   document.body.style.overflow = '';
 }
