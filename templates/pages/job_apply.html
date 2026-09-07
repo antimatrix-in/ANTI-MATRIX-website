@@ -1,868 +1,283 @@
-{% extends 'base.html' %}
+{%- extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
-
 {% block title %}Apply for {{ job.title }} | Anti-Matrix Careers{% endblock %}
-
 {% block content %}
-<!-- Apply Page Hero -->
-<section class="page-hero" style="padding-bottom: var(--space-xl); background: var(--color-bg-alt); border-bottom: 1px solid var(--color-border);">
-  <div class="container" style="max-width: 1200px;">
-    
-    <!-- Navigation Breadcrumbs -->
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);">
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--color-text-dim);">
-        <a href="{{ url_for('main.careers') }}" style="color: var(--color-text-dim); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          {{ icon('arrow-left', size=13) }} Careers
-        </a>
-        <span>/</span>
-        <span style="color: var(--color-text-dim);">{{ job.department }}</span>
-        <span>/</span>
-        <span style="color: var(--color-primary-light); font-weight: 600;">Application</span>
-      </div>
+<style>
+  .apply-hero{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:2rem 0 2.25rem}
+  .apply-bc{display:flex;align-items:center;gap:6px;font-size:.825rem;color:#64748b;margin-bottom:1.25rem}
+  .apply-bc a{color:#64748b;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+  .apply-bc a:hover{color:#059669}
+  .ahc{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.75rem 2rem;box-shadow:0 1px 4px rgba(15,23,42,.05)}
+  .aht{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+  .amts{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.6rem}
+  .amt{display:inline-flex;align-items:center;gap:4px;font-size:.775rem;font-weight:500;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:.2rem .55rem}
+  .amt-g{color:#059669;background:#f0fdf4;border-color:#bbf7d0}
+  .amt-b{color:#2563eb;background:#eff6ff;border-color:#bfdbfe}
+  .at{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;color:#0f172a;margin-bottom:.4rem;line-height:1.2}
+  .ad{font-size:.9rem;color:#475569;max-width:720px;line-height:1.65;margin:0}
+  .asteps{display:flex;align-items:center;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid #f1f5f9;overflow-x:auto}
+  .sitem{display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}
+  .snum{width:26px;height:26px;border-radius:50%;background:#059669;color:#fff;font-weight:700;font-size:.725rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .snum.dim{background:#f1f5f9;color:#94a3b8}
+  .slbl{font-size:.8rem;font-weight:600;color:#0f172a}
+  .slbl.dim{color:#94a3b8}
+  .sdiv{min-width:24px;max-width:60px;height:1px;background:#e2e8f0;margin:0 8px;flex-shrink:0;flex:1}
+  .apply-body{padding:2.5rem 0 4rem;background:#f8fafc}
+  .agrid{display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start}
+  .asb{position:sticky;top:calc(80px + 1.5rem);display:flex;flex-direction:column;gap:1rem}
+  .fcard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.75rem;box-shadow:0 1px 3px rgba(15,23,42,.04);margin-bottom:1.25rem}
+  .fcard:last-child{margin-bottom:0}
+  .fcard-h{display:flex;align-items:center;gap:10px;padding-bottom:1rem;margin-bottom:1.25rem;border-bottom:1px solid #f1f5f9}
+  .fcard-i{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .fcard-i.g{background:#f0fdf4;color:#059669}
+  .fcard-i.b{background:#eff6ff;color:#2563eb}
+  .fcard-i.p{background:#faf5ff;color:#7c3aed}
+  .fcard-i.db{background:#dbeafe;color:#2563eb}
+  .fcard-t{font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 1px;line-height:1.3}
+  .fcard-s{font-size:.775rem;color:#64748b;margin:0}
+  .flbl{display:block;font-size:.825rem;font-weight:600;color:#334155;margin-bottom:5px}
+  .freq{color:#ef4444;margin-left:2px}
+  .fopt{font-size:.75rem;font-weight:400;color:#94a3b8;margin-left:4px}
+  .finp{width:100%;padding:.7rem .9rem;background:#fff;border:1px solid #cbd5e1;border-radius:7px;color:#0f172a;font-family:var(--font-body);font-size:.9rem;outline:none;transition:border-color .15s,box-shadow .15s;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+  .finp::placeholder{color:#94a3b8}
+  .finp:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.1)}
+  select.finp{appearance:auto}
+  textarea.finp{resize:vertical;min-height:72px;line-height:1.6}
+  .ferr{display:none;font-size:.775rem;color:#dc2626;margin-top:4px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
+  .fgrp{display:flex;flex-direction:column}
+  .fdrop{border:1.5px dashed #cbd5e1;border-radius:8px;padding:1.25rem 1rem;text-align:center;cursor:pointer;background:#fafafa;transition:all .18s}
+  .fdrop:hover{border-color:#059669;background:#f0fdf4}
+  .fdrop-ic{width:40px;height:40px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin:0 auto .6rem;color:#64748b}
+  .fdrop-lg{padding:2rem 1.5rem}
+  .fdrop-lg .fdrop-ic{width:52px;height:52px;background:#f0fdf4;color:#059669}
+  .fdrop-t{font-size:.85rem;font-weight:600;color:#334155;margin-bottom:2px}
+  .fdrop-lg .fdrop-t{font-size:.95rem}
+  .fdrop-h{font-size:.75rem;color:#94a3b8;margin:0}
+  .fdrop-ok{display:none;font-size:.8rem;font-weight:600;color:#059669;margin-top:.5rem}
+  .decl-bx{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.1rem;font-size:.8rem;color:#475569;line-height:1.65}
+  .decl-bx a{color:#059669}
+  .scard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.4rem;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+  .slabel{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px}
+  .sjt{font-size:1.05rem;font-weight:800;color:#0f172a;margin-bottom:2px;line-height:1.3}
+  .sjd{font-size:.825rem;color:#059669;font-weight:600;margin-bottom:1rem}
+  .feeblk{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.85rem 1rem;text-align:center;margin-bottom:1rem}
+  .feeblk-l{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:2px}
+  .feeblk-a{font-size:1.6rem;font-weight:900;color:#059669;line-height:1;margin-bottom:2px}
+  .feeblk-n{font-size:.725rem;color:#64748b}
+  .feeblk-fr{background:#f8fafc;border-color:#e2e8f0}
+  .feeblk-fr .feeblk-a{font-size:1.1rem;color:#334155}
+  .subbtn{width:100%;padding:.85rem 1.5rem;background:linear-gradient(135deg,#059669 0%,#10b981 100%);color:#fff;font-family:var(--font-heading);font-size:.95rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 14px rgba(5,150,105,.25)}
+  .subbtn:hover{background:linear-gradient(135deg,#047857 0%,#059669 100%);box-shadow:0 6px 20px rgba(5,150,105,.35);transform:translateY(-1px)}
+  .sslnote{font-size:.725rem;color:#94a3b8;text-align:center;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px}
+  .tl-ttl{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.85rem;display:flex;align-items:center;gap:5px}
+  .tl-step{display:flex;gap:10px;padding-bottom:.85rem;border-bottom:1px solid #f1f5f9;margin-bottom:.85rem}
+  .tl-step:last-child{padding-bottom:0;border-bottom:none;margin-bottom:0}
+  .tl-n{width:22px;height:22px;border-radius:50%;font-weight:700;font-size:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tl-n.g{background:#f0fdf4;color:#059669}
+  .tl-n.b{background:#eff6ff;color:#2563eb}
+  .tl-n.p{background:#faf5ff;color:#7c3aed}
+  .tl-t{font-size:.8rem;font-weight:700;color:#0f172a;margin-bottom:1px}
+  .tl-d{font-size:.765rem;color:#64748b;line-height:1.5}
+  .hlptxt{text-align:center;font-size:.775rem;color:#94a3b8;line-height:1.6}
+  .hlptxt a{color:#059669;font-weight:600}
+  .docs-fc{border:1.5px solid #bfdbfe !important;background:#f0f9ff !important}
+  .docs-badge{font-size:.7rem;font-weight:700;background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:2px 8px}
+  @media(max-width:900px){.agrid{grid-template-columns:1fr}.asb{position:static}.row2,.row3{grid-template-columns:1fr}}
+  @media(max-width:600px){.ahc,.fcard{padding:1.25rem}}
+</style>
 
-      <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 6px; padding: 0.25rem 0.65rem; font-size: 0.75rem; color: var(--color-primary-light); font-weight: 700;">
-        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-primary-light); display: inline-block;"></span>
-        Active Opening &bull; Verified Portal
-      </div>
-    </div>
-
-    <!-- Role Summary Header Card -->
-    <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: var(--space-xl); box-shadow: var(--shadow-md);">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-lg);">
-        <div>
-          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: var(--space-sm);">
-            <span class="badge" style="background: rgba(16,185,129,0.15); color: var(--color-primary-light); border: 1px solid rgba(16,185,129,0.3);">
-              {{ icon('briefcase', size=11) }} {{ job.department }}
-            </span>
-            <span style="font-size: 0.825rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">
-              {{ icon('map-pin', size=12) }} {{ job.location }}
-            </span>
-            <span style="font-size: 0.825rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">
-              {{ icon('clock', size=12) }} {{ job.employment_type }}
-            </span>
-            {% if job.duration_display %}
-              <span style="font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.35);">
-                {{ icon('clock', size=12) }} Internship Duration: {{ job.duration_display }}
-              </span>
-            {% endif %}
-            {% if job.fee_display %}
-              <span style="font-size: 0.825rem; color: var(--color-primary-light); font-weight: 800; display: inline-flex; align-items: center; gap: 4px; background: rgba(16,185,129,0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(16,185,129,0.3);">
-                {{ icon('credit-card', size=12) }} Application Fee: {{ job.fee_display }}
-              </span>
-            {% elif job.salary %}
-              <span style="font-size: 0.825rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">
-                {{ icon('credit-card', size=12) }} {{ job.salary }}
-              </span>
-            {% endif %}
+<section class="apply-hero">
+  <div class="container" style="max-width:1200px;">
+    <nav class="apply-bc" aria-label="Breadcrumb">
+      <a href="{{ url_for('main.careers') }}">{{ icon('arrow-left',size=13) }} Careers</a>
+      <span style="color:#cbd5e1">/</span><span>{{ job.department }}</span>
+      <span style="color:#cbd5e1">/</span><span style="color:#059669;font-weight:600">Apply</span>
+    </nav>
+    <div class="ahc">
+      <div class="aht">
+        <div style="flex:1;min-width:0">
+          <div class="amts">
+            <span class="amt amt-g">{{ icon('briefcase',size=11) }} {{ job.department }}</span>
+            <span class="amt">{{ icon('map-pin',size=11) }} {{ job.location }}</span>
+            <span class="amt">{{ icon('clock',size=11) }} {{ job.employment_type }}</span>
+            {% if job.duration_display %}<span class="amt amt-b">{{ icon('calendar',size=11) }} {{ job.duration_display }}</span>{% endif %}
+            {% if job.fee_display %}<span class="amt amt-g">{{ icon('credit-card',size=11) }} Fee: {{ job.fee_display }}</span>{% endif %}
           </div>
-
-          <h1 style="font-size: clamp(1.75rem, 3.5vw, 2.4rem); font-weight: 800; color: var(--color-white); margin-bottom: var(--space-xs); line-height: 1.2;">
-            Apply for {{ job.title }}
-          </h1>
-
-          <p style="color: var(--color-text-dim); font-size: 0.95rem; max-width: 780px; margin: 0; line-height: 1.6;">
-            {{ job.short_description }}
-          </p>
+          <h1 class="at">Apply for {{ job.title }}</h1>
+          <p class="ad">{{ job.short_description }}</p>
         </div>
-
-        <a href="{{ url_for('main.careers') }}" class="btn btn-outline btn-sm" style="gap: 6px;">
-          {{ icon('eye', size=13) }} View All Openings
-        </a>
+        <a href="{{ url_for('main.careers') }}" class="btn btn-outline btn-sm" style="flex-shrink:0">{{ icon('arrow-left',size=13) }} All Openings</a>
       </div>
-
-      <!-- Application Steps Indicator -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); margin-top: var(--space-xl); border-top: 1px solid var(--color-border); padding-top: var(--space-md);">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: #000; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">1</span>
-          <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-white);">Personal Details</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: #000; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">2</span>
-          <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-white);">Education Info</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: #000; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">3</span>
-          <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-white);">Resume &amp; Proofs</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.08); color: var(--color-text-dim); font-weight: 700; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">4</span>
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-dim);">Review &amp; Submit</span>
-        </div>
+      <div class="asteps">
+        <div class="sitem"><span class="snum">1</span><span class="slbl">Personal Details</span></div>
+        <div class="sdiv"></div>
+        <div class="sitem"><span class="snum">2</span><span class="slbl">Education</span></div>
+        <div class="sdiv"></div>
+        <div class="sitem"><span class="snum">3</span><span class="slbl">Resume &amp; Docs</span></div>
+        <div class="sdiv"></div>
+        <div class="sitem"><span class="snum dim">4</span><span class="slbl dim">Review &amp; Submit</span></div>
       </div>
     </div>
-
   </div>
 </section>
 
-<!-- Application Form & Sidebar Layout -->
-<section class="section" style="background: var(--color-bg); padding-top: var(--space-2xl); padding-bottom: var(--space-3xl);">
-  <div class="container" style="max-width: 1200px;">
-    
+<section class="apply-body">
+  <div class="container" style="max-width:1200px;">
     <form method="POST" action="{{ url_for('main.apply_job', job_id=job.id) }}" enctype="multipart/form-data" id="job-application-form" novalidate>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="agrid">
 
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-2xl); align-items: start;">
-        
-        <!-- ================= LEFT COLUMN: CANDIDATE DOSSIER FORM ================= -->
-        <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
-
-          <!-- CARD 1: PERSONAL INFORMATION -->
-          <div class="card" style="padding: var(--space-xl); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-lg);">
-              <div style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); display: flex; align-items: center; justify-content: center;">
-                {{ icon('user', size=18) }}
-              </div>
-              <div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); margin: 0;">1. Personal &amp; Contact Information</h3>
-                <p style="font-size: 0.8rem; color: var(--color-text-dim); margin: 0;">Provide your legal identity and contact credentials for application tracking</p>
-              </div>
+        <div>
+          <!-- Card 1: Personal -->
+          <div class="fcard">
+            <div class="fcard-h">
+              <div class="fcard-i g">{{ icon('user',size=17) }}</div>
+              <div><p class="fcard-t">1. Personal &amp; Contact Information</p><p class="fcard-s">Your legal identity and contact details for application tracking</p></div>
             </div>
-
-            <!-- Name row -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-md);">
-              <div class="form-group">
-                <label for="first_name" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  First Name <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="first_name"
-                  name="first_name"
-                  class="form-input"
-                  placeholder="e.g. Arun"
-                  value="{{ form_data.get('first_name', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-first_name" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="last_name" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Last Name <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="last_name"
-                  name="last_name"
-                  class="form-input"
-                  placeholder="e.g. Kumar"
-                  value="{{ form_data.get('last_name', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-last_name" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
+            <div class="row2" style="margin-bottom:1rem">
+              <div class="fgrp"><label for="first_name" class="flbl">First Name <span class="freq">*</span></label><input type="text" id="first_name" name="first_name" class="finp" placeholder="e.g. Arun" value="{{ form_data.get('first_name','') }}" required /><span class="ferr" id="err-first_name"></span></div>
+              <div class="fgrp"><label for="last_name" class="flbl">Last Name <span class="freq">*</span></label><input type="text" id="last_name" name="last_name" class="finp" placeholder="e.g. Kumar" value="{{ form_data.get('last_name','') }}" required /><span class="ferr" id="err-last_name"></span></div>
             </div>
-
-            <!-- Email & Phone row -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-md);">
-              <div class="form-group">
-                <label for="email" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Email Address <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  class="form-input"
-                  placeholder="e.g. arun.kumar@gmail.com"
-                  value="{{ form_data.get('email', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-email" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="phone" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Phone Number (10 Digits) <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  class="form-input"
-                  placeholder="e.g. 9876543210"
-                  maxlength="10"
-                  value="{{ form_data.get('phone', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-phone" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
+            <div class="row2" style="margin-bottom:1rem">
+              <div class="fgrp"><label for="email" class="flbl">Email Address <span class="freq">*</span></label><input type="email" id="email" name="email" class="finp" placeholder="arun.kumar@gmail.com" value="{{ form_data.get('email','') }}" required /><span class="ferr" id="err-email"></span></div>
+              <div class="fgrp"><label for="phone" class="flbl">Phone Number <span class="freq">*</span></label><input type="tel" id="phone" name="phone" class="finp" placeholder="10-digit mobile" maxlength="10" value="{{ form_data.get('phone','') }}" required /><span class="ferr" id="err-phone"></span></div>
             </div>
-
-            <!-- Address -->
-            <div class="form-group" style="margin-bottom: var(--space-md);">
-              <label for="address" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                Residential Address <span style="color: #f87171;">*</span>
-              </label>
-              <textarea
-                id="address"
-                name="address"
-                rows="2"
-                class="form-textarea"
-                placeholder="Door No., Street Name, Area / Locality..."
-                required
-                style="line-height: 1.6; font-size: 0.9rem;"
-              >{{ form_data.get('address', '') }}</textarea>
-              <span class="field-error-msg" id="err-address" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-            </div>
-
-            <!-- State, City, Pincode in 3 columns -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-md);">
-              <div class="form-group">
-                <label for="state" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  State <span style="color: #f87171;">*</span>
-                </label>
-                <select id="state" name="state" class="form-input" style="appearance: auto; padding: 0.75rem 0.85rem;" required onchange="handleStateChange()">
-                  <option value="">-- Select State --</option>
-                  {% for st_name in states_and_cities.keys() %}
-                    <option value="{{ st_name }}" {{ 'selected' if form_data.get('state') == st_name else '' }}>{{ st_name }}</option>
-                  {% endfor %}
-                </select>
-                <span class="field-error-msg" id="err-state" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="city" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  City <span style="color: #f87171;">*</span>
-                </label>
-                <select id="city" name="city" class="form-input" style="appearance: auto; padding: 0.75rem 0.85rem;" required>
-                  <option value="">-- Select City --</option>
-                </select>
-                <span class="field-error-msg" id="err-city" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="pincode" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Pincode (6 Digits) <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="pincode"
-                  name="pincode"
-                  class="form-input"
-                  placeholder="e.g. 600001"
-                  maxlength="6"
-                  pattern="[1-9][0-9]{5}"
-                  value="{{ form_data.get('pincode', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-pincode" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
+            <div class="fgrp" style="margin-bottom:1rem"><label for="address" class="flbl">Residential Address <span class="freq">*</span></label><textarea id="address" name="address" rows="2" class="finp" placeholder="Door No., Street, Area / Locality..." required>{{ form_data.get('address','') }}</textarea><span class="ferr" id="err-address"></span></div>
+            <div class="row3">
+              <div class="fgrp"><label for="state" class="flbl">State <span class="freq">*</span></label><select id="state" name="state" class="finp" required onchange="handleStateChange()"><option value="">Select State</option>{% for st_name in states_and_cities.keys() %}<option value="{{ st_name }}" {{ 'selected' if form_data.get('state') == st_name else '' }}>{{ st_name }}</option>{% endfor %}</select><span class="ferr" id="err-state"></span></div>
+              <div class="fgrp"><label for="city" class="flbl">City <span class="freq">*</span></label><select id="city" name="city" class="finp" required><option value="">Select City</option></select><span class="ferr" id="err-city"></span></div>
+              <div class="fgrp"><label for="pincode" class="flbl">Pincode <span class="freq">*</span></label><input type="text" id="pincode" name="pincode" class="finp" placeholder="6-digit code" maxlength="6" pattern="[1-9][0-9]{5}" value="{{ form_data.get('pincode','') }}" required /><span class="ferr" id="err-pincode"></span></div>
             </div>
           </div>
 
-          <!-- CARD 2: ACADEMIC CREDENTIALS -->
-          <div class="card" style="padding: var(--space-xl); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-lg);">
-              <div style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.12); color: #60a5fa; display: flex; align-items: center; justify-content: center;">
-                {{ icon('award', size=18) }}
-              </div>
-              <div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); margin: 0;">2. Academic Qualifications</h3>
-                <p style="font-size: 0.8rem; color: var(--color-text-dim); margin: 0;">Your educational degree, discipline, and expected graduation schedule</p>
-              </div>
+          <!-- Card 2: Academic -->
+          <div class="fcard">
+            <div class="fcard-h">
+              <div class="fcard-i b">{{ icon('award',size=17) }}</div>
+              <div><p class="fcard-t">2. Academic Qualifications</p><p class="fcard-s">Your degree, specialization, and expected graduation year</p></div>
             </div>
-
-            <!-- Education level & Degree -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-md);">
-              <div class="form-group">
-                <label for="education_level" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Highest Education Level <span style="color: #f87171;">*</span>
-                </label>
-                <select id="education_level" name="education_level" class="form-input" style="appearance: auto; padding: 0.75rem 1rem;" required>
-                  <option value="">-- Select Education Level --</option>
-                  {% for edu in education_levels %}
-                    <option value="{{ edu }}" {{ 'selected' if (form_data.get('education_level') == edu or form_data.get('education') == edu) else '' }}>{{ edu }}</option>
-                  {% endfor %}
-                </select>
-                <span class="field-error-msg" id="err-education_level" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="degree" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Degree Program <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="degree"
-                  name="degree"
-                  class="form-input"
-                  placeholder="e.g. B.Tech / B.E. / B.Sc / BCA / MCA"
-                  value="{{ form_data.get('degree', '') }}"
-                  required
-                  list="degree-suggestions"
-                  style="padding: 0.75rem 1rem;"
-                />
-                <datalist id="degree-suggestions">
-                  {% for deg in common_degrees %}
-                    <option value="{{ deg }}">
-                  {% endfor %}
-                </datalist>
-                <span class="field-error-msg" id="err-degree" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
+            <div class="row2" style="margin-bottom:1rem">
+              <div class="fgrp"><label for="education_level" class="flbl">Education Level <span class="freq">*</span></label><select id="education_level" name="education_level" class="finp" required><option value="">Select Level</option>{% for edu in education_levels %}<option value="{{ edu }}" {{ 'selected' if (form_data.get('education_level') == edu or form_data.get('education') == edu) else '' }}>{{ edu }}</option>{% endfor %}</select><span class="ferr" id="err-education_level"></span></div>
+              <div class="fgrp"><label for="degree" class="flbl">Degree Program <span class="freq">*</span></label><input type="text" id="degree" name="degree" class="finp" placeholder="e.g. B.Tech / BCA / MCA" value="{{ form_data.get('degree','') }}" required list="degree-suggestions" /><datalist id="degree-suggestions">{% for deg in common_degrees %}<option value="{{ deg }}">{% endfor %}</datalist><span class="ferr" id="err-degree"></span></div>
             </div>
-
-            <!-- Major & Graduation Year -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
-              <div class="form-group">
-                <label for="major" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Major / Specialization <span style="color: #f87171;">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="major"
-                  name="major"
-                  class="form-input"
-                  placeholder="e.g. Computer Science, Artificial Intelligence, IT"
-                  value="{{ form_data.get('major', '') }}"
-                  required
-                  style="padding: 0.75rem 1rem;"
-                />
-                <span class="field-error-msg" id="err-major" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="graduation_year" class="form-label" style="font-weight: 700; color: var(--color-white);">
-                  Graduation Year (Up to 2029) <span style="color: #f87171;">*</span>
-                </label>
-                <select id="graduation_year" name="graduation_year" class="form-input" style="appearance: auto; padding: 0.75rem 1rem;" required>
-                  <option value="">-- Select Graduation Year --</option>
-                  {% for yr in graduation_years %}
-                    <option value="{{ yr }}" {{ 'selected' if form_data.get('graduation_year')|string == yr|string else '' }}>{{ yr }}</option>
-                  {% endfor %}
-                </select>
-                <span class="field-error-msg" id="err-graduation_year" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-              </div>
+            <div class="row2">
+              <div class="fgrp"><label for="major" class="flbl">Major / Specialization <span class="freq">*</span></label><input type="text" id="major" name="major" class="finp" placeholder="e.g. Computer Science, AI, IT" value="{{ form_data.get('major','') }}" required /><span class="ferr" id="err-major"></span></div>
+              <div class="fgrp"><label for="graduation_year" class="flbl">Graduation Year <span class="freq">*</span></label><select id="graduation_year" name="graduation_year" class="finp" required><option value="">Select Year</option>{% for yr in graduation_years %}<option value="{{ yr }}" {{ 'selected' if form_data.get('graduation_year')|string == yr|string else '' }}>{{ yr }}</option>{% endfor %}</select><span class="ferr" id="err-graduation_year"></span></div>
             </div>
           </div>
 
-          <!-- CARD 3: 3-MONTH INTERNSHIP IDENTITY DOCUMENTS (CONDITIONAL) -->
           {% if job.duration == '3_months' %}
-            <div class="card" style="padding: var(--space-xl); border: 1.5px solid rgba(59, 130, 246, 0.35); background: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, var(--color-surface) 100%); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-lg);">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center;">
-                    {{ icon('shield', size=18) }}
-                  </div>
-                  <div>
-                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); margin: 0;">3. Identity Verification Proofs</h3>
-                    <p style="font-size: 0.8rem; color: var(--color-text-dim); margin: 0;">Mandatory compliance for the 3-Months Internship track</p>
-                  </div>
-                </div>
-                <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);">
-                  3-Month Requirement
-                </span>
-              </div>
-
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-md);">
-                <!-- Aadhaar Card Upload (Required) -->
-                <div class="form-group">
-                  <label class="form-label" style="font-weight: 700; color: var(--color-white);">
-                    Aadhaar Document <span style="color: #f87171;">*</span>
-                  </label>
-                  <div
-                    class="file-upload-dropzone"
-                    onclick="document.getElementById('aadhaar-input').click();"
-                    style="padding: var(--space-lg); text-align: center; border: 1.5px dashed var(--color-border); border-radius: var(--radius-md); cursor: pointer; background: rgba(0,0,0,0.25); transition: all 0.2s;"
-                    onmouseover="this.style.borderColor='var(--color-primary)'; this.style.background='rgba(16,185,129,0.04)';"
-                    onmouseout="this.style.borderColor='var(--color-border)'; this.style.background='rgba(0,0,0,0.25)';"
-                  >
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: var(--color-primary-light);">
-                      {{ icon('upload-cloud', size=18) }}
-                    </div>
-                    <div style="font-size: 0.875rem; font-weight: 700; color: var(--color-white);">Upload Aadhaar Card</div>
-                    <p style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 2px; margin-bottom: 0;">PDF, JPG, PNG (Max 16MB)</p>
-                    <div id="aadhaar-name-display" style="margin-top: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--color-primary-light); display: none;"></div>
-                  </div>
-                  <input
-                    type="file"
-                    id="aadhaar-input"
-                    name="aadhaar"
-                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                    style="display: none;"
-                    required
-                    onchange="handleFileSelected(this, 'aadhaar-name-display', 'err-aadhaar', ['pdf','jpg','jpeg','png'])"
-                  />
-                  <span class="field-error-msg" id="err-aadhaar" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-                </div>
-
-                <!-- PAN Card (Optional) -->
-                <div class="form-group">
-                  <label class="form-label" style="font-weight: 700; color: var(--color-white);">
-                    PAN Card <span style="font-size: 0.75rem; color: var(--color-text-dim); font-weight: normal;">(Optional)</span>
-                  </label>
-                  <div
-                    class="file-upload-dropzone"
-                    onclick="document.getElementById('pan-input').click();"
-                    style="padding: var(--space-lg); text-align: center; border: 1.5px dashed var(--color-border); border-radius: var(--radius-md); cursor: pointer; background: rgba(0,0,0,0.25); transition: all 0.2s;"
-                    onmouseover="this.style.borderColor='var(--color-primary)'; this.style.background='rgba(16,185,129,0.04)';"
-                    onmouseout="this.style.borderColor='var(--color-border)'; this.style.background='rgba(0,0,0,0.25)';"
-                  >
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: var(--color-text-dim);">
-                      {{ icon('upload-cloud', size=18) }}
-                    </div>
-                    <div style="font-size: 0.875rem; font-weight: 700; color: var(--color-white);">Upload PAN Card</div>
-                    <p style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 2px; margin-bottom: 0;">PDF, JPG, PNG (Max 16MB)</p>
-                    <div id="pan-name-display" style="margin-top: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--color-primary-light); display: none;"></div>
-                  </div>
-                  <input
-                    type="file"
-                    id="pan-input"
-                    name="pan"
-                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                    style="display: none;"
-                    onchange="handleFileSelected(this, 'pan-name-display', 'err-pan', ['pdf','jpg','jpeg','png'])"
-                  />
-                  <span class="field-error-msg" id="err-pan" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-                </div>
-
-                <!-- College ID (Optional) -->
-                <div class="form-group">
-                  <label class="form-label" style="font-weight: 700; color: var(--color-white);">
-                    College ID Card <span style="font-size: 0.75rem; color: var(--color-text-dim); font-weight: normal;">(Optional)</span>
-                  </label>
-                  <div
-                    class="file-upload-dropzone"
-                    onclick="document.getElementById('college-id-input').click();"
-                    style="padding: var(--space-lg); text-align: center; border: 1.5px dashed var(--color-border); border-radius: var(--radius-md); cursor: pointer; background: rgba(0,0,0,0.25); transition: all 0.2s;"
-                    onmouseover="this.style.borderColor='var(--color-primary)'; this.style.background='rgba(16,185,129,0.04)';"
-                    onmouseout="this.style.borderColor='var(--color-border)'; this.style.background='rgba(0,0,0,0.25)';"
-                  >
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: var(--color-text-dim);">
-                      {{ icon('upload-cloud', size=18) }}
-                    </div>
-                    <div style="font-size: 0.875rem; font-weight: 700; color: var(--color-white);">Upload College ID</div>
-                    <p style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 2px; margin-bottom: 0;">PDF, JPG, PNG (Max 16MB)</p>
-                    <div id="college-id-name-display" style="margin-top: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--color-primary-light); display: none;"></div>
-                  </div>
-                  <input
-                    type="file"
-                    id="college-id-input"
-                    name="college_id"
-                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                    style="display: none;"
-                    onchange="handleFileSelected(this, 'college-id-name-display', 'err-college_id', ['pdf','jpg','jpeg','png'])"
-                  />
-                  <span class="field-error-msg" id="err-college_id" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
-                </div>
-              </div>
+          <div class="fcard docs-fc">
+            <div class="fcard-h" style="border-bottom-color:#dbeafe">
+              <div class="fcard-i db">{{ icon('shield',size=17) }}</div>
+              <div style="flex:1"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><p class="fcard-t">3. Identity Verification Documents</p><span class="docs-badge">3-Month Requirement</span></div><p class="fcard-s">Mandatory compliance documents for the 3-Month Internship track</p></div>
             </div>
+            <div class="row3">
+              <div class="fgrp"><label class="flbl">Aadhaar Card <span class="freq">*</span></label><div class="fdrop" onclick="document.getElementById('aadhaar-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload Aadhaar</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="aadhaar-name-display"></div></div><input type="file" id="aadhaar-input" name="aadhaar" accept=".pdf,.jpg,.jpeg,.png" style="display:none" required onchange="handleFileSelected(this,'aadhaar-name-display','err-aadhaar',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-aadhaar"></span></div>
+              <div class="fgrp"><label class="flbl">PAN Card <span class="fopt">(Optional)</span></label><div class="fdrop" onclick="document.getElementById('pan-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload PAN</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="pan-name-display"></div></div><input type="file" id="pan-input" name="pan" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelected(this,'pan-name-display','err-pan',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-pan"></span></div>
+              <div class="fgrp"><label class="flbl">College ID <span class="fopt">(Optional)</span></label><div class="fdrop" onclick="document.getElementById('college-id-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload College ID</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="college-id-name-display"></div></div><input type="file" id="college-id-input" name="college_id" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelected(this,'college-id-name-display','err-college_id',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-college_id"></span></div>
+            </div>
+          </div>
           {% endif %}
 
-          <!-- CARD 4: RESUME / CV UPLOAD -->
-          <div class="card" style="padding: var(--space-xl); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-lg);">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); display: flex; align-items: center; justify-content: center;">
-                  {{ icon('file-text', size=18) }}
-                </div>
-                <div>
-                  <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); margin: 0;">
-                    {% if job.duration == '3_months' %}4{% else %}3{% endif %}. Resume / Curriculum Vitae <span style="color: #f87171;">*</span>
-                  </h3>
-                  <p style="font-size: 0.8rem; color: var(--color-text-dim); margin: 0;">Uploaded resume is reviewed by engineering leads and recruiters</p>
-                </div>
+          <!-- Resume -->
+          <div class="fcard">
+            <div class="fcard-h">
+              <div class="fcard-i g">{{ icon('file-text',size=17) }}</div>
+              <div style="flex:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                <div><p class="fcard-t">{% if job.duration == '3_months' %}4{% else %}3{% endif %}. Resume / Curriculum Vitae <span class="freq">*</span></p><p class="fcard-s">Reviewed by engineering leads and the recruitment team</p></div>
+                <span style="font-size:.7rem;font-weight:700;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px">Mandatory</span>
               </div>
-              <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--color-primary-light);">
-                Mandatory
-              </span>
             </div>
+            <div class="fgrp"><div class="fdrop fdrop-lg" onclick="document.getElementById('resume-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=22) }}</div><div class="fdrop-t">Click to browse or drag &amp; drop your resume</div><p class="fdrop-h">PDF, DOC, DOCX accepted &#183; Maximum 16 MB</p><div class="fdrop-ok" id="resume-name-display"></div></div><input type="file" id="resume-input" name="resume" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" required onchange="handleFileSelected(this,'resume-name-display','err-resume',['pdf','doc','docx'])" /><span class="ferr" id="err-resume"></span></div>
+          </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-              <div
-                class="file-upload-dropzone"
-                onclick="document.getElementById('resume-input').click();"
-                style="padding: var(--space-2xl) var(--space-xl); text-align: center; border: 2px dashed rgba(16, 185, 129, 0.35); border-radius: var(--radius-lg); cursor: pointer; background: rgba(16, 185, 129, 0.02); transition: all 0.25s;"
-                onmouseover="this.style.borderColor='var(--color-primary)'; this.style.background='rgba(16,185,129,0.06)';"
-                onmouseout="this.style.borderColor='rgba(16, 185, 129, 0.35)'; this.style.background='rgba(16,185,129,0.02)';"
-              >
-                <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-md); color: var(--color-primary-light);">
-                  {{ icon('upload-cloud', size=26) }}
-                </div>
-                <div style="font-size: 1.05rem; font-weight: 800; color: var(--color-white); margin-bottom: 0.25rem;">
-                  Click to Browse or Drag &amp; Drop Your Resume
-                </div>
-                <p style="font-size: 0.825rem; color: var(--color-text-dim); margin-bottom: 0;">
-                  Accepted formats: <strong style="color: var(--color-primary-light);">PDF, DOC, DOCX</strong> &bull; Maximum file size: <strong>16 MB</strong>
-                </p>
-                <div id="resume-name-display" style="margin-top: 1rem; font-size: 0.9rem; font-weight: 700; color: var(--color-primary-light); display: none;"></div>
-              </div>
-
-              <input
-                type="file"
-                id="resume-input"
-                name="resume"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                style="display: none;"
-                required
-                onchange="handleFileSelected(this, 'resume-name-display', 'err-resume', ['pdf','doc','docx'])"
-              />
-              <span class="field-error-msg" id="err-resume" style="color: #f87171; font-size: 0.775rem; display: none; margin-top: 0.25rem;"></span>
+          <!-- Online Profiles -->
+          <div class="fcard">
+            <div class="fcard-h">
+              <div class="fcard-i p">{{ icon('globe',size=17) }}</div>
+              <div><p class="fcard-t">{% if job.duration == '3_months' %}5{% else %}4{% endif %}. Online Profiles &amp; Portfolio <span class="fopt">(Optional)</span></p><p class="fcard-s">Showcase your projects, open-source work, or live deployments</p></div>
+            </div>
+            <div class="row3">
+              <div class="fgrp"><label for="github_url" class="flbl">GitHub</label><input type="url" id="github_url" name="github_url" class="finp" placeholder="github.com/username" value="{{ form_data.get('github_url','') }}" /></div>
+              <div class="fgrp"><label for="linkedin_url" class="flbl">LinkedIn</label><input type="url" id="linkedin_url" name="linkedin_url" class="finp" placeholder="linkedin.com/in/username" value="{{ form_data.get('linkedin_url','') }}" /></div>
+              <div class="fgrp"><label for="portfolio_url" class="flbl">Portfolio / Website</label><input type="url" id="portfolio_url" name="portfolio_url" class="finp" placeholder="yourportfolio.dev" value="{{ form_data.get('portfolio_url','') }}" /></div>
             </div>
           </div>
 
-          <!-- CARD 5: PROFESSIONAL LINKS & PROFILES (OPTIONAL) -->
-          <div class="card" style="padding: var(--space-xl); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-md); margin-bottom: var(--space-lg);">
-              <div style="width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(168, 85, 247, 0.12); color: #c084fc; display: flex; align-items: center; justify-content: center;">
-                {{ icon('globe', size=18) }}
-              </div>
-              <div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); margin: 0;">
-                  {% if job.duration == '3_months' %}5{% else %}4{% endif %}. Online Profiles &amp; Portfolio <span style="font-size: 0.8rem; color: var(--color-text-dim); font-weight: normal;">(Optional)</span>
-                </h3>
-                <p style="font-size: 0.8rem; color: var(--color-text-dim); margin: 0;">Showcase open-source projects, code samples, or live deployments</p>
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-md);">
-              <div class="form-group">
-                <label for="github_url" class="form-label" style="font-weight: 600; color: var(--color-white);">GitHub URL</label>
-                <input
-                  type="url"
-                  id="github_url"
-                  name="github_url"
-                  class="form-input"
-                  placeholder="https://github.com/username"
-                  value="{{ form_data.get('github_url', '') }}"
-                  style="padding: 0.65rem 0.85rem;"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="linkedin_url" class="form-label" style="font-weight: 600; color: var(--color-white);">LinkedIn URL</label>
-                <input
-                  type="url"
-                  id="linkedin_url"
-                  name="linkedin_url"
-                  class="form-input"
-                  placeholder="https://linkedin.com/in/username"
-                  value="{{ form_data.get('linkedin_url', '') }}"
-                  style="padding: 0.65rem 0.85rem;"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="portfolio_url" class="form-label" style="font-weight: 600; color: var(--color-white);">Portfolio / Website</label>
-                <input
-                  type="url"
-                  id="portfolio_url"
-                  name="portfolio_url"
-                  class="form-input"
-                  placeholder="https://yourportfolio.dev"
-                  value="{{ form_data.get('portfolio_url', '') }}"
-                  style="padding: 0.65rem 0.85rem;"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- CARD 6: LEGAL DECLARATION -->
-          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-lg); line-height: 1.6; font-size: 0.825rem; color: var(--color-text-dim);">
-            <p style="margin-bottom: var(--space-xs); color: var(--color-text);">
-              <strong>Candidate Declaration &amp; Submission Agreement:</strong> By submitting this application, I confirm that all credentials, personal data, and documents uploaded by me are accurate, authentic, and belong solely to me.
-            </p>
-            <p style="margin-bottom: 0;">
-              I understand that application fees (where applicable) are strictly non-refundable once paid and do not guarantee an offer. Governed by Anti Matrix 
-              <a href="{{ url_for('main.terms') }}" target="_blank" style="color: var(--color-primary-light); text-decoration: underline;">Terms &amp; Conditions</a>, 
-              <a href="{{ url_for('main.privacy') }}" target="_blank" style="color: var(--color-primary-light); text-decoration: underline;">Privacy Policy</a>, and 
-              <a href="{{ url_for('main.refund_policy') }}" target="_blank" style="color: var(--color-primary-light); text-decoration: underline;">Refund &amp; Cancellation Policy</a>.
-            </p>
-          </div>
-
+          <div class="decl-bx"><strong style="color:#334155">Candidate Declaration:</strong> By submitting this application, I confirm all credentials, personal data, and documents are accurate, authentic, and belong solely to me. Application fees (where applicable) are non-refundable. Governed by Anti-Matrix <a href="{{ url_for('main.terms') }}" target="_blank">Terms &amp; Conditions</a>, <a href="{{ url_for('main.privacy') }}" target="_blank">Privacy Policy</a>, and <a href="{{ url_for('main.refund_policy') }}" target="_blank">Refund Policy</a>.</div>
         </div>
 
-        <!-- ================= RIGHT COLUMN: STICKY APPLICATION SIDEBAR ================= -->
-        <div style="display: flex; flex-direction: column; gap: var(--space-xl); position: sticky; top: calc(var(--nav-height, 80px) + 1.5rem);">
-
-          <!-- Position Snapshot Card -->
-          <div class="card" style="padding: var(--space-xl); border: 1px solid var(--color-border); background: var(--color-surface); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; margin-bottom: 6px;">
-              Applying For
-            </div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--color-white); margin-bottom: var(--space-xs); line-height: 1.3;">
-              {{ job.title }}
-            </h3>
-            <div style="font-size: 0.85rem; color: var(--color-primary-light); font-weight: 600; margin-bottom: var(--space-md);">
-              {{ job.department }} &bull; {{ job.location }}
-            </div>
-
-            <!-- Fee & Program breakdown -->
+        <!-- SIDEBAR -->
+        <div class="asb">
+          <div class="scard">
+            <div class="slabel">Applying For</div>
+            <div class="sjt">{{ job.title }}</div>
+            <div class="sjd">{{ job.department }} &bull; {{ job.location }}</div>
             {% if job.is_internship and job.fee_inr > 0 %}
-              <div style="background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.12) 0%, rgba(0,0,0,0.3) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-lg); text-align: center;">
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">
-                  Internship Fee
-                </div>
-                <div style="font-size: 1.75rem; font-weight: 900; color: var(--color-primary-light); font-family: var(--font-mono, monospace); margin: 2px 0;">
-                  {{ job.fee_display }}
-                </div>
-                <div style="font-size: 0.775rem; color: var(--color-text-dim);">
-                  {{ job.duration_display }} &bull; One-Time Processing Fee
-                </div>
-              </div>
+              <div class="feeblk"><div class="feeblk-l">Internship Fee</div><div class="feeblk-a">{{ job.fee_display }}</div><div class="feeblk-n">{{ job.duration_display }} &bull; One-time processing fee</div></div>
+              <button type="submit" class="subbtn" id="submit-application-btn">Review &amp; Pay {{ job.fee_display }} {{ icon('arrow-right',size=15) }}</button>
             {% else %}
-              <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-lg); text-align: center;">
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">
-                  Application Cost
-                </div>
-                <div style="font-size: 1.25rem; font-weight: 800; color: var(--color-primary-light); margin: 2px 0;">
-                  Free Submission
-                </div>
-                <div style="font-size: 0.775rem; color: var(--color-text-dim);">
-                  Standard Full-Time / Contract Position
-                </div>
-              </div>
+              <div class="feeblk feeblk-fr"><div class="feeblk-l">Application Cost</div><div class="feeblk-a">Free</div><div class="feeblk-n">No fee required for this position</div></div>
+              <button type="submit" class="subbtn" id="submit-application-btn">Submit Application {{ icon('send',size=15) }}</button>
             {% endif %}
-
-            <!-- Primary Submit / Review CTA Button -->
-            {% if job.is_internship and job.fee_inr > 0 %}
-              <button
-                type="submit"
-                class="btn btn-primary btn-lg"
-                id="submit-application-btn"
-                style="width: 100%; justify-content: center; font-weight: 800; font-size: 1rem; gap: 8px; box-shadow: 0 4px 18px rgba(16,185,129,0.35);"
-              >
-                Review &amp; Pay Fee ({{ job.fee_display }}) {{ icon('arrow-right', size=16) }}
-              </button>
-            {% else %}
-              <button
-                type="submit"
-                class="btn btn-primary btn-lg"
-                id="submit-application-btn"
-                style="width: 100%; justify-content: center; font-weight: 800; font-size: 1rem; gap: 8px; box-shadow: 0 4px 18px rgba(16,185,129,0.35);"
-              >
-                Submit Application {{ icon('send', size=16) }}
-              </button>
-            {% endif %}
-
-            <div style="font-size: 0.75rem; color: var(--color-text-muted); text-align: center; margin-top: 8px;">
-              {{ icon('lock', size=11) }} 256-Bit SSL Encrypted &bull; Instant Confirmation
-            </div>
+            <div class="sslnote">{{ icon('lock',size=11) }} SSL encrypted &bull; Instant confirmation</div>
           </div>
-
-          <!-- What Happens Next? Timeline Card -->
-          <div class="card" style="padding: var(--space-lg); border: 1px solid var(--color-border); background: var(--color-surface);">
-            <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-white); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-md); display: flex; align-items: center; gap: 6px;">
-              {{ icon('compass', size=14, color='var(--color-primary-light)') }} What Happens Next?
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: var(--space-md); font-size: 0.8rem;">
-              <div style="display: flex; gap: 10px;">
-                <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(16,185,129,0.15); color: var(--color-primary-light); font-weight: 800; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</span>
-                <div>
-                  <strong style="color: var(--color-white); display: block;">Application ID Assigned</strong>
-                  <span style="color: var(--color-text-dim);">You receive an official code (e.g. <code>AM-APP-XXXXXX</code>) and confirmation email.</span>
-                </div>
-              </div>
-
-              <div style="display: flex; gap: 10px;">
-                <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(59,130,246,0.15); color: #60a5fa; font-weight: 800; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</span>
-                <div>
-                  <strong style="color: var(--color-white); display: block;">Engineering Review</strong>
-                  <span style="color: var(--color-text-dim);">Technical leads evaluate your resume, skills, and academic profile.</span>
-                </div>
-              </div>
-
-              <div style="display: flex; gap: 10px;">
-                <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(168,85,247,0.15); color: #c084fc; font-weight: 800; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</span>
-                <div>
-                  <strong style="color: var(--color-white); display: block;">Shortlisting &amp; Offer</strong>
-                  <span style="color: var(--color-text-dim);">Status is updated live in your profile, followed by an official Offer Letter.</span>
-                </div>
-              </div>
-            </div>
+          <div class="scard">
+            <div class="tl-ttl">{{ icon('compass',size=13) }} What Happens Next</div>
+            <div class="tl-step"><span class="tl-n g">1</span><div><div class="tl-t">Application ID Assigned</div><div class="tl-d">You receive an official code (AM-APP-XXXXXX) and a confirmation email.</div></div></div>
+            <div class="tl-step"><span class="tl-n b">2</span><div><div class="tl-t">Engineering Review</div><div class="tl-d">Technical leads evaluate your resume, skills, and academic profile.</div></div></div>
+            <div class="tl-step"><span class="tl-n p">3</span><div><div class="tl-t">Shortlisting &amp; Offer</div><div class="tl-d">Status updated live in your profile, followed by an official Offer Letter.</div></div></div>
           </div>
-
-          <!-- Help & Support -->
-          <div style="text-align: center; font-size: 0.8rem; color: var(--color-text-dim);">
-            Need assistance with your application?<br />
-            Contact us: <a href="mailto:info@antimatrix.com" style="color: var(--color-primary-light); text-decoration: none; font-weight: 600;">info@antimatrix.com</a>
-          </div>
-
+          <div class="hlptxt">Need assistance?<br /><a href="mailto:info@antimatrix.com">info@antimatrix.com</a></div>
         </div>
-
       </div>
     </form>
-
   </div>
 </section>
 
 {% block scripts %}
 <script>
-// State & City Data Mapping
-const stateCityMap = {{ states_and_cities|tojson }};
-const initialSelectedState = "{{ form_data.get('state', '') }}";
-const initialSelectedCity = "{{ form_data.get('city', '') }}";
-
-function populateCities(stateName, selectedCity = '') {
-  const citySelect = document.getElementById('city');
-  if (!citySelect) return;
-  
-  citySelect.innerHTML = '<option value="">-- Select City --</option>';
-  
-  if (!stateName || !stateCityMap[stateName]) {
-    return;
-  }
-  
-  const cities = stateCityMap[stateName];
-  cities.forEach(city => {
-    const opt = document.createElement('option');
-    opt.value = city;
-    opt.textContent = city;
-    if (city === selectedCity) {
-      opt.selected = true;
-    }
-    citySelect.appendChild(opt);
-  });
+var stateCityMap = {{ states_and_cities|tojson }};
+var initState = "{{ form_data.get('state','') }}";
+var initCity  = "{{ form_data.get('city','') }}";
+function populateCities(sn, sc) {
+  sc = sc || '';
+  var cs = document.getElementById('city');
+  if (!cs) return;
+  cs.innerHTML = '<option value="">Select City</option>';
+  if (!sn || !stateCityMap[sn]) return;
+  stateCityMap[sn].forEach(function(c) { var o = document.createElement('option'); o.value = c; o.textContent = c; if (c === sc) o.selected = true; cs.appendChild(o); });
 }
-
-function handleStateChange() {
-  const stateSelect = document.getElementById('state');
-  const selectedState = stateSelect.value;
-  populateCities(selectedState, '');
+function handleStateChange() { populateCities(document.getElementById('state').value, ''); }
+document.addEventListener('DOMContentLoaded', function() { if (initState) populateCities(initState, initCity); });
+function handleFileSelected(inp, did, eid, exts) {
+  var f = inp.files[0]; var d = document.getElementById(did); var e = document.getElementById(eid);
+  if (e) e.style.display = 'none';
+  if (!f) { if (d) d.style.display = 'none'; return; }
+  var ext = f.name.split('.').pop().toLowerCase();
+  if (!exts.includes(ext)) { if (e) { e.textContent = 'Invalid format. Allowed: ' + exts.join(', ').toUpperCase(); e.style.display = 'block'; } inp.value = ''; if (d) d.style.display = 'none'; return; }
+  if (f.size > 16*1024*1024) { if (e) { e.textContent = 'File exceeds 16 MB limit.'; e.style.display = 'block'; } inp.value = ''; if (d) d.style.display = 'none'; return; }
+  if (d) { d.textContent = 'Ready: ' + f.name + ' (' + (f.size/1024/1024).toFixed(2) + ' MB)'; d.style.display = 'block'; }
 }
-
-// Initialize cities on page load if state was previously selected
-document.addEventListener('DOMContentLoaded', function() {
-  if (initialSelectedState) {
-    populateCities(initialSelectedState, initialSelectedCity);
-  }
-});
-
-function handleFileSelected(inputElem, displayId, errorId, allowedExts) {
-  const file = inputElem.files[0];
-  const display = document.getElementById(displayId);
-  const errElem = document.getElementById(errorId);
-  
-  if (errElem) errElem.style.display = 'none';
-
-  if (!file) {
-    if (display) display.style.display = 'none';
-    return;
-  }
-
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (!allowedExts.includes(ext)) {
-    if (errElem) {
-      errElem.textContent = 'Invalid file format. Allowed: ' + allowedExts.join(', ').toUpperCase();
-      errElem.style.display = 'block';
-    }
-    inputElem.value = '';
-    if (display) display.style.display = 'none';
-    return;
-  }
-
-  if (file.size > 16 * 1024 * 1024) {
-    if (errElem) {
-      errElem.textContent = 'File exceeds maximum allowed limit of 16 MB.';
-      errElem.style.display = 'block';
-    }
-    inputElem.value = '';
-    if (display) display.style.display = 'none';
-    return;
-  }
-
-  if (display) {
-    display.textContent = '✓ Ready: ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
-    display.style.display = 'block';
-  }
-}
-
-// Client-Side Validation
 document.getElementById('job-application-form').addEventListener('submit', function(e) {
-  let hasErrors = false;
-  
-  // Clear errors
-  document.querySelectorAll('.field-error-msg').forEach(el => el.style.display = 'none');
-
-  const requiredFields = [
-    { id: 'first_name', name: 'First Name' },
-    { id: 'last_name', name: 'Last Name' },
-    { id: 'email', name: 'Email Address' },
-    { id: 'phone', name: 'Phone Number' },
-    { id: 'address', name: 'Address' },
-    { id: 'state', name: 'State' },
-    { id: 'city', name: 'City' },
-    { id: 'pincode', name: 'Pincode' },
-    { id: 'education_level', name: 'Education Level' },
-    { id: 'degree', name: 'Degree' },
-    { id: 'major', name: 'Major' },
-    { id: 'graduation_year', name: 'Graduation Year' }
-  ];
-
-  requiredFields.forEach(field => {
-    const el = document.getElementById(field.id);
-    const errEl = document.getElementById('err-' + field.id);
-    if (el && !el.value.trim()) {
-      if (errEl) {
-        errEl.textContent = field.name + ' is required.';
-        errEl.style.display = 'block';
-      }
-      hasErrors = true;
-    }
+  var has = false;
+  document.querySelectorAll('.ferr').forEach(function(el) { el.style.display = 'none'; });
+  [{id:'first_name',n:'First Name'},{id:'last_name',n:'Last Name'},{id:'email',n:'Email Address'},{id:'phone',n:'Phone Number'},{id:'address',n:'Address'},{id:'state',n:'State'},{id:'city',n:'City'},{id:'pincode',n:'Pincode'},{id:'education_level',n:'Education Level'},{id:'degree',n:'Degree'},{id:'major',n:'Major'},{id:'graduation_year',n:'Graduation Year'}].forEach(function(f) {
+    var el = document.getElementById(f.id); var er = document.getElementById('err-'+f.id);
+    if (el && !el.value.trim()) { if (er) { er.textContent = f.n + ' is required.'; er.style.display = 'block'; } has = true; }
   });
-
-  // Phone check
-  const phoneEl = document.getElementById('phone');
-  if (phoneEl && phoneEl.value.trim()) {
-    const phoneVal = phoneEl.value.replace(/\D/g, '');
-    if (phoneVal.length !== 10) {
-      const errEl = document.getElementById('err-phone');
-      if (errEl) {
-        errEl.textContent = 'Please enter a valid 10-digit phone number.';
-        errEl.style.display = 'block';
-      }
-      hasErrors = true;
-    }
-  }
-
-  // Pincode check
-  const pinEl = document.getElementById('pincode');
-  if (pinEl && pinEl.value.trim()) {
-    if (!/^[1-9][0-9]{5}$/.test(pinEl.value.trim())) {
-      const errEl = document.getElementById('err-pincode');
-      if (errEl) {
-        errEl.textContent = 'Please enter a valid 6-digit Indian pincode.';
-        errEl.style.display = 'block';
-      }
-      hasErrors = true;
-    }
-  }
-
-  // Resume check
-  const resumeInput = document.getElementById('resume-input');
-  if (resumeInput && (!resumeInput.files || resumeInput.files.length === 0)) {
-    const errEl = document.getElementById('err-resume');
-    if (errEl) {
-      errEl.textContent = 'Resume upload is required.';
-      errEl.style.display = 'block';
-    }
-    hasErrors = true;
-  }
-
-  // Aadhaar check for 3 months
-  const aadhaarInput = document.getElementById('aadhaar-input');
-  if (aadhaarInput && (!aadhaarInput.files || aadhaarInput.files.length === 0)) {
-    const errEl = document.getElementById('err-aadhaar');
-    if (errEl) {
-      errEl.textContent = 'Aadhaar document upload is required for the 3-months internship.';
-      errEl.style.display = 'block';
-    }
-    hasErrors = true;
-  }
-
-  if (hasErrors) {
-    e.preventDefault();
-    const firstErr = document.querySelector('.field-error-msg[style*="display: block"]');
-    if (firstErr) {
-      firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }
+  var ph = document.getElementById('phone');
+  if (ph && ph.value.trim() && ph.value.replace(/\D/g,'').length !== 10) { var er = document.getElementById('err-phone'); if (er) { er.textContent = 'Enter a valid 10-digit phone number.'; er.style.display = 'block'; } has = true; }
+  var pi = document.getElementById('pincode');
+  if (pi && pi.value.trim() && !/^[1-9][0-9]{5}$/.test(pi.value.trim())) { var er = document.getElementById('err-pincode'); if (er) { er.textContent = 'Enter a valid 6-digit Indian pincode.'; er.style.display = 'block'; } has = true; }
+  var ri = document.getElementById('resume-input');
+  if (ri && (!ri.files || ri.files.length === 0)) { var er = document.getElementById('err-resume'); if (er) { er.textContent = 'Resume upload is required.'; er.style.display = 'block'; } has = true; }
+  var ai = document.getElementById('aadhaar-input');
+  if (ai && (!ai.files || ai.files.length === 0)) { var er = document.getElementById('err-aadhaar'); if (er) { er.textContent = 'Aadhaar is required for the 3-month internship.'; er.style.display = 'block'; } has = true; }
+  if (has) { e.preventDefault(); var fe = document.querySelector('.ferr[style*="block"]'); if (fe) fe.scrollIntoView({behavior:'smooth',block:'center'}); }
 });
 </script>
 {% endblock %}
