@@ -806,11 +806,18 @@ def preview_application_offer_letter_pdf(app_id):
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
         current_app.logger.error(f"Offer letter PDF conversion failed for app {app_id}: {err_msg}")
-        return jsonify({
-            'status': 'error',
-            'error_code': 'CONVERSION_FAILED',
-            'message': err_msg or 'Preview is temporarily unavailable. Please use Download DOCX.'
-        }), 503
+        if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'status': 'error',
+                'error_code': 'CONVERSION_FAILED',
+                'message': err_msg or 'Preview is temporarily unavailable. Please use Download DOCX.'
+            }), 503
+        return render_template(
+            'admin/preview_error.html',
+            app=application,
+            download_url=url_for('admin.download_application_offer_letter', app_id=app_id),
+            error_message="The Offer Letter preview could not be generated right now. Please try again or use Download DOCX."
+        ), 503
 
     pdf_filename = f"{os.path.splitext(offer_doc.file_name)[0]}.pdf"
     return send_from_directory(
@@ -942,11 +949,19 @@ def preview_document_pdf_by_id(doc_id):
 
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
-        return jsonify({
-            'status': 'error',
-            'error_code': 'CONVERSION_FAILED',
-            'message': err_msg or 'Preview is temporarily unavailable. Please download the document to view it.'
-        }), 503
+        if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'status': 'error',
+                'error_code': 'CONVERSION_FAILED',
+                'message': err_msg or 'Preview is temporarily unavailable. Please download the document to view it.'
+            }), 503
+        download_url = f"/admin/documents/{doc_id}/download" if hasattr(document, 'id') else "#"
+        return render_template(
+            'admin/preview_error.html',
+            app=document.application if document.application else None,
+            download_url=download_url,
+            error_message="The document preview could not be generated right now. Please download the document to view it."
+        ), 503
 
     pdf_filename = f"{os.path.splitext(document.file_name)[0]}.pdf"
     return send_from_directory(
