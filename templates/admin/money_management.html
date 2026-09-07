@@ -1,45 +1,36 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}Money Management | Financial Dashboard | Anti-Matrix{% endblock %}
+{% block title %}Money Management | Anti-Matrix Admin{% endblock %}
 
 {% block content %}
-<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 1.75rem); background: #f8fafc; min-height: 90vh; padding-bottom: 4rem;">
-  <div class="container" style="max-width: 1320px; margin: 0 auto; padding: 0 var(--space-xl);">
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: var(--color-bg); min-height: 85vh; padding-bottom: 4rem;">
+  <div class="container">
     
     <!-- Admin Header -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-      <div>
-        <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 4px; padding: 2px 8px; margin-bottom: 0.35rem;">
-          {{ icon('shield', size=11) }} Finance &amp; Accounting Portal
-        </div>
-        <h1 style="font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-weight: 800; color: #0f172a; margin: 0 0 0.25rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px;">
-          Money Management
-        </h1>
-        <p style="color: #64748b; font-size: 0.875rem; margin: 0; max-width: 680px;">
-          Monitor revenue, payments, expenses, and transaction ledger activity in real time.
-        </p>
+    <div class="admin-header">
+      <div class="admin-header-title">
+        <h1>Money Management</h1>
+        <p>Monitor revenue, expenses, Cashfree application payments, and financial ledger records.</p>
       </div>
-
-      <!-- Action Buttons -->
-      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="exportTransactionsCSV()" style="gap: 6px; font-size: 0.825rem; padding: 0.5rem 0.85rem; border-color: #cbd5e1; color: #334155; background: #ffffff;" title="Export currently filtered transactions as CSV">
+      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="exportTransactionsCSV()" style="gap: 6px;" title="Export filtered records to CSV">
           {{ icon('download', size=14) }} Export CSV
         </button>
         <form method="POST" action="{{ url_for('admin.reconcile_payments') }}" style="display: inline; margin: 0;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px; font-size: 0.825rem; padding: 0.5rem 0.85rem; border-color: #cbd5e1; color: #334155; background: #ffffff;" title="Scan and reconcile any missing Cashfree payments">
+          <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px;" title="Reconcile any missing Cashfree payment records">
             {{ icon('refresh-cw', size=14) }} Sync Payments
           </button>
         </form>
-        <a href="{{ url_for('admin.add_money_transaction') }}" class="btn btn-primary btn-sm" style="gap: 6px; font-size: 0.825rem; padding: 0.5rem 0.95rem; background: #059669; border-color: #059669;">
-          {{ icon('plus', size=14) }} Record Transaction
+        <a href="{{ url_for('admin.add_money_transaction') }}" class="btn btn-primary btn-sm" style="gap: 6px;">
+          {{ icon('plus', size=14) }} Add Transaction
         </a>
       </div>
     </div>
 
     <!-- Admin Nav Tabs -->
-    <div class="admin-nav-tabs" style="margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+    <div class="admin-nav-tabs">
       <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-tab">
         {{ icon('layout', size=15) }} Overview
       </a>
@@ -58,357 +49,291 @@
       <a href="{{ url_for('admin.templates') }}" class="admin-nav-tab">
         {{ icon('file-text', size=15) }} Templates
       </a>
-      <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab active" style="color: #059669; border-bottom-color: #059669;">
+      <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab active">
         {{ icon('wallet', size=15) }} Money Management
       </a>
     </div>
 
-    <!-- 1. FINANCIAL SUMMARY TILES (High-density, professional metric cards) -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <!-- 1. Executive Summary Cards (Native Admin Stat Cards) -->
+    <div class="admin-stats-grid" style="margin-bottom: var(--space-xl);">
       
-      <!-- Total Revenue / Inflow -->
-      <div class="f-stat-card">
-        <div class="f-stat-header">
-          <span class="f-stat-label">Total Inflow / Revenue</span>
-          <span class="f-stat-tag green">{{ icon('arrow-down-left', size=12) }} INFLOW</span>
+      <!-- Total Income -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #f0fdf4; color: #059669; border-color: #bbf7d0;">
+          {{ icon('arrow-down-left', size=20) }}
         </div>
-        <div class="f-stat-value" style="color: #059669;">₹{{ "{:,.2f}".format(summary.total_income) }}</div>
-        <div class="f-stat-sub">
-          <span>Real (Prod): <strong>₹{{ "{:,.2f}".format(summary.production_income) }}</strong></span>
-          {% if summary.sandbox_income > 0 %}
-            <span class="f-pill-sub amber">Sandbox: ₹{{ "{:,.2f}".format(summary.sandbox_income) }}</span>
-          {% endif %}
+        <div class="stat-info">
+          <div class="stat-value" style="color: #059669;">₹{{ "{:,.2f}".format(summary.total_income) }}</div>
+          <div class="stat-label">Total Inflow / Revenue</div>
         </div>
       </div>
 
-      <!-- Total Outflow / Expenses -->
-      <div class="f-stat-card">
-        <div class="f-stat-header">
-          <span class="f-stat-label">Total Outflow / Expenses</span>
-          <span class="f-stat-tag red">{{ icon('arrow-up-right', size=12) }} OUTFLOW</span>
+      <!-- Total Expenses -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #fef2f2; color: #dc2626; border-color: #fecaca;">
+          {{ icon('arrow-up-right', size=20) }}
         </div>
-        <div class="f-stat-value" style="color: #dc2626;">₹{{ "{:,.2f}".format(summary.total_expense) }}</div>
-        <div class="f-stat-sub">
-          <span>Manual Operational Costs: <strong>₹{{ "{:,.2f}".format(summary.manual_expense) }}</strong></span>
-        </div>
-      </div>
-
-      <!-- Net Available Balance -->
-      <div class="f-stat-card">
-        <div class="f-stat-header">
-          <span class="f-stat-label">Net Available Balance</span>
-          <span class="f-stat-tag blue">{{ icon('wallet', size=12) }} LEDGER</span>
-        </div>
-        <div class="f-stat-value" style="color: #0f172a;">₹{{ "{:,.2f}".format(summary.balance) }}</div>
-        <div class="f-stat-sub">
-          <span>Real Net: <strong>₹{{ "{:,.2f}".format(summary.production_balance) }}</strong></span>
-          {% if summary.sandbox_balance != 0 %}
-            <span class="f-pill-sub amber">Test: ₹{{ "{:,.2f}".format(summary.sandbox_balance) }}</span>
-          {% endif %}
+        <div class="stat-info">
+          <div class="stat-value" style="color: #dc2626;">₹{{ "{:,.2f}".format(summary.total_expense) }}</div>
+          <div class="stat-label">Total Expenses</div>
         </div>
       </div>
 
-      <!-- Transaction Volume & Activity -->
-      <div class="f-stat-card">
-        <div class="f-stat-header">
-          <span class="f-stat-label">Ledger Entries</span>
-          <span class="f-stat-tag neutral">{{ icon('receipt', size=12) }} RECORDS</span>
+      <!-- Available Balance -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+          {{ icon('wallet', size=20) }}
         </div>
-        <div class="f-stat-value" style="color: #334155;">{{ summary.transaction_count }}</div>
-        <div class="f-stat-sub">
-          <span>Today: <strong style="color: #059669;">+₹{{ "{:,.0f}".format(summary.today_income) }}</strong> / <strong style="color: #dc2626;">-₹{{ "{:,.0f}".format(summary.today_expense) }}</strong></span>
-          {% if summary.transaction_count != summary.all_time_count %}
-            <span style="color: #94a3b8; font-size: 0.75rem;">({{ summary.all_time_count }} all-time)</span>
-          {% endif %}
+        <div class="stat-info">
+          <div class="stat-value">₹{{ "{:,.2f}".format(summary.balance) }}</div>
+          <div class="stat-label">Net Available Balance</div>
         </div>
       </div>
 
-    </div>
-
-    <!-- 2. FINANCIAL FLOW & LEDGER INSIGHTS BAR (Compact, sleek summary) -->
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.1rem 1.4rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 0.775rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #475569;">
-            Inflow vs Outflow Ratio
-          </span>
-          <span style="font-size: 0.75rem; color: #64748b;">
-            {% set total_flow = (summary.total_income + summary.total_expense) %}
-            {% if total_flow > 0 %}
-              {% set income_pct = ((summary.total_income / total_flow) * 100)|round(1) %}
-              <strong>{{ income_pct }}% Inflow</strong> (₹{{ "{:,.2f}".format(summary.total_income) }} of ₹{{ "{:,.2f}".format(total_flow) }})
-            {% else %}
-              0.0% Active Flow
-            {% endif %}
-          </span>
+      <!-- Total Records -->
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #f8fafc; color: #475569; border-color: #e2e8f0;">
+          {{ icon('receipt', size=20) }}
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; font-size: 0.8rem;">
-          <span style="display: inline-flex; align-items: center; gap: 4px; color: #059669; font-weight: 600;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Cashfree Gateway: ₹{{ "{:,.2f}".format(summary.cashfree_income) }}
-          </span>
-          <span style="display: inline-flex; align-items: center; gap: 4px; color: #2563eb; font-weight: 600;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></span> Manual Income: ₹{{ "{:,.2f}".format(summary.manual_income) }}
-          </span>
-          <span style="display: inline-flex; align-items: center; gap: 4px; color: #dc2626; font-weight: 600;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span> Expenses: ₹{{ "{:,.2f}".format(summary.manual_expense) }}
-          </span>
+        <div class="stat-info">
+          <div class="stat-value">{{ summary.transaction_count }}</div>
+          <div class="stat-label">Ledger Records</div>
         </div>
       </div>
 
-      <!-- Ratio Progress Track -->
-      <div style="height: 6px; background: #fee2e2; border-radius: 999px; overflow: hidden; display: flex;">
-        {% if total_flow > 0 %}
-          <div style="width: {{ income_pct }}%; background: #059669; transition: width 0.3s ease;"></div>
-        {% else %}
-          <div style="width: 100%; background: #e2e8f0;"></div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- 3. UNIFIED FILTERS & TOOLBAR -->
+    <!-- 2. Transaction History Section & Filter Controls -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
-      <h2 style="font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
         {{ icon('receipt', size=16, color='#059669') }} Transaction History
         <span style="font-size: 0.8rem; font-weight: 500; color: #64748b;">({{ transactions|length }} records)</span>
       </h2>
     </div>
 
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px 10px 0 0; padding: 1rem 1.25rem; border-bottom: none;">
-      <form method="GET" action="{{ url_for('admin.money_management') }}" id="moneyFilterForm" style="margin: 0;">
-        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
-          
-          <!-- Search Box -->
-          <div style="flex: 2; min-width: 220px; position: relative;">
-            <input type="text" name="q" class="f-input" value="{{ search_query }}" placeholder="Search purpose, ref, app code, order ID..." style="padding-left: 30px; font-size: 0.835rem; width: 100%;" />
-            <div style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; display: flex; align-items: center;">
-              {{ icon('search', size=13) }}
-            </div>
-          </div>
+    <!-- Controls & Filter Bar -->
+    <div class="admin-controls-bar" style="margin-bottom: 0; border-bottom: none; border-radius: 10px 10px 0 0; background: #ffffff;">
+      <form method="GET" action="{{ url_for('admin.money_management') }}" class="admin-search-form" id="moneyFilterForm" style="flex: 1; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        
+        <!-- Search Input -->
+        <input
+          type="text"
+          name="q"
+          placeholder="Search purpose, ref, ID, order..."
+          class="form-input"
+          value="{{ search_query }}"
+          style="min-width: 220px; flex: 2; padding: 0.5rem 0.85rem; font-size: 0.875rem;"
+        />
 
-          <!-- Transaction Type Filter -->
-          <div style="flex: 1; min-width: 130px;">
-            <select name="type" class="f-input f-select" style="font-size: 0.835rem; width: 100%;" onchange="document.getElementById('moneyFilterForm').submit()">
-              <option value="all" {{ 'selected' if type_filter == 'all' else '' }}>All Types</option>
-              <option value="income" {{ 'selected' if type_filter == 'income' else '' }}>Inflow (Income)</option>
-              <option value="expense" {{ 'selected' if type_filter == 'expense' else '' }}>Outflow (Expense)</option>
-            </select>
-          </div>
+        <!-- Type Select -->
+        <select name="type" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 120px;">
+          <option value="all" {{ 'selected' if type_filter == 'all' else '' }}>All Types</option>
+          <option value="income" {{ 'selected' if type_filter == 'income' else '' }}>Inflow</option>
+          <option value="expense" {{ 'selected' if type_filter == 'expense' else '' }}>Outflow</option>
+        </select>
 
-          <!-- Environment Filter -->
-          <div style="flex: 1; min-width: 140px;">
-            <select name="env" class="f-input f-select" style="font-size: 0.835rem; width: 100%;" onchange="document.getElementById('moneyFilterForm').submit()">
-              <option value="all" {{ 'selected' if env_filter == 'all' else '' }}>All Environments</option>
-              <option value="production" {{ 'selected' if env_filter == 'production' else '' }}>Production</option>
-              <option value="sandbox" {{ 'selected' if env_filter == 'sandbox' else '' }}>Sandbox / Test</option>
-              <option value="manual" {{ 'selected' if env_filter == 'manual' else '' }}>Manual Entries</option>
-            </select>
-          </div>
+        <!-- Environment Select -->
+        <select name="env" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px;">
+          <option value="all" {{ 'selected' if env_filter == 'all' else '' }}>All Environments</option>
+          <option value="production" {{ 'selected' if env_filter == 'production' else '' }}>Production</option>
+          <option value="sandbox" {{ 'selected' if env_filter == 'sandbox' else '' }}>Sandbox</option>
+          <option value="manual" {{ 'selected' if env_filter == 'manual' else '' }}>Manual</option>
+        </select>
 
-          <!-- Category Filter -->
-          <div style="flex: 1; min-width: 140px;">
-            <select name="category" class="f-input f-select" style="font-size: 0.835rem; width: 100%;" onchange="document.getElementById('moneyFilterForm').submit()">
-              <option value="all">All Categories</option>
-              {% for cat in categories %}
-                <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat }}</option>
-              {% endfor %}
-            </select>
-          </div>
+        <!-- Category Select -->
+        <select name="category" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 140px;">
+          <option value="all">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat }}</option>
+          {% endfor %}
+        </select>
 
-          <!-- Date Quick Filter -->
-          <div style="flex: 1; min-width: 120px;">
-            <select name="date" id="dateFilterSelect" class="f-input f-select" style="font-size: 0.835rem; width: 100%;" onchange="handleDateFilterChange(this.value)">
-              <option value="all" {{ 'selected' if date_filter == 'all' else '' }}>All Dates</option>
-              <option value="today" {{ 'selected' if date_filter == 'today' else '' }}>Today</option>
-              <option value="this_week" {{ 'selected' if date_filter == 'this_week' else '' }}>This Week</option>
-              <option value="this_month" {{ 'selected' if date_filter == 'this_month' else '' }}>This Month</option>
-              <option value="custom" {{ 'selected' if date_filter == 'custom' else '' }}>Custom Range...</option>
-            </select>
-          </div>
+        <!-- Date Range Select -->
+        <select name="date" id="dateSelect" class="admin-select" onchange="handleDateSelect(this.value);" style="flex: 1; min-width: 120px;">
+          <option value="all" {{ 'selected' if date_filter == 'all' else '' }}>All Dates</option>
+          <option value="today" {{ 'selected' if date_filter == 'today' else '' }}>Today</option>
+          <option value="this_week" {{ 'selected' if date_filter == 'this_week' else '' }}>This Week</option>
+          <option value="this_month" {{ 'selected' if date_filter == 'this_month' else '' }}>This Month</option>
+          <option value="custom" {{ 'selected' if date_filter == 'custom' else '' }}>Custom...</option>
+        </select>
 
-          <!-- Sort Selector -->
-          <div style="flex: 1; min-width: 130px;">
-            <select name="sort" class="f-input f-select" style="font-size: 0.835rem; width: 100%;" onchange="document.getElementById('moneyFilterForm').submit()">
-              <option value="newest" {{ 'selected' if sort_by == 'newest' else '' }}>Newest First</option>
-              <option value="oldest" {{ 'selected' if sort_by == 'oldest' else '' }}>Oldest First</option>
-              <option value="highest" {{ 'selected' if sort_by == 'highest' else '' }}>Highest Amount</option>
-              <option value="lowest" {{ 'selected' if sort_by == 'lowest' else '' }}>Lowest Amount</option>
-            </select>
-          </div>
+        <!-- Sort Select -->
+        <select name="sort" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px;">
+          <option value="newest" {{ 'selected' if sort_by == 'newest' else '' }}>Newest First</option>
+          <option value="oldest" {{ 'selected' if sort_by == 'oldest' else '' }}>Oldest First</option>
+          <option value="highest" {{ 'selected' if sort_by == 'highest' else '' }}>Highest Amount</option>
+          <option value="lowest" {{ 'selected' if sort_by == 'lowest' else '' }}>Lowest Amount</option>
+        </select>
 
-          <!-- Submit / Reset -->
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.825rem; padding: 0.45rem 0.8rem; background: #ffffff; border-color: #cbd5e1; color: #0f172a; font-weight: 600;">
-              Apply
-            </button>
-            {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
-              <a href="{{ url_for('admin.money_management') }}" class="btn btn-ghost btn-sm" style="font-size: 0.825rem; padding: 0.45rem 0.65rem; color: #64748b;" title="Reset all filters">
-                Reset
-              </a>
-            {% endif %}
-          </div>
+        <button type="submit" class="btn btn-outline btn-sm" style="padding: 0.5rem 0.8rem;">
+          {{ icon('search', size=14) }}
+        </button>
 
-        </div>
+        {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
+          <a href="{{ url_for('admin.money_management') }}" class="btn btn-ghost btn-sm" style="color: #64748b; font-size: 0.8rem;" title="Clear filters">
+            Reset
+          </a>
+        {% endif %}
 
-        <!-- Custom Date Range Sub-Row (Only displayed if custom selected) -->
-        <div id="customDateRangeRow" style="display: {{ 'flex' if date_filter == 'custom' else 'none' }}; align-items: center; gap: 8px; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0;">
-          <span style="font-size: 0.78rem; font-weight: 600; color: #64748b;">Custom Date Range:</span>
-          <input type="date" name="start_date" class="f-input" value="{{ start_date or '' }}" style="width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem;" placeholder="Start Date" />
-          <span style="color: #94a3b8; font-size: 0.8rem;">to</span>
-          <input type="date" name="end_date" class="f-input" value="{{ end_date or '' }}" style="width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem;" placeholder="End Date" />
-          <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.35rem 0.65rem;">
-            Filter Dates
+        <!-- Custom Date Range Row -->
+        <div id="customDateRow" style="display: {{ 'flex' if date_filter == 'custom' else 'none' }}; width: 100%; align-items: center; gap: 8px; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">
+          <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Custom Range:</span>
+          <input type="date" name="start_date" class="form-input" value="{{ start_date or '' }}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; width: auto;" />
+          <span style="font-size: 0.8rem; color: #94a3b8;">to</span>
+          <input type="date" name="end_date" class="form-input" value="{{ end_date or '' }}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; width: auto;" />
+          <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.775rem; padding: 0.35rem 0.65rem;">
+            Apply Dates
           </button>
         </div>
+
       </form>
     </div>
 
-    <!-- 4. TRANSACTIONS DATA TABLE (The Core Table Component) -->
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0 0 10px 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(15,23,42,0.04); margin-bottom: 1.5rem;">
-      <div style="overflow-x: auto;">
-        <table class="f-table" id="transactionsTable">
-          <thead>
-            <tr>
-              <th style="min-width: 220px;">Transaction / Description</th>
-              <th style="min-width: 100px;">Type</th>
-              <th style="min-width: 130px;">Environment</th>
-              <th style="min-width: 120px;">Payment Method</th>
-              <th style="min-width: 140px;">Date &amp; Time</th>
-              <th style="min-width: 120px; text-align: right;">Amount (INR)</th>
-              <th style="min-width: 100px; text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if transactions %}
-              {% for txn in transactions %}
-                <tr class="f-table-row" onclick="viewTransactionDetail({{ txn.id }})" title="Click row to inspect complete audit details">
-                  
-                  <!-- Purpose & Category -->
-                  <td>
-                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                      <div style="font-weight: 600; color: #0f172a; font-size: 0.875rem;">
-                        {{ txn.purpose or txn.category }}
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; flex-wrap: wrap;">
-                        <span>{{ txn.category }}</span>
-                        {% if txn.application %}
-                          <span style="color: #cbd5e1;">&bull;</span>
-                          <span class="badge-app-ref" onclick="event.stopPropagation()">
-                            <a href="{{ url_for('admin.application_detail', app_id=txn.application_id) }}" style="color: inherit; text-decoration: none;">
-                              {{ icon('users', size=11) }} {{ txn.application.formatted_code }}
-                            </a>
-                          </span>
-                        {% endif %}
-                        {% if txn.reference %}
-                          <span style="color: #cbd5e1;">&bull;</span>
-                          <span style="font-family: var(--font-mono, monospace); color: #94a3b8;">Ref: {{ txn.reference[:18] }}{% if txn.reference|length > 18 %}...{% endif %}</span>
-                        {% endif %}
-                      </div>
+    <!-- 3. Transactions Data Table (Main Component) -->
+    <div class="admin-table-wrapper" style="border-radius: 0 0 10px 10px; margin-bottom: var(--space-xl); background: #ffffff;">
+      <table class="admin-table" id="moneyTransactionsTable">
+        <thead>
+          <tr>
+            <th style="min-width: 240px;">Transaction / Purpose</th>
+            <th style="min-width: 100px;">Type</th>
+            <th style="min-width: 120px;">Environment</th>
+            <th style="min-width: 120px;">Method</th>
+            <th style="min-width: 140px;">Date &amp; Time</th>
+            <th style="min-width: 120px; text-align: right;">Amount (INR)</th>
+            <th style="min-width: 90px; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if transactions %}
+            {% for txn in transactions %}
+              <tr onclick="viewTransactionDetail({{ txn.id }})" style="cursor: pointer;" title="Click to view full transaction details">
+                
+                <!-- Purpose & Category -->
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-weight: 600; color: #0f172a; font-size: 0.875rem;">
+                      {{ txn.purpose or txn.category }}
                     </div>
-                  </td>
-
-                  <!-- Type Badge -->
-                  <td>
-                    {% if txn.is_income %}
-                      <span class="f-badge income">{{ icon('arrow-down-left', size=11) }} Inflow</span>
-                    {% else %}
-                      <span class="f-badge expense">{{ icon('arrow-up-right', size=11) }} Outflow</span>
-                    {% endif %}
-                  </td>
-
-                  <!-- Environment -->
-                  <td>
-                    <span class="{{ txn.environment_badge_class }}">
-                      {{ txn.environment_display }}
-                    </span>
-                  </td>
-
-                  <!-- Payment Method -->
-                  <td>
-                    <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">
-                      {{ txn.payment_method or ('Cashfree' if txn.is_cashfree else 'Manual') }}
-                    </span>
-                  </td>
-
-                  <!-- Date & Time -->
-                  <td>
-                    <div style="font-size: 0.825rem; color: #0f172a; font-weight: 500;">
-                      {{ txn.formatted_date_display }}
-                    </div>
-                    {% if txn.transaction_time %}
-                      <div style="font-size: 0.725rem; color: #94a3b8;">
-                        {{ txn.transaction_time }}
-                      </div>
-                    {% endif %}
-                  </td>
-
-                  <!-- Amount -->
-                  <td style="text-align: right;">
-                    <div style="font-family: var(--font-mono, monospace); font-weight: 700; font-size: 0.95rem; color: {{ '#059669' if txn.is_income else '#dc2626' }};">
-                      {{ '+' if txn.is_income else '-' }} {{ txn.formatted_amount }}
-                    </div>
-                  </td>
-
-                  <!-- Actions -->
-                  <td style="text-align: right;" onclick="event.stopPropagation()">
-                    <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
-                      <button type="button" class="f-action-btn" onclick="viewTransactionDetail({{ txn.id }})" title="View Details">
-                        {{ icon('eye', size=13) }}
-                      </button>
-                      {% if txn.is_manual %}
-                        <a href="{{ url_for('admin.edit_money_transaction', txn_id=txn.id) }}" class="f-action-btn" title="Edit Manual Transaction">
-                          {{ icon('edit', size=13) }}
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; flex-wrap: wrap;">
+                      <span>{{ txn.category }}</span>
+                      {% if txn.application %}
+                        <span style="color: #cbd5e1;">&bull;</span>
+                        <a href="{{ url_for('admin.application_detail', app_id=txn.application_id) }}" onclick="event.stopPropagation();" style="color: #059669; text-decoration: none; font-weight: 600;">
+                          {{ txn.application.formatted_code }}
                         </a>
-                        <button type="button" class="f-action-btn danger" onclick="openDeleteTransactionModal({{ txn.id }}, '{{ txn.formatted_amount }}', '{{ txn.purpose or txn.category }}')" title="Delete Manual Entry">
-                          {{ icon('trash-2', size=13) }}
-                        </button>
-                      {% else %}
-                        <span style="font-size: 0.7rem; color: #94a3b8; padding: 2px 6px; background: #f8fafc; border-radius: 4px; border: 1px solid #f1f5f9;" title="Gateway payment record strictly preserved for audit integrity">
-                          Locked
-                        </span>
+                      {% endif %}
+                      {% if txn.reference %}
+                        <span style="color: #cbd5e1;">&bull;</span>
+                        <span style="font-family: var(--font-mono, monospace); color: #94a3b8;">{{ txn.reference[:16] }}{% if txn.reference|length > 16 %}...{% endif %}</span>
                       {% endif %}
                     </div>
-                  </td>
-
-                </tr>
-              {% endfor %}
-            {% else %}
-              <!-- Empty Table State -->
-              <tr>
-                <td colspan="7" style="text-align: center; padding: 3.5rem 1.5rem;">
-                  <div style="width: 44px; height: 44px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; color: #64748b;">
-                    {{ icon('wallet', size=20) }}
-                  </div>
-                  <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem;">No transactions found</h3>
-                  <p style="font-size: 0.825rem; color: #64748b; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.5;">
-                    {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
-                      No records match the active filter criteria. Try adjusting or clearing filters.
-                    {% else %}
-                      Transactions will appear here once candidate payments are verified or manual transactions are recorded.
-                    {% endif %}
-                  </p>
-                  <div style="display: flex; justify-content: center; gap: 8px;">
-                    {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
-                      <a href="{{ url_for('admin.money_management') }}" class="btn btn-outline btn-sm" style="font-size: 0.8rem;">Clear Filters</a>
-                    {% endif %}
-                    <a href="{{ url_for('admin.add_money_transaction') }}" class="btn btn-primary btn-sm" style="font-size: 0.8rem; gap: 5px;">
-                      {{ icon('plus', size=13) }} Record Transaction
-                    </a>
                   </div>
                 </td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
 
-      <!-- Table Bottom Bar (Record Count & Dangerous Ledger Reset) -->
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; background: #fafafa; border-top: 1px solid #f1f5f9; font-size: 0.8rem; color: #64748b; flex-wrap: wrap; gap: 8px;">
+                <!-- Type Badge -->
+                <td>
+                  {% if txn.is_income %}
+                    <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.725rem; font-weight: 700; padding: 2px 7px;">
+                      + Inflow
+                    </span>
+                  {% else %}
+                    <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.725rem; font-weight: 700; padding: 2px 7px;">
+                      - Outflow
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Environment -->
+                <td>
+                  <span class="{{ txn.environment_badge_class }}">
+                    {{ txn.environment_display }}
+                  </span>
+                </td>
+
+                <!-- Payment Method -->
+                <td>
+                  <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">
+                    {{ txn.payment_method or ('Cashfree' if txn.is_cashfree else 'Manual') }}
+                  </span>
+                </td>
+
+                <!-- Date & Time -->
+                <td>
+                  <div style="font-size: 0.825rem; color: #0f172a; font-weight: 500;">
+                    {{ txn.formatted_date_display }}
+                  </div>
+                  {% if txn.transaction_time %}
+                    <div style="font-size: 0.725rem; color: #94a3b8;">
+                      {{ txn.transaction_time }}
+                    </div>
+                  {% endif %}
+                </td>
+
+                <!-- Amount -->
+                <td style="text-align: right;">
+                  <div style="font-family: var(--font-mono, monospace); font-weight: 700; font-size: 0.95rem; color: {{ '#059669' if txn.is_income else '#dc2626' }};">
+                    {{ '+' if txn.is_income else '-' }} {{ txn.formatted_amount }}
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td style="text-align: right;" onclick="event.stopPropagation();">
+                  <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="viewTransactionDetail({{ txn.id }})" style="padding: 0.25rem 0.45rem;" title="View Details">
+                      {{ icon('eye', size=13) }}
+                    </button>
+                    {% if txn.is_manual %}
+                      <a href="{{ url_for('admin.edit_money_transaction', txn_id=txn.id) }}" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.45rem;" title="Edit Manual Entry">
+                        {{ icon('edit', size=13) }}
+                      </a>
+                      <button type="button" class="btn btn-ghost btn-sm" onclick="openDeleteTransactionModal({{ txn.id }}, '{{ txn.formatted_amount }}', '{{ txn.purpose or txn.category }}')" style="padding: 0.25rem 0.45rem; color: #dc2626;" title="Delete Manual Entry">
+                        {{ icon('trash-2', size=13) }}
+                      </button>
+                    {% else %}
+                      <span style="font-size: 0.7rem; color: #94a3b8; padding: 2px 6px; background: #f8fafc; border-radius: 4px; border: 1px solid #f1f5f9;">
+                        Locked
+                      </span>
+                    {% endif %}
+                  </div>
+                </td>
+
+              </tr>
+            {% endfor %}
+          {% else %}
+            <!-- Empty State -->
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 3.5rem 1.5rem;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; color: #64748b;">
+                  {{ icon('wallet', size=20) }}
+                </div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem;">No transactions found</h3>
+                <p style="font-size: 0.825rem; color: #64748b; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.5;">
+                  {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
+                    No records match the active filter criteria. Try clearing filters or searching for another keyword.
+                  {% else %}
+                    Financial transactions will appear here once candidate payments are verified or manual transactions are recorded.
+                  {% endif %}
+                </p>
+                <div style="display: flex; justify-content: center; gap: 8px;">
+                  {% if type_filter != 'all' or env_filter != 'all' or date_filter != 'all' or category_filter != 'all' or search_query %}
+                    <a href="{{ url_for('admin.money_management') }}" class="btn btn-outline btn-sm">Clear Filters</a>
+                  {% endif %}
+                  <a href="{{ url_for('admin.add_money_transaction') }}" class="btn btn-primary btn-sm" style="gap: 5px;">
+                    {{ icon('plus', size=13) }} Record Transaction
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+
+      <!-- Bottom Status Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; background: #fafafa; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #64748b; flex-wrap: wrap; gap: 8px;">
         <div>
           Showing <strong>{{ transactions|length }}</strong> of <strong>{{ summary.all_time_count }}</strong> ledger transactions
         </div>
         <div>
           {% if summary.all_time_count > 0 %}
-            <button type="button" class="btn-danger-link" onclick="openClearAllTransactionsModal()" title="Destructive action to reset ledger copy">
+            <button type="button" onclick="openClearAllTransactionsModal()" style="background: none; border: none; color: #dc2626; font-size: 0.775rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 0;" title="Destructive action to reset ledger copy">
               {{ icon('trash-2', size=12) }} Clear Ledger Entries
             </button>
           {% endif %}
@@ -420,10 +345,10 @@
 </section>
 
 <!-- ==============================================================================
-     MODAL: TRANSACTION AUDIT DETAILS (Clean, Structured Inspection Modal)
+     MODAL: TRANSACTION AUDIT DETAILS
      ============================================================================== -->
-<div id="modalTransactionDetail" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeTransactionDetailModal()">
-  <div class="modal-card" style="max-width: 580px; padding: 0; overflow: hidden; border-radius: 12px;">
+<div id="modalTransactionDetail" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeTransactionDetailModal();">
+  <div class="modal-card" style="max-width: 560px; padding: 0; overflow: hidden; border-radius: 12px;">
     
     <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
       <div style="display: flex; align-items: center; gap: 8px;">
@@ -432,15 +357,15 @@
         </div>
         <div>
           <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Transaction Details</h3>
-          <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Audit record &amp; payment reference</p>
+          <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Financial audit record</p>
         </div>
       </div>
-      <button type="button" class="modal-close-btn" onclick="closeTransactionDetailModal()">{{ icon('x', size=16) }}</button>
+      <button type="button" class="modal-close-btn" onclick="closeTransactionDetailModal();">{{ icon('x', size=16) }}</button>
     </div>
 
     <div style="padding: 1.5rem; background: #ffffff;">
       <div id="detailLoading" style="text-align: center; padding: 2rem 0; color: #64748b; font-size: 0.875rem;">
-        <span class="spinner-inline"></span> Loading transaction details...
+        Loading transaction details...
       </div>
 
       <div id="detailContent" style="display: none;">
@@ -454,51 +379,51 @@
           <div id="detailAmount" style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-mono, monospace);"></div>
         </div>
 
-        <!-- Detail Key-Value List -->
-        <div class="f-detail-grid">
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Environment:</span>
-            <span class="f-detail-val" id="detailEnvironment"></span>
+        <!-- Key-Value Grid -->
+        <div style="display: grid; gap: 0.5rem; font-size: 0.825rem;">
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Environment:</span>
+            <span id="detailEnvironment" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Source / Provider:</span>
-            <span class="f-detail-val" id="detailSource"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Source / Provider:</span>
+            <span id="detailSource" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Date &amp; Time:</span>
-            <span class="f-detail-val" id="detailDateTime"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Date &amp; Time:</span>
+            <span id="detailDateTime" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Category:</span>
-            <span class="f-detail-val" id="detailCategory"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Category:</span>
+            <span id="detailCategory" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Payment Method:</span>
-            <span class="f-detail-val" id="detailPaymentMethod"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Payment Method:</span>
+            <span id="detailPaymentMethod" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Reference Code:</span>
-            <span class="f-detail-val font-mono" id="detailReference"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Reference Code:</span>
+            <span id="detailReference" style="font-weight: 600; color: #0f172a; font-family: var(--font-mono, monospace);"></span>
           </div>
-          <div class="f-detail-row" id="detailAppRow">
-            <span class="f-detail-lbl">Candidate Application:</span>
-            <span class="f-detail-val" id="detailApp"></span>
+          <div id="detailAppRow" style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Candidate Application:</span>
+            <span id="detailApp" style="font-weight: 600; color: #059669;"></span>
           </div>
-          <div class="f-detail-row" id="detailOrderRow">
-            <span class="f-detail-lbl">Cashfree Order ID:</span>
-            <span class="f-detail-val font-mono" id="detailOrder"></span>
+          <div id="detailOrderRow" style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Cashfree Order ID:</span>
+            <span id="detailOrder" style="font-weight: 600; color: #0f172a; font-family: var(--font-mono, monospace);"></span>
           </div>
-          <div class="f-detail-row" id="detailPayIdRow">
-            <span class="f-detail-lbl">Gateway Payment ID:</span>
-            <span class="f-detail-val font-mono" id="detailPayId"></span>
+          <div id="detailPayIdRow" style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Gateway Payment ID:</span>
+            <span id="detailPayId" style="font-weight: 600; color: #0f172a; font-family: var(--font-mono, monospace);"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Created By:</span>
-            <span class="f-detail-val" id="detailCreatedBy"></span>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.45rem; border-bottom: 1px solid #f1f5f9;">
+            <span style="color: #64748b;">Created By:</span>
+            <span id="detailCreatedBy" style="font-weight: 600; color: #0f172a;"></span>
           </div>
-          <div class="f-detail-row">
-            <span class="f-detail-lbl">Recorded At:</span>
-            <span class="f-detail-val" id="detailCreatedAt"></span>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #64748b;">Recorded At:</span>
+            <span id="detailCreatedAt" style="font-weight: 600; color: #0f172a;"></span>
           </div>
         </div>
 
@@ -512,7 +437,7 @@
     </div>
 
     <div style="padding: 0.85rem 1.5rem; background: #fafafa; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
-      <button type="button" class="btn btn-outline btn-sm" onclick="closeTransactionDetailModal()">Close</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeTransactionDetailModal();">Close</button>
     </div>
   </div>
 </div>
@@ -520,7 +445,7 @@
 <!-- ==============================================================================
      MODAL: DELETE TRANSACTION CONFIRMATION
      ============================================================================== -->
-<div id="modalDeleteTransaction" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeDeleteTransactionModal()">
+<div id="modalDeleteTransaction" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeDeleteTransactionModal();">
   <div class="modal-card" style="max-width: 440px; padding: 0; overflow: hidden; border-radius: 12px;">
     <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #fee2e2; background: #fff5f5; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center; gap: 8px;">
@@ -532,7 +457,7 @@
           <p style="font-size: 0.75rem; color: #b91c1c; margin: 0;">Permanent record removal</p>
         </div>
       </div>
-      <button type="button" class="modal-close-btn" onclick="closeDeleteTransactionModal()">{{ icon('x', size=16) }}</button>
+      <button type="button" class="modal-close-btn" onclick="closeDeleteTransactionModal();">{{ icon('x', size=16) }}</button>
     </div>
 
     <div style="padding: 1.25rem 1.5rem; background: #ffffff;">
@@ -550,7 +475,7 @@
     <form id="deleteTransactionForm" method="POST" action="" style="padding: 0; margin: 0;">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div style="padding: 0.85rem 1.5rem; background: #fafafa; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="closeDeleteTransactionModal()">Cancel</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeDeleteTransactionModal();">Cancel</button>
         <button type="submit" class="btn btn-danger-solid btn-sm" style="gap: 5px; background: #dc2626; border-color: #dc2626; color: #ffffff;">
           {{ icon('trash-2', size=13) }} Confirm Delete
         </button>
@@ -562,7 +487,7 @@
 <!-- ==============================================================================
      MODAL: CLEAR ALL TRANSACTIONS (2-Step Safety Code 'CLEAR')
      ============================================================================== -->
-<div id="modalClearAllTransactions" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeClearAllTransactionsModal()">
+<div id="modalClearAllTransactions" class="modal-backdrop-wrapper" style="display: none;" onclick="if(event.target === this) closeClearAllTransactionsModal();">
   <div class="modal-card" style="max-width: 480px; padding: 0; overflow: hidden; border-radius: 12px;">
     <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #fee2e2; background: #fff5f5; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center; gap: 8px;">
@@ -574,10 +499,10 @@
           <p style="font-size: 0.75rem; color: #b91c1c; margin: 0;">Destructive ledger reset</p>
         </div>
       </div>
-      <button type="button" class="modal-close-btn" onclick="closeClearAllTransactionsModal()">{{ icon('x', size=16) }}</button>
+      <button type="button" class="modal-close-btn" onclick="closeClearAllTransactionsModal();">{{ icon('x', size=16) }}</button>
     </div>
 
-    <form id="clearAllTransactionsForm" method="POST" action="{{ url_for('admin.clear_all_money_transactions') }}" onsubmit="handleClearAllSubmit(event)" style="padding: 0; margin: 0;">
+    <form id="clearAllTransactionsForm" method="POST" action="{{ url_for('admin.clear_all_money_transactions') }}" onsubmit="handleClearAllSubmit(event);" style="padding: 0; margin: 0;">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
       <div style="padding: 1.25rem 1.5rem; background: #ffffff;">
@@ -593,12 +518,12 @@
           <label class="form-label" for="clearConfirmationInput" style="font-weight: 700; color: #0f172a; font-size: 0.825rem; margin-bottom: 4px;">
             Type <span style="color: #dc2626; font-family: var(--font-mono, monospace); font-weight: 800;">CLEAR</span> to confirm:
           </label>
-          <input type="text" id="clearConfirmationInput" name="confirmation" class="f-input" placeholder="Type CLEAR" oninput="validateClearConfirmation(this.value)" autocomplete="off" required style="font-family: var(--font-mono, monospace); font-weight: 700; text-transform: uppercase; width: 100%;" />
+          <input type="text" id="clearConfirmationInput" name="confirmation" class="form-input" placeholder="Type CLEAR" oninput="validateClearConfirmation(this.value);" autocomplete="off" required style="font-family: var(--font-mono, monospace); font-weight: 700; text-transform: uppercase; width: 100%;" />
         </div>
       </div>
 
       <div style="padding: 0.85rem 1.5rem; background: #fafafa; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="closeClearAllTransactionsModal()">Cancel</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeClearAllTransactionsModal();">Cancel</button>
         <button type="submit" id="btnSubmitClearAll" class="btn btn-danger-solid btn-sm" style="gap: 5px; background: #dc2626; border-color: #dc2626; color: #ffffff;" disabled>
           {{ icon('trash-2', size=13) }} Permanently Clear
         </button>
@@ -607,142 +532,7 @@
   </div>
 </div>
 
-<!-- ==============================================================================
-     PAGE STYLES (RESTRAINED, STRIPE/LINEAR STYLE ENTERPRISE DESIGN)
-     ============================================================================== -->
 <style>
-  /* 1. Summary Cards */
-  .f-stat-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 1.2rem 1.35rem;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: border-color 0.15s ease;
-  }
-  .f-stat-card:hover { border-color: #cbd5e1; }
-  .f-stat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.4rem;
-  }
-  .f-stat-label {
-    font-size: 0.725rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-  }
-  .f-stat-tag {
-    font-size: 0.675rem;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-  .f-stat-tag.green { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-  .f-stat-tag.red { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-  .f-stat-tag.blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-  .f-stat-tag.neutral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-  
-  .f-stat-value {
-    font-size: clamp(1.4rem, 2.2vw, 1.7rem);
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 0.4rem;
-    font-family: var(--font-heading, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-    letter-spacing: -0.02em;
-  }
-  .f-stat-sub {
-    font-size: 0.785rem;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding-top: 0.4rem;
-    border-top: 1px solid #f8fafc;
-  }
-  .f-pill-sub {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 3px;
-  }
-  .f-pill-sub.amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-
-  /* 2. Controls & Form Inputs */
-  .f-input {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 0.45rem 0.75rem;
-    color: #0f172a;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 2px rgba(15,23,42,0.03);
-  }
-  .f-input:focus {
-    border-color: #059669;
-    box-shadow: 0 0 0 3px rgba(5,150,105,0.1);
-  }
-  .f-select { appearance: auto; }
-
-  /* 3. Table Styles */
-  .f-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    text-align: left;
-  }
-  .f-table thead tr {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .f-table th {
-    padding: 0.75rem 1rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #475569;
-    white-space: nowrap;
-  }
-  .f-table tbody tr {
-    border-bottom: 1px solid #f1f5f9;
-    transition: background-color 0.1s ease;
-    cursor: pointer;
-  }
-  .f-table tbody tr:hover {
-    background-color: #f8fafc;
-  }
-  .f-table td {
-    padding: 0.85rem 1rem;
-    vertical-align: middle;
-  }
-
-  /* 4. Badges */
-  .f-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.725rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .f-badge.income { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-  .f-badge.expense { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-  
   .badge-production {
     font-size: 0.7rem;
     font-weight: 600;
@@ -770,87 +560,6 @@
     color: #475569;
     border: 1px solid #e2e8f0;
   }
-  .badge-app-ref {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #059669;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 3px;
-    padding: 0.5px 5px;
-    transition: background 0.15s;
-  }
-  .badge-app-ref:hover {
-    background: #dcfce7;
-  }
-
-  /* 5. Action Buttons */
-  .f-action-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 5px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #475569;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .f-action-btn:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-    color: #0f172a;
-  }
-  .f-action-btn.danger:hover {
-    border-color: #fecaca;
-    background: #fef2f2;
-    color: #dc2626;
-  }
-  .btn-danger-link {
-    background: none;
-    border: none;
-    color: #dc2626;
-    font-size: 0.775rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
-    transition: color 0.15s;
-  }
-  .btn-danger-link:hover { color: #991b1b; text-decoration: underline; }
-
-  /* 6. Modal Key-Value Grid */
-  .f-detail-grid {
-    display: grid;
-    gap: 0.5rem;
-    font-size: 0.825rem;
-  }
-  .f-detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  .f-detail-row:last-child { border-bottom: none; }
-  .f-detail-lbl {
-    color: #64748b;
-    font-weight: 500;
-  }
-  .f-detail-val {
-    font-weight: 600;
-    color: #0f172a;
-    text-align: right;
-  }
-  .font-mono { font-family: var(--font-mono, monospace); font-size: 0.8rem; }
-  
   .modal-close-btn {
     background: none;
     border: none;
@@ -864,29 +573,19 @@
     transition: color 0.15s;
   }
   .modal-close-btn:hover { color: #0f172a; }
-  .spinner-inline {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(100,116,139,0.3);
-    border-top-color: #059669;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-  }
 </style>
 
 <!-- ==============================================================================
      CLIENT JAVASCRIPT FOR MONEY MANAGEMENT
      ============================================================================== -->
 <script>
-  function handleDateFilterChange(val) {
-    const rangeDiv = document.getElementById('customDateRangeRow');
-    if (rangeDiv) {
+  function handleDateSelect(val) {
+    const customRow = document.getElementById('customDateRow');
+    if (customRow) {
       if (val === 'custom') {
-        rangeDiv.style.display = 'flex';
+        customRow.style.display = 'flex';
       } else {
-        rangeDiv.style.display = 'none';
+        customRow.style.display = 'none';
         document.getElementById('moneyFilterForm').submit();
       }
     }
@@ -941,7 +640,7 @@
     const btn = document.getElementById('btnSubmitClearAll');
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = `<span class="spinner-inline"></span> Clearing...`;
+      btn.innerHTML = `Clearing...`;
     }
   }
 
@@ -972,8 +671,8 @@
       }
 
       document.getElementById('detailTypeBadge').innerHTML = data.transaction_type === 'INCOME' 
-        ? '<span class="f-badge income">{{ icon("arrow-down-left", size=10) }} INFLOW</span>' 
-        : '<span class="f-badge expense">{{ icon("arrow-up-right", size=10) }} OUTFLOW</span>';
+        ? '<span class="badge" style="font-size:0.75rem; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-weight:700;">+ INFLOW</span>' 
+        : '<span class="badge" style="font-size:0.75rem; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700;">- OUTFLOW</span>';
 
       document.getElementById('detailEnvironment').innerHTML = `<span class="${data.is_cashfree ? (['SANDBOX','TEST'].includes(data.environment) ? 'badge-sandbox' : 'badge-production') : 'badge-manual'}">${data.environment_display}</span>`;
       document.getElementById('detailSource').textContent = data.is_cashfree ? 'Cashfree Gateway Webhook' : 'Manual Admin Accounting';
@@ -1032,12 +731,12 @@
   // Client-side CSV Exporter
   function exportTransactionsCSV() {
     const rows = [];
-    rows.push(['Transaction ID', 'Type', 'Amount (INR)', 'Category', 'Purpose', 'Payment Method', 'Date', 'Environment', 'Reference Code']);
+    rows.push(['Transaction ID', 'Type', 'Amount (INR)', 'Category', 'Purpose', 'Payment Method', 'Date', 'Environment']);
     
-    const table = document.getElementById('transactionsTable');
+    const table = document.getElementById('moneyTransactionsTable');
     if (!table) return;
 
-    const trs = table.querySelectorAll('tbody tr.f-table-row');
+    const trs = table.querySelectorAll('tbody tr');
     if (trs.length === 0) {
       alert('No transactions available to export.');
       return;
@@ -1052,17 +751,18 @@
       const date = tr.querySelector('td:nth-child(5) div:first-child')?.innerText?.trim() || '';
       const amount = tr.querySelector('td:nth-child(6)')?.innerText?.trim() || '';
       
-      rows.push([
-        '',
-        type.replace(/\s+/g, ' '),
-        amount.replace(/[^\d.-]/g, ''),
-        `"${category.replace(/"/g, '""')}"`,
-        `"${purpose.replace(/"/g, '""')}"`,
-        `"${paymentMethod.replace(/"/g, '""')}"`,
-        `"${date}"`,
-        `"${env.replace(/"/g, '""')}"`,
-        ''
-      ]);
+      if (purpose) {
+        rows.push([
+          '',
+          type.replace(/\s+/g, ' '),
+          amount.replace(/[^\d.-]/g, ''),
+          `"${category.replace(/"/g, '""')}"`,
+          `"${purpose.replace(/"/g, '""')}"`,
+          `"${paymentMethod.replace(/"/g, '""')}"`,
+          `"${date}"`,
+          `"${env.replace(/"/g, '""')}"`
+        ]);
+      }
     });
 
     const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
