@@ -721,20 +721,86 @@ def send_shortlist_offer_action(app_id):
 @admin_bp.route('/applications/<int:app_id>/offer-letter/download', methods=['GET'])
 @admin_required
 def download_application_offer_letter(app_id):
-    """Download / preview candidate-specific generated Offer Letter DOCX."""
+    """Download candidate-specific generated Offer Letter DOCX."""
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
 
-    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
+    if not offer_doc:
         flash('Offer Letter has not been generated yet.', 'warning')
         return redirect(url_for('admin.application_detail', app_id=application.id))
 
+    fpath = offer_doc.file_path
+    if not fpath or not os.path.exists(fpath):
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            flash('Offer Letter has not been generated yet.', 'warning')
+            return redirect(url_for('admin.application_detail', app_id=application.id))
+
     return send_from_directory(
-        os.path.dirname(offer_doc.file_path),
-        os.path.basename(offer_doc.file_path),
+        os.path.dirname(fpath),
+        os.path.basename(fpath),
         as_attachment=True,
         download_name=offer_doc.file_name
     )
+
+
+@admin_bp.route('/applications/<int:app_id>/offer-letter/preview', methods=['GET'])
+@admin_required
+def preview_application_offer_letter(app_id):
+    """
+    Admin-only endpoint: renders or returns in-browser HTML preview for generated Offer Letter DOCX.
+    Does NOT download the file; does NOT modify the original DOCX or database records.
+    """
+    from services.document_preview_service import get_application_offer_letter_preview
+
+    application = db.session.get(JobApplication, app_id) or abort(404)
+    preview_data = get_application_offer_letter_preview(app_id)
+
+    is_ajax = (
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+        request.args.get('format') == 'json' or
+        request.accept_mimetypes.best == 'application/json'
+    )
+
+    if preview_data.get('status') == 'error':
+        error_code = preview_data.get('error_code')
+        if error_code == 'NOT_FOUND':
+            abort(404)
+        if is_ajax:
+            return jsonify(preview_data), 400
+        flash(preview_data.get('message', 'Offer letter preview unavailable.'), 'warning')
+        return redirect(url_for('admin.application_detail', app_id=app_id))
+
+    if is_ajax:
+        return jsonify(preview_data), 200
+
+    # Standalone full-page preview for direct browser requests
+    return render_template(
+        'admin/document_preview.html',
+        preview=preview_data,
+        app=application,
+        back_url=url_for('admin.application_detail', app_id=app_id)
+    )
+
+
+@admin_bp.route('/documents/<int:doc_id>/preview', methods=['GET'])
+@admin_required
+def preview_document_by_id(doc_id):
+    """
+    Admin-only endpoint: returns HTML preview for any EmployeeDocument by ID.
+    """
+    from services.document_preview_service import get_document_preview_by_id
+
+    preview_data = get_document_preview_by_id(doc_id)
+    if preview_data.get('status') == 'error':
+        if preview_data.get('error_code') == 'NOT_FOUND':
+            abort(404)
+        return jsonify(preview_data), 400
+
+    return jsonify(preview_data), 200
 
 
 @admin_bp.route('/applications/<int:app_id>/status', methods=['POST'])

@@ -241,9 +241,24 @@ def get_active_offer_letter_template(category_or_job=None):
         )
 
     if not active_template.file_path or not os.path.exists(active_template.file_path):
-        raise OfferLetterTemplateFileMissingError(
-            f"The active template file for {cat_info['card_title']} could not be found at '{active_template.file_path}'. Please upload the template again."
-        )
+        # Fallback to local filename in uploads/templates or static/default_templates
+        candidate_paths = [
+            os.path.join(current_app.root_path, 'uploads', 'templates', os.path.basename(active_template.file_path or active_template.filename or '')),
+            os.path.join(current_app.root_path, 'uploads', 'templates', cat_info['default_filename']),
+            os.path.join(current_app.root_path, 'static', 'default_templates', cat_info['default_filename']),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix).docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_master.docx'),
+        ]
+        found = False
+        for cpath in candidate_paths:
+            if cpath and os.path.exists(cpath):
+                active_template.file_path = cpath
+                found = True
+                break
+        if not found:
+            raise OfferLetterTemplateFileMissingError(
+                f"The active template file for {cat_info['card_title']} could not be found at '{active_template.file_path}'. Please upload the template again."
+            )
 
     return active_template
 

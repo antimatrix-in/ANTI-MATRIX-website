@@ -278,9 +278,14 @@
               </div>
 
               {% if offer_doc %}
-                <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline" style="width: 100%; justify-content: center; gap: 6px; font-weight: 700;">
-                  {{ icon('download', size=15) }} Preview / Download Offer Letter DOCX
-                </a>
+                <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-sm);">
+                  <button type="button" class="btn btn-primary" onclick="openOfferLetterPreview({{ app.id }})" style="flex: 1; min-width: 130px; justify-content: center; gap: 6px; font-weight: 700;">
+                    {{ icon('eye', size=15) }} Show Preview
+                  </button>
+                  <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline" style="flex: 1; min-width: 130px; justify-content: center; gap: 6px; font-weight: 700;">
+                    {{ icon('download', size=15) }} Download DOCX
+                  </a>
+                </div>
               {% endif %}
             </div>
 
@@ -412,9 +417,14 @@
                 </div>
 
                 {% if offer_doc %}
-                  <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline btn-sm" style="width: 100%; justify-content: center; gap: 6px; font-weight: 700;">
-                    {{ icon('download', size=14) }} Download Generated Offer Letter DOCX
-                  </a>
+                  <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-sm);">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openOfferLetterPreview({{ app.id }})" style="flex: 1; min-width: 120px; justify-content: center; gap: 6px; font-weight: 700;">
+                      {{ icon('eye', size=14) }} Show Preview
+                    </button>
+                    <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline btn-sm" style="flex: 1; min-width: 120px; justify-content: center; gap: 6px; font-weight: 700;">
+                      {{ icon('download', size=14) }} Download DOCX
+                    </a>
+                  </div>
                 {% endif %}
               </div>
             </div>
@@ -524,11 +534,16 @@
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; align-items: center; gap: var(--space-md);">
+          <div style="display: flex; justify-content: flex-end; align-items: center; gap: var(--space-md); flex-wrap: wrap;">
             {% if offer_doc %}
-              <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 6px;">
-                {{ icon('download', size=14) }} Download Offer Letter DOCX
-              </a>
+              <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openOfferLetterPreview({{ app.id }})" style="gap: 6px; font-weight: 700;">
+                  {{ icon('eye', size=14) }} Show Preview
+                </button>
+                <a href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 6px;">
+                  {{ icon('download', size=14) }} Download Offer Letter DOCX
+                </a>
+              </div>
             {% endif %}
             <form method="POST" action="{{ url_for('admin.send_joining_email_action', app_id=app.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -873,4 +888,156 @@
 
   </div>
 </section>
+
+<!-- DOCX In-Page Document Preview Modal -->
+<div id="docx-preview-modal-overlay" class="docx-preview-overlay" style="display: none;" aria-hidden="true" role="dialog" aria-labelledby="docx-preview-modal-title">
+  <div class="docx-preview-modal" onclick="event.stopPropagation();">
+    <!-- Header -->
+    <div class="docx-preview-header">
+      <div class="docx-preview-title-group">
+        {{ icon('file-text', size=20, color='var(--color-primary-light)') }}
+        <h3 id="docx-preview-modal-title" class="docx-preview-title">
+          Offer Letter Preview &bull; {{ app.full_name }}
+        </h3>
+        <span id="docx-preview-modal-badge" class="docx-preview-badge">
+          {{ app.formatted_code }}
+        </span>
+      </div>
+      <div class="docx-preview-actions">
+        <a id="docx-preview-download-btn" href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 6px; font-weight: 700;" title="Download DOCX File">
+          {{ icon('download', size=14) }} Download DOCX
+        </a>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeOfferLetterPreview()" aria-label="Close Preview" style="padding: 0.35rem 0.55rem; color: #94a3b8;" title="Close (Esc)">
+          {{ icon('x', size=18) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Body (Page-Like Presentation Container) -->
+    <div id="docx-preview-modal-body" class="docx-preview-body">
+      <div class="docx-preview-loading">
+        <div class="docx-spinner"></div>
+        <div>Rendering document preview...</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="docx-preview-footer">
+      <div class="docx-preview-info">
+        {{ icon('shield', size=14, color='var(--color-primary-light)') }}
+        <span>Official Anti Matrix Generated Document &bull; Read-Only Preview</span>
+      </div>
+      <div style="display: flex; gap: var(--space-sm); align-items: center;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeOfferLetterPreview()" style="font-weight: 600;">
+          Close Preview
+        </button>
+        <a id="docx-preview-footer-download-btn" href="{{ url_for('admin.download_application_offer_letter', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 6px; font-weight: 700;">
+          {{ icon('download', size=14) }} Download
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openOfferLetterPreview(appId) {
+  var overlay = document.getElementById('docx-preview-modal-overlay');
+  var body = document.getElementById('docx-preview-modal-body');
+  var titleEl = document.getElementById('docx-preview-modal-title');
+  var badgeEl = document.getElementById('docx-preview-modal-badge');
+  var downloadBtn = document.getElementById('docx-preview-download-btn');
+  var footerDownloadBtn = document.getElementById('docx-preview-footer-download-btn');
+
+  if (!overlay || !body) return;
+
+  // Reset body with spinner
+  body.innerHTML = '<div class="docx-preview-loading"><div class="docx-spinner"></div><div>Rendering document preview...</div></div>';
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  fetch('/admin/applications/' + appId + '/offer-letter/preview?format=json', {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(function(res) {
+    if (!res.ok) {
+      return res.json().then(function(data) {
+        throw new Error(data.message || 'Failed to load preview');
+      }).catch(function() {
+        throw new Error('Preview is currently unavailable. Please download the document to view it.');
+      });
+    }
+    return res.json();
+  })
+  .then(function(data) {
+    if (data.status === 'success' && data.html) {
+      if (titleEl && data.candidate_name) {
+        titleEl.innerText = 'Offer Letter Preview — ' + data.candidate_name;
+      }
+      if (badgeEl && data.application_code) {
+        badgeEl.innerText = data.application_code;
+      }
+      if (downloadBtn && data.download_url) {
+        downloadBtn.href = data.download_url;
+      }
+      if (footerDownloadBtn && data.download_url) {
+        footerDownloadBtn.href = data.download_url;
+      }
+      body.innerHTML = '<div class="docx-page-sheet">' + data.html + '</div>';
+    } else {
+      throw new Error(data.message || 'Preview is currently unavailable. Please download the document to view it.');
+    }
+  })
+  .catch(function(err) {
+    var downloadUrl = '/admin/applications/' + appId + '/offer-letter/download';
+    body.innerHTML = 
+      '<div class="docx-preview-error">' +
+        '<h4>Document Preview Unavailable</h4>' +
+        '<p>' + (err.message || 'Preview is currently unavailable. Please download the document to view it.') + '</p>' +
+        '<div style="display: flex; justify-content: center; gap: 10px;">' +
+          '<a href="' + downloadUrl + '" class="btn btn-primary btn-sm" style="gap: 6px;">' +
+            'Download Document' +
+          '</a>' +
+          '<button type="button" class="btn btn-outline btn-sm" onclick="closeOfferLetterPreview()">' +
+            'Close' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  });
+}
+
+function closeOfferLetterPreview() {
+  var overlay = document.getElementById('docx-preview-modal-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var overlay = document.getElementById('docx-preview-modal-overlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        closeOfferLetterPreview();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var overlay = document.getElementById('docx-preview-modal-overlay');
+      if (overlay && overlay.style.display === 'flex') {
+        closeOfferLetterPreview();
+      }
+    }
+  });
+});
+</script>
 {% endblock %}

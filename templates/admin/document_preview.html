@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}{{ preview.file_name }} Preview | Anti-Matrix Admin{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 1.5rem); background: var(--color-bg); min-height: 90vh;">
+  <div class="container">
+    
+    <!-- Top Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl); flex-wrap: wrap; gap: var(--space-md);">
+      <div>
+        <a href="{{ back_url or url_for('admin.application_detail', app_id=app.id) }}" class="btn btn-ghost btn-sm" style="margin-bottom: 0.35rem; display: inline-flex; align-items: center; gap: 6px;">
+          {{ icon('arrow-left', size=14) }} Back to Application Details
+        </a>
+        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--color-text); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span>{{ preview.candidate_name }} &bull; Offer Letter Preview</span>
+          <span class="docx-preview-badge">{{ preview.application_code }}</span>
+        </h1>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <a href="{{ preview.download_url }}" class="btn btn-primary" style="gap: 6px; font-weight: 700;">
+          {{ icon('download', size=15) }} Download DOCX
+        </a>
+      </div>
+    </div>
+
+    <!-- Paper-Like Document Presentation Sheet -->
+    <div style="background: #cbd5e1; border-radius: 12px; padding: 2.5rem 1.5rem; display: flex; justify-content: center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.1); margin-bottom: var(--space-2xl);">
+      <div class="docx-page-sheet">
+        {{ preview.html|safe }}
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
