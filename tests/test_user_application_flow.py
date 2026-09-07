@@ -124,7 +124,7 @@ class UserApplicationFlowTestCase(unittest.TestCase):
         self.login('alice@example.com', 'AlicePass123!')
         res = self.client.get(f'/careers/apply/{self.job_a.id}')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Apply for', res.data)
+        self.assertIn(b'Application Form', res.data)
         self.assertNotIn(b'Sign in to your Anti-Matrix account', res.data)
 
     # -------------------------------------------------------------
@@ -151,13 +151,25 @@ class UserApplicationFlowTestCase(unittest.TestCase):
             'resume': resume_file
         }
 
-        # Step 1: Submit Application Form -> Directly initiates payment checkout (under test mode, marks paid and completes application)
+        # Step 1: Submit Application Form -> Redirects to Review & Payment
         res = self.client.post(f'/careers/apply/{self.job_a.id}', data=form_data, content_type='multipart/form-data', follow_redirects=False)
         self.assertEqual(res.status_code, 302)
 
         app_record = JobApplication.query.filter_by(job_id=self.job_a.id, user_id=self.user_a.id).first()
         self.assertIsNotNone(app_record)
         self.assertEqual(app_record.user_id, self.user_a.id)
+        self.assertEqual(app_record.payment_status, 'pending')
+
+        # Step 2: Review Page
+        rev_res = self.client.get(f'/careers/apply/review/{app_record.id}')
+        self.assertEqual(rev_res.status_code, 200)
+        self.assertIn(b'199', rev_res.data)
+
+        # Step 3: Complete Test Payment
+        pay_res = self.client.post(f'/careers/apply/test-payment/{app_record.id}', follow_redirects=False)
+        self.assertEqual(pay_res.status_code, 302)
+
+        db.session.refresh(app_record)
         self.assertEqual(app_record.payment_status, 'paid')
         self.assertIn(app_record.application_status, ['submitted', 'APPLIED'])
         self.assertTrue(app_record.formatted_code.startswith('AM-APP-'))

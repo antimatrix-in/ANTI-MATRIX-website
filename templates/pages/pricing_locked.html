@@ -1,47 +1,91 @@
 {% extends 'base.html' %}
-{% from 'components/icons.html' import icon %}
+{% from 'components/icons.html' import icon, google_icon %}
 
-{% block title %}Protected Pricing & Plans | Anti-Matrix{% endblock %}
+{% block title %}Protected Pricing & Packages (INR) | Anti-Matrix{% endblock %}
 
 {% block content %}
-<div class="section" style="min-height: 80vh; display: flex; align-items: center; background: var(--color-bg);">
-  <div class="container" style="max-width: 580px; margin: 0 auto;">
-    <div class="card text-center animate-fade-up" style="padding: var(--space-3xl) var(--space-2xl); border: 1px solid rgba(16, 185, 129, 0.3); text-align: center;">
+<div class="section" style="min-height: 85vh; display: flex; align-items: center; background: var(--color-bg); padding: var(--space-3xl) 0;">
+  <div class="container" style="max-width: 680px; margin: 0 auto;">
+    
+    {# Central Authentication Required Card #}
+    <div class="card text-center animate-fade-up" style="padding: var(--space-3xl) var(--space-2xl); border: 1px solid rgba(5, 150, 105, 0.3); border-radius: var(--radius-xl); text-align: center; box-shadow: var(--shadow-lg); background: #ffffff;">
+      
       {# Lock Icon Header #}
-      <div style="width: 68px; height: 68px; background: var(--color-primary-glow); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-lg); color: var(--color-primary-light);">
-        {{ icon('lock', size=30, color='var(--color-primary-light)') }}
+      <div style="width: 72px; height: 72px; background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-lg); color: var(--color-primary);">
+        {{ icon('lock', size=32, color='var(--color-primary)') }}
       </div>
 
       <div class="badge" style="margin: 0 auto var(--space-md);">
-        {{ icon('shield-check', size=13) }} Member Access Only
+        {{ icon('shield-check', size=13) }} Exclusive Member Pricing
       </div>
 
-      <h2 style="color: #000000; margin-bottom: var(--space-md);">
-        Protected Pricing & Plans
-      </h2>
+      <h1 style="color: #000000; font-size: 2rem; margin-bottom: var(--space-sm); font-family: var(--font-heading); font-weight: 800;">
+        Sign in to View Pricing & Packages
+      </h1>
 
-      <p style="margin-bottom: var(--space-2xl); line-height: 1.8;">
-        Our pricing and custom package details are exclusive to registered Anti-Matrix members. Please sign in to unlock access.
+      <p style="color: var(--color-text-dim); margin-bottom: var(--space-2xl); line-height: 1.7; font-size: 1rem; max-width: 520px; margin-left: auto; margin-right: auto;">
+        Our transparent project packages (Standard, Professional, and Pro in <strong>INR / ₹</strong>), feature comparison guide, and add-on catalogs are exclusively accessible to logged-in members.
       </p>
 
-      <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+      {# Action Buttons #}
+      <div style="display: flex; flex-direction: column; gap: var(--space-md); max-width: 440px; margin: 0 auto;">
+        
+        {# Google Sign-In #}
+        <a
+          href="{{ url_for('auth.google_login', next='/pricing') }}"
+          class="btn btn-outline btn-lg"
+          id="btn-pricing-google-login"
+          style="justify-content: center; display: inline-flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--color-border); color: #000000; font-weight: 600; box-shadow: var(--shadow-sm);"
+        >
+          {{ google_icon(size=20) }}
+          <span>Continue with Google</span>
+        </a>
+
+        {# Email Sign-In #}
         <a
           href="{{ url_for('auth.login', redirect='/pricing') }}"
           class="btn btn-primary btn-lg"
-          style="justify-content: center;"
+          style="justify-content: center; display: inline-flex; align-items: center; gap: 8px;"
         >
-          Sign In to View Pricing {{ icon('arrow-right', size=17) }}
+          {{ icon('mail', size=18) }}
+          <span>Sign In with Email</span>
+          {{ icon('arrow-right', size=16) }}
         </a>
 
-        <a
-          href="{{ url_for('auth.signup') }}"
-          class="btn btn-outline"
-          style="justify-content: center;"
-        >
-          Create a Free Account
-        </a>
+        {# Create Account #}
+        <div style="margin-top: var(--space-xs); font-size: 0.9rem; color: var(--color-text-dim);">
+          New to Anti-Matrix?
+          <a href="{{ url_for('auth.signup', redirect='/pricing') }}" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Create a free account</a>
+        </div>
       </div>
+
+      {# Preview of Tiers Locked #}
+      <div style="margin-top: var(--space-2xl); padding-top: var(--space-xl); border-top: 1px dashed var(--color-border); text-align: left;">
+        <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--color-text-dim); margin-bottom: var(--space-md); text-align: center;">
+          What's Inside (In Indian Rupees):
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); text-align: center;">
+          <div style="background: var(--color-bg-alt); padding: var(--space-md) var(--space-sm); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase;">Standard</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #000000; margin: 4px 0;">Starts ₹4,999+</div>
+            <div style="font-size: 0.72rem; color: var(--color-text-dim);">Single Page + Add-Ons</div>
+          </div>
+          <div style="background: rgba(5, 150, 105, 0.05); padding: var(--space-md) var(--space-sm); border-radius: var(--radius-md); border: 1px solid rgba(5, 150, 105, 0.3);">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary-600); text-transform: uppercase;">Professional</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #000000; margin: 4px 0;">Starts ₹14,999+</div>
+            <div style="font-size: 0.72rem; color: var(--color-text-dim);">5 Pages + Admin + Booking</div>
+          </div>
+          <div style="background: var(--color-bg-alt); padding: var(--space-md) var(--space-sm); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase;">Pro Package</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #000000; margin: 4px 0;">Starts ₹29,999+</div>
+            <div style="font-size: 0.72rem; color: var(--color-text-dim);">10 Pages + 3D + AI Booking</div>
+          </div>
+        </div>
+      </div>
+
     </div>
+
   </div>
 </div>
 {% endblock %}
+

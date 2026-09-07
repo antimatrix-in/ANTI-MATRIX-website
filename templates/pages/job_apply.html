@@ -69,10 +69,7 @@
   .feeblk-fr{background:#f8fafc;border-color:#e2e8f0}
   .feeblk-fr .feeblk-a{font-size:1.1rem;color:#334155}
   .subbtn{width:100%;padding:.85rem 1.5rem;background:linear-gradient(135deg,#059669 0%,#10b981 100%);color:#fff;font-family:var(--font-heading);font-size:.95rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 14px rgba(5,150,105,.25)}
-  .subbtn:hover:not(:disabled){background:linear-gradient(135deg,#047857 0%,#059669 100%);box-shadow:0 6px 20px rgba(5,150,105,.35);transform:translateY(-1px)}
-  .subbtn:disabled{opacity:0.75;cursor:not-allowed;transform:none!important;box-shadow:none!important}
-  @keyframes btn-spin { to { transform: rotate(360deg); } }
-  .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #ffffff; border-radius: 50%; animation: btn-spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+  .subbtn:hover{background:linear-gradient(135deg,#047857 0%,#059669 100%);box-shadow:0 6px 20px rgba(5,150,105,.35);transform:translateY(-1px)}
   .sslnote{font-size:.725rem;color:#94a3b8;text-align:center;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px}
   .hlptxt{text-align:center;font-size:.775rem;color:#94a3b8;line-height:1.6}
   .hlptxt a{color:#059669;font-weight:600}
@@ -212,7 +209,7 @@
             <div class="sjd">{{ job.department }} &bull; {{ job.location }}</div>
             {% if job.is_internship and job.fee_inr > 0 %}
               <div class="feeblk"><div class="feeblk-l">Internship Fee</div><div class="feeblk-a">{{ job.fee_display }}</div><div class="feeblk-n">{{ job.duration_display }} &bull; One-time processing fee</div></div>
-              <button type="submit" class="subbtn" id="submit-application-btn">Pay {{ job.fee_display }} {{ icon('arrow-right',size=15) }}</button>
+              <button type="submit" class="subbtn" id="submit-application-btn">Review &amp; Pay {{ job.fee_display }} {{ icon('arrow-right',size=15) }}</button>
             {% else %}
               <div class="feeblk feeblk-fr"><div class="feeblk-l">Application Cost</div><div class="feeblk-a">Free</div><div class="feeblk-n">No fee required for this position</div></div>
               <button type="submit" class="subbtn" id="submit-application-btn">Submit Application {{ icon('send',size=15) }}</button>
@@ -250,35 +247,6 @@ function handleFileSelected(inp, did, eid, exts) {
   if (f.size > 16*1024*1024) { if (e) { e.textContent = 'File exceeds 16 MB limit.'; e.style.display = 'block'; } inp.value = ''; if (d) d.style.display = 'none'; return; }
   if (d) { d.textContent = 'Ready: ' + f.name + ' (' + (f.size/1024/1024).toFixed(2) + ' MB)'; d.style.display = 'block'; }
 }
-
-/**
- * Payment & submission button state controller
- * Supported states: 'normal' | 'loading' | 'processing' | 'success' | 'error'
- */
-function setPaymentButtonState(state, message) {
-  var btn = document.getElementById('submit-application-btn');
-  if (!btn) return;
-  var isInternship = {{ 'true' if job.is_internship and job.fee_inr > 0 else 'false' }};
-  var feeDisplay = "{{ job.fee_display }}";
-
-  if (state === 'normal') {
-    btn.disabled = false;
-    btn.innerHTML = isInternship
-      ? 'Pay ' + feeDisplay + ' ' + `{{ icon('arrow-right', size=15) }}`
-      : 'Submit Application ' + `{{ icon('send', size=15) }}`;
-  } else if (state === 'loading' || state === 'processing') {
-    btn.disabled = true;
-    var defaultMsg = isInternship ? 'Processing Payment...' : 'Submitting Application...';
-    btn.innerHTML = '<span class="btn-spinner"></span> ' + (message || defaultMsg);
-  } else if (state === 'success') {
-    btn.disabled = true;
-    btn.innerHTML = '✓ ' + (message || (isInternship ? 'Payment Initiated...' : 'Submitted!'));
-  } else if (state === 'error') {
-    btn.disabled = false;
-    btn.innerHTML = (message || (isInternship ? 'Payment Error - Retry' : 'Submission Error - Retry')) + ' ' + `{{ icon('arrow-right', size=15) }}`;
-  }
-}
-
 document.getElementById('job-application-form').addEventListener('submit', function(e) {
   var has = false;
   document.querySelectorAll('.ferr').forEach(function(el) { el.style.display = 'none'; });
@@ -294,15 +262,7 @@ document.getElementById('job-application-form').addEventListener('submit', funct
   if (ri && (!ri.files || ri.files.length === 0)) { var er = document.getElementById('err-resume'); if (er) { er.textContent = 'Resume upload is required.'; er.style.display = 'block'; } has = true; }
   var ai = document.getElementById('aadhaar-input');
   if (ai && (!ai.files || ai.files.length === 0)) { var er = document.getElementById('err-aadhaar'); if (er) { er.textContent = 'Aadhaar is required for the 3-month internship.'; er.style.display = 'block'; } has = true; }
-  if (has) {
-    e.preventDefault();
-    setPaymentButtonState('normal');
-    var fe = document.querySelector('.ferr[style*="block"]');
-    if (fe) fe.scrollIntoView({behavior:'smooth',block:'center'});
-  } else {
-    // Valid submission: update button state to processing with spinner
-    setPaymentButtonState('processing');
-  }
+  if (has) { e.preventDefault(); var fe = document.querySelector('.ferr[style*="block"]'); if (fe) fe.scrollIntoView({behavior:'smooth',block:'center'}); }
 });
 </script>
 {% endblock %}

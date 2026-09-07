@@ -391,8 +391,8 @@ def apply_job(job_id):
         db.session.commit()
 
         if is_internship and fee_inr > 0:
-            # Directly proceed to payment gateway checkout (no intermediate review step)
-            return job_apply_checkout(application.id)
+            # Redirect candidate to Review & Payment step
+            return redirect(url_for('main.job_apply_review', app_id=application.id))
         else:
             # Exempt/Free application submission
             flash(f"Application submitted successfully! Application reference: {application.formatted_code}.", 'success')

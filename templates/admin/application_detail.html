@@ -94,17 +94,7 @@
           </div>
           <div>
             <div style="font-weight: 700; color: {{ 'var(--color-text)' if is_stage_offer_completed else 'var(--color-text-dim)' }}; font-size: 0.9rem;">4. Offer Completed</div>
-            <div style="font-size: 0.75rem; color: var(--color-text-dim);">
-              {% if offer_doc and offer_doc.email_status == 'sent' %}
-                Offer Letter Sent ✓
-              {% elif offer_doc and offer_doc.email_status == 'failed' %}
-                Offer Email Failed ⚠
-              {% elif is_stage_offer_completed %}
-                Offer Completed
-              {% else %}
-                Offer Letter Pending
-              {% endif %}
-            </div>
+            <div style="font-size: 0.75rem; color: var(--color-text-dim);">Offer Letter Sent</div>
           </div>
         </div>
 
@@ -300,54 +290,29 @@
             </div>
 
             <!-- Right Subcard: Shortlisted Email Preview -->
-            <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); flex-wrap: wrap; gap: var(--space-xs);">
-                  <span style="font-weight: 800; color: var(--color-text); font-size: 1rem; display: flex; align-items: center; gap: 6px;">
-                    {{ icon('mail', size=16, color='var(--color-primary-light)') }} Shortlisted Email Preview
-                  </span>
-                  {% if offer_doc and offer_doc.email_status == 'sent' %}
-                    <span class="badge-status active" style="font-size: 0.75rem; font-weight: 700;">
-                      {{ icon('check', size=11) }} Sent on {{ offer_doc.sent_at.strftime('%d %b %Y, %I:%M %p') if offer_doc.sent_at else 'Earlier' }}
-                    </span>
-                  {% elif offer_doc and offer_doc.email_status == 'failed' %}
-                    <span class="badge-status" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); font-size: 0.75rem; font-weight: 700;" title="{{ offer_doc.email_error or 'Delivery failed' }}">
-                      ⚠ Delivery Failed (Retry Available)
-                    </span>
-                  {% else %}
-                    <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3); font-size: 0.75rem;">
-                      Will Send on "Mark as Complete"
-                    </span>
+            <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: var(--space-lg);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+                <span style="font-weight: 800; color: var(--color-text); font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                  {{ icon('mail', size=16, color='var(--color-primary-light)') }} Shortlisted Email Preview
+                </span>
+                <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3); font-size: 0.75rem;">Will Send on "Mark as Complete"</span>
+              </div>
+
+              {% if shortlist_email_preview %}
+                <!-- Email Meta Info -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-md); font-size: 0.8rem;">
+                  <div style="margin-bottom: 2px;"><strong style="color: var(--color-text-dim);">To:</strong> <span style="color: var(--color-primary-light); font-weight: 600;">{{ shortlist_email_preview.to }}</span></div>
+                  <div style="margin-bottom: 2px;"><strong style="color: var(--color-text-dim);">Subject:</strong> <span style="color: var(--color-text); font-weight: 600;">{{ shortlist_email_preview.subject }}</span></div>
+                  {% if offer_doc %}
+                    <div><strong style="color: var(--color-text-dim);">Attachment:</strong> <span style="color: #60a5fa; font-weight: 600;">{{ offer_doc.file_name }}</span></div>
                   {% endif %}
                 </div>
 
-                {% if shortlist_email_preview %}
-                  <!-- Email Meta Info -->
-                  <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-md); font-size: 0.8rem;">
-                    <div style="margin-bottom: 2px;"><strong style="color: var(--color-text-dim);">To:</strong> <span style="color: var(--color-primary-light); font-weight: 600;">{{ shortlist_email_preview.to }}</span></div>
-                    <div style="margin-bottom: 2px;"><strong style="color: var(--color-text-dim);">Subject:</strong> <span style="color: var(--color-text); font-weight: 600;">{{ shortlist_email_preview.subject }}</span></div>
-                    {% if offer_doc %}
-                      <div><strong style="color: var(--color-text-dim);">Attachment:</strong> <span style="color: #60a5fa; font-weight: 600;">{{ offer_doc.file_name | replace('.docx', '.pdf') }} (PDF)</span></div>
-                    {% endif %}
-                  </div>
-
-                  <!-- Email HTML Preview Container -->
-                  <div style="background: #ffffff; color: #1e293b; border-radius: var(--radius-md); padding: var(--space-md); max-height: 180px; overflow-y: auto; font-size: 0.85rem; line-height: 1.55; border: 1px solid var(--color-border); margin-bottom: var(--space-md);">
-                    {{ shortlist_email_preview.body_html|safe }}
-                  </div>
-                {% endif %}
-              </div>
-
-              <!-- Explicit Send / Resend Button -->
-              <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: var(--space-xs);">
-                <form method="POST" action="{{ url_for('admin.send_shortlist_offer_action', app_id=app.id) }}" onsubmit="return confirm('Send / Resend official Offer Letter PDF email to {{ app.email }} via Brevo?');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                  <input type="hidden" name="force_resend" value="1" />
-                  <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-primary-light); border-color: var(--color-primary-light);">
-                    {{ icon('send', size=13) }} {{ 'Resend Offer Letter Email' if (offer_doc and offer_doc.email_status == 'sent') else 'Send Offer Letter Email via Brevo' }}
-                  </button>
-                </form>
-              </div>
+                <!-- Email HTML Preview Container -->
+                <div style="background: #ffffff; color: #1e293b; border-radius: var(--radius-md); padding: var(--space-md); max-height: 180px; overflow-y: auto; font-size: 0.85rem; line-height: 1.55; border: 1px solid var(--color-border); margin-bottom: var(--space-md);">
+                  {{ shortlist_email_preview.body_html|safe }}
+                </div>
+              {% endif %}
             </div>
 
           </div>
@@ -420,33 +385,13 @@
                 Stage 4: Offer Completed &bull; Ready for Onboarding &amp; Joining
               </div>
               <p style="color: var(--color-text-dim); margin-bottom: 0; font-size: 0.9rem;">
-                Offer Letter has been generated. Set the official joining date and click <strong>Mark as Hired</strong> to send credentials &amp; complete onboarding.
+                Offer Letter has been delivered to candidate. Set the official joining date and click <strong>Mark as Hired</strong> to send credentials &amp; complete onboarding.
               </p>
             </div>
             
-            <div style="display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap;">
-              {% if offer_doc and offer_doc.email_status == 'sent' %}
-                <span class="badge-status active" style="font-size: 0.85rem; font-weight: 800; padding: 0.35rem 0.85rem;">
-                  {{ icon('check', size=14) }} Offer Email: SENT ({{ offer_doc.sent_at.strftime('%d %b %Y, %I:%M %p') if offer_doc.sent_at else 'Delivered' }})
-                </span>
-              {% elif offer_doc and offer_doc.email_status == 'failed' %}
-                <span class="badge-status" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); font-size: 0.85rem; font-weight: 800; padding: 0.35rem 0.85rem;" title="{{ offer_doc.email_error or 'Delivery failed' }}">
-                  ⚠ Offer Email: FAILED
-                </span>
-              {% else %}
-                <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3); font-size: 0.85rem; font-weight: 800; padding: 0.35rem 0.85rem;">
-                  ○ Offer Email: NOT SENT
-                </span>
-              {% endif %}
-
-              <form method="POST" action="{{ url_for('admin.send_shortlist_offer_action', app_id=app.id) }}" onsubmit="return confirm('Send / Resend official Offer Letter PDF email to {{ app.email }} via Brevo?');" style="display: inline-block;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <input type="hidden" name="force_resend" value="1" />
-                <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-primary-light); border-color: var(--color-primary-light);">
-                  {{ icon('send', size=13) }} {{ 'Resend Offer Email' if (offer_doc and offer_doc.email_status == 'sent') else 'Send Offer Email via Brevo' }}
-                </button>
-              </form>
-            </div>
+            <span class="badge-status active" style="font-size: 0.85rem; font-weight: 800; padding: 0.35rem 0.85rem;">
+              {{ icon('check', size=14) }} Offer Letter Sent
+            </span>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-lg); margin-bottom: var(--space-lg);">
@@ -561,7 +506,7 @@
           </div>
 
           <!-- Summary Dossier Grid -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg);">
             <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md);">
               <div style="font-size: 0.775rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Employee ID</div>
               <div style="font-family: var(--font-mono, monospace); font-size: 1.25rem; font-weight: 900; color: var(--color-primary-light);">
@@ -573,27 +518,6 @@
               <div style="font-size: 0.775rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Confirmed Joining Date</div>
               <div style="font-weight: 800; font-size: 1.1rem; color: var(--color-text);">
                 {{ app.joining_date or 'Immediate' }}
-              </div>
-            </div>
-
-            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md);">
-              <div style="font-size: 0.775rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Offer Letter Email Status</div>
-              <div style="font-weight: 800; font-size: 0.95rem; color: {{ '#10b981' if (offer_doc and offer_doc.email_status == 'sent') else ('#f87171' if (offer_doc and offer_doc.email_status == 'failed') else '#eab308') }};">
-                {% if offer_doc and offer_doc.email_status == 'sent' %}
-                  ✓ SENT
-                  {% if offer_doc.sent_at %}
-                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--color-text-dim); display: block;">
-                      {{ offer_doc.sent_at.strftime('%d %b %Y, %I:%M %p') }}
-                    </span>
-                  {% endif %}
-                {% elif offer_doc and offer_doc.email_status == 'failed' %}
-                  ⚠ FAILED
-                  <span style="font-size: 0.725rem; font-weight: normal; color: #f87171; display: block; word-break: break-all;">
-                    {{ offer_doc.email_error or 'Delivery failed' }}
-                  </span>
-                {% else %}
-                  ○ NOT SENT
-                {% endif %}
               </div>
             </div>
 
@@ -621,14 +545,7 @@
                 </a>
               </div>
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.send_shortlist_offer_action', app_id=app.id) }}" onsubmit="return confirm('Send / Resend official Offer Letter PDF email to {{ app.email }} via Brevo?');">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <input type="hidden" name="force_resend" value="1" />
-              <button type="submit" class="btn btn-ghost btn-sm" style="gap: 6px; font-size: 0.8rem; color: var(--color-text-dim);">
-                {{ icon('mail', size=13) }} Resend Offer Letter Email
-              </button>
-            </form>
-            <form method="POST" action="{{ url_for('admin.send_joining_email_action', app_id=app.id) }}" onsubmit="return confirm('Resend joining & credentials email to {{ app.email }} via Brevo?');">
+            <form method="POST" action="{{ url_for('admin.send_joining_email_action', app_id=app.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-ghost btn-sm" style="gap: 6px; font-size: 0.8rem; color: var(--color-text-dim);">
                 {{ icon('send', size=13) }} Resend Joining Email

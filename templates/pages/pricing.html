@@ -1,234 +1,697 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}Pricing | Anti-Matrix{% endblock %}
+{% block title %}Pricing & Packages (INR) | Anti-Matrix{% endblock %}
 
 {% block content %}
 <!-- Page Hero -->
 <section class="page-hero">
   <div class="container">
-    <div class="badge">{{ icon('zap', size=11) }} Transparent Pricing</div>
-    <h1>Simple, honest pricing for every stage of growth</h1>
-    <p>No hidden fees. No surprises. Just clear investment in technology that delivers results.</p>
+    <div class="badge">{{ icon('shield-check', size=13) }} Transparent Pricing · Modular Add-Ons</div>
+    <h1>Clear, Honest Investment with Full Scope Transparency</h1>
+    <p>Predictable baseline packages designed for every business stage. Modular add-ons let you scale features on demand with 1 Year Zero Hidden Renewal Charges.</p>
   </div>
 </section>
 
 <!-- Project Packages -->
-<section class="section reveal" style="background: var(--color-bg);">
+<section class="section reveal" style="background: var(--color-bg); padding-top: var(--space-2xl);">
   <div class="container">
     <div class="section-header centered">
-      <h2 style="color: #000000;">Project Packages</h2>
+      <h2 style="color: #000000;">Website Project Packages</h2>
       <div class="divider center"></div>
-      <p>One-time investment packages for new digital products. All prices in USD.</p>
+      <p>Base investment packages starting from ₹4,999 onwards. Tailor with add-ons to suit your exact workflow.</p>
     </div>
 
     <div class="pricing-grid">
-      {# Plan 1: Starter #}
+      
+      {# ==========================================
+         PLAN 1: STANDARD PACKAGE (Starts ₹4,999 onwards)
+         ========================================== #}
       <div class="pricing-card">
-        <div class="pricing-header">
-          <div class="pricing-tier">Starter</div>
-          <div class="pricing-name">Starter Package</div>
-          <div class="pricing-price">
-            <span class="pricing-currency">$</span>
-            <span class="pricing-amount">2,499</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-dim); margin-left: 4px;">/project</span>
+        <div>
+          <div class="pricing-header">
+            <div class="pricing-tier">Starter Base</div>
+            <div class="pricing-name">Standard Package</div>
+            
+            <div class="pricing-starts-label">Base investment</div>
+            <div class="pricing-price">
+              <span class="pricing-currency">₹</span>
+              <span class="pricing-amount">4,999</span>
+              <span class="pricing-onwards-tag">onwards</span>
+            </div>
+            <div class="pricing-transparency-note">
+              {{ icon('shield-check', size=13, color='var(--color-primary)') }}
+              <span>Transparent base price · Add-ons available</span>
+            </div>
+            
+            <p class="pricing-desc">
+              <strong>Ideal for:</strong> Solo clinics, independent doctors, home ventures, and new salons establishing their first credible online presence.
+            </p>
           </div>
-          <p class="pricing-desc">Perfect for small businesses and startups needing a professional digital presence.</p>
+
+          {# ROI Callout #}
+          <div class="pricing-roi-badge">
+            {{ icon('trending-up', size=15) }}
+            <div><strong>ROI Insight:</strong> Pays for itself the moment a few new clients arrive after verifying your legitimacy online.</div>
+          </div>
+
+          <div class="pricing-section-subheading">Core Inclusions:</div>
+          <ul class="pricing-features-list">
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Single Web Page</div>
+                <div class="feature-desc">Custom-designed responsive landing page for your brand</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">SSL Certificate</div>
+                <div class="feature-desc">Padlock HTTPS security & complete data encryption</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Basic SEO Setup</div>
+                <div class="feature-desc">Google search indexing & local discoverability setup</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Mobile-First Layout</div>
+                <div class="feature-desc">Flawless design on phones, tablets & laptops</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Free Managed Hosting</div>
+                <div class="feature-desc">Zero server maintenance or separate hosting vendor bills</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">30 Days Support</div>
+                <div class="feature-desc">Free post-launch fixes, minor edits & adjustments</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">1 Year Guarantee</div>
+                <div class="feature-desc">Zero surprise renewal fees or hidden charges for 1 full year</div>
+              </div>
+            </li>
+          </ul>
+
+          {# Add-Ons Section #}
+          <div class="pricing-addons-box">
+            <div class="pricing-section-subheading" style="padding: 0; margin-top: 0;">Popular Add-Ons:</div>
+            <div class="pricing-addons-pills">
+              <span class="addon-pill">+ Brand Design</span>
+              <span class="addon-pill">+ Google Maps</span>
+              <span class="addon-pill">+ WhatsApp Button</span>
+              <span class="addon-pill">+ Social Links</span>
+              <span class="addon-pill">+ Extra Pages</span>
+              <span class="addon-pill">+ Extra Care+</span>
+            </div>
+          </div>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Up to 5-page website or mobile app MVP</li>
-          <li>{{ icon('check-circle-2', size=15) }} Custom UI/UX design</li>
-          <li>{{ icon('check-circle-2', size=15) }} Responsive across all devices</li>
-          <li>{{ icon('check-circle-2', size=15) }} Basic SEO setup</li>
-          <li>{{ icon('check-circle-2', size=15) }} Contact form & integrations</li>
-          <li>{{ icon('check-circle-2', size=15) }} Google Analytics setup</li>
-          <li>{{ icon('check-circle-2', size=15) }} 30-day post-launch support</li>
-          <li>{{ icon('check-circle-2', size=15) }} 2 revision rounds</li>
-        </ul>
+
         <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-outline">
-            Get Started {{ icon('arrow-right', size=15) }}
+          <a href="{{ url_for('main.contact') }}?package=standard" class="btn btn-outline">
+            Choose Standard (₹4,999 onwards) {{ icon('arrow-right', size=15) }}
           </a>
         </div>
       </div>
 
-      {# Plan 2: Growth (Featured) #}
+      {# ==========================================
+         PLAN 2: PROFESSIONAL PACKAGE (Starts ₹14,999 onwards) - FEATURED
+         ========================================== #}
       <div class="pricing-card featured">
-        <div class="pricing-badge">Most Popular</div>
-        <div class="pricing-header">
-          <div class="pricing-tier">Growth</div>
-          <div class="pricing-name">Growth Package</div>
-          <div class="pricing-price">
-            <span class="pricing-currency">$</span>
-            <span class="pricing-amount">7,999</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-dim); margin-left: 4px;">/project</span>
+        <div>
+          <div class="pricing-badge">Most Popular · High Conversion</div>
+          <div class="pricing-header">
+            <div class="pricing-tier">Growth Engine</div>
+            <div class="pricing-name">Professional Package</div>
+            
+            <div class="pricing-starts-label">Base investment</div>
+            <div class="pricing-price">
+              <span class="pricing-currency">₹</span>
+              <span class="pricing-amount">14,999</span>
+              <span class="pricing-onwards-tag">onwards</span>
+            </div>
+            <div class="pricing-transparency-note">
+              {{ icon('zap', size=13, color='var(--color-primary)') }}
+              <span>Active sales engine · Modular add-ons available</span>
+            </div>
+            
+            <p class="pricing-desc">
+              <strong>Ideal for:</strong> Multi-doctor clinics, fitness gyms, wellness spas, and service businesses ready for automated bookings & Google rankings.
+            </p>
           </div>
-          <p class="pricing-desc">For growing businesses that need a robust digital platform with advanced functionality.</p>
+
+          {# ROI Callout #}
+          <div class="pricing-roi-badge" style="background: rgba(5, 150, 105, 0.1); border-color: rgba(5, 150, 105, 0.3);">
+            {{ icon('zap', size=15) }}
+            <div><strong>ROI Insight:</strong> Typically recovered within 2–3 months through automated lead capture & online bookings alone.</div>
+          </div>
+
+          <div class="pricing-section-subheading">Everything in Standard, plus:</div>
+          <ul class="pricing-features-list">
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Up to 5 Pages</div>
+                <div class="feature-desc">Home, Services, Team/Doctors, Reviews & Contact</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Advanced Competitor SEO</div>
+                <div class="feature-desc">High-intent keyword targeting to outrank local rivals</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Admin Dashboard</div>
+                <div class="feature-desc">Self-service portal to update photos, offers & banners</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Appointment Booking</div>
+                <div class="feature-desc">24/7 self-service client scheduling & slot reservation</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Searchable Database</div>
+                <div class="feature-desc">Automatic, searchable capture of all client enquiries</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Animated Micro-Touches</div>
+                <div class="feature-desc">Interactive button glowing & subtle touch animations</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Custom Imagery</div>
+                <div class="feature-desc">Real space, clinic, or studio visuals (no generic stock)</div>
+              </div>
+            </li>
+          </ul>
+
+          {# Add-Ons Section #}
+          <div class="pricing-addons-box">
+            <div class="pricing-section-subheading" style="padding: 0; margin-top: 0;">Sales Tool Add-Ons:</div>
+            <div class="pricing-addons-pills">
+              <span class="addon-pill">+ Gmail Alerts</span>
+              <span class="addon-pill">+ WhatsApp Alerts</span>
+              <span class="addon-pill">+ AI Insights</span>
+              <span class="addon-pill">+ AI Chatbot</span>
+              <span class="addon-pill">+ Member Login</span>
+              <span class="addon-pill">+ Payment Gateway</span>
+            </div>
+          </div>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Full web application or mobile app</li>
-          <li>{{ icon('check-circle-2', size=15) }} Custom backend API & database</li>
-          <li>{{ icon('check-circle-2', size=15) }} User authentication & roles</li>
-          <li>{{ icon('check-circle-2', size=15) }} Third-party integrations (CRM, payments)</li>
-          <li>{{ icon('check-circle-2', size=15) }} Admin dashboard</li>
-          <li>{{ icon('check-circle-2', size=15) }} SEO & performance optimization</li>
-          <li>{{ icon('check-circle-2', size=15) }} CI/CD deployment pipeline</li>
-          <li>{{ icon('check-circle-2', size=15) }} 90-day post-launch support</li>
-          <li>{{ icon('check-circle-2', size=15) }} Dedicated project manager</li>
-          <li>{{ icon('check-circle-2', size=15) }} 5 revision rounds</li>
-        </ul>
+
         <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-primary">
-            Start Your Project {{ icon('arrow-right', size=15) }}
+          <a href="{{ url_for('main.contact') }}?package=professional" class="btn btn-primary">
+            Start Professional (₹14,999 onwards) {{ icon('arrow-right', size=15) }}
           </a>
         </div>
       </div>
 
-      {# Plan 3: Enterprise #}
+      {# ==========================================
+         PLAN 3: PRO PACKAGE (Starts ₹29,999 onwards)
+         ========================================== #}
       <div class="pricing-card">
-        <div class="pricing-header">
-          <div class="pricing-tier">Enterprise</div>
-          <div class="pricing-name">Enterprise Package</div>
-          <div class="pricing-price">
-            <span class="pricing-amount">Custom</span>
+        <div>
+          <div class="pricing-header">
+            <div class="pricing-tier">Enterprise & Scale</div>
+            <div class="pricing-name">Pro Package</div>
+            
+            <div class="pricing-starts-label">Base investment</div>
+            <div class="pricing-price">
+              <span class="pricing-currency">₹</span>
+              <span class="pricing-amount">29,999</span>
+              <span class="pricing-onwards-tag">onwards</span>
+            </div>
+            <div class="pricing-transparency-note">
+              {{ icon('shield-check', size=13, color='var(--color-primary)') }}
+              <span>Full digital ecosystem · Custom add-ons available</span>
+            </div>
+            
+            <p class="pricing-desc">
+              <strong>Ideal for:</strong> High-volume businesses, multi-branch hospitals, premium chains, and educational institutes seeking full automation.
+            </p>
           </div>
-          <p class="pricing-desc">Full-scale digital transformation with AI, cloud infrastructure, and ongoing partnership.</p>
+
+          {# ROI Callout #}
+          <div class="pricing-roi-badge">
+            {{ icon('brain', size=15) }}
+            <div><strong>ROI Insight:</strong> Saves the equivalent of a part-time front-desk role while maximizing revenue conversions.</div>
+          </div>
+
+          <div class="pricing-section-subheading">Everything in Professional, plus:</div>
+          <ul class="pricing-features-list">
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Up to 10 Pages</div>
+                <div class="feature-desc">Multi-department, branch & specialized service architecture</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">3D Hero Section</div>
+                <div class="feature-desc">Homepage opener with real spatial depth & motion effects</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Central Database</div>
+                <div class="feature-desc">Scalable data management across multiple branches</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">AI Booking Assistant</div>
+                <div class="feature-desc">Automated in-chat appointment scheduling & confirmations</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Customer Login Portal</div>
+                <div class="feature-desc">Client account system & booking history (Included)</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">24/7 AI Chatbot</div>
+                <div class="feature-desc">Intelligent client enquiry answering assistant (Included)</div>
+              </div>
+            </li>
+            <li class="feature-item">
+              <span class="feature-icon">{{ icon('check-circle-2', size=18) }}</span>
+              <div class="feature-content">
+                <div class="feature-title">Multi-Channel Alerts</div>
+                <div class="feature-desc">Instant lead alerts via Gmail & WhatsApp (Included)</div>
+              </div>
+            </li>
+          </ul>
+
+          {# Add-Ons Section #}
+          <div class="pricing-addons-box">
+            <div class="pricing-section-subheading" style="padding: 0; margin-top: 0;">Finishing Add-Ons:</div>
+            <div class="pricing-addons-pills">
+              <span class="addon-pill">+ Scroll Motion</span>
+              <span class="addon-pill">+ Traffic Tracking</span>
+              <span class="addon-pill">+ UPI / Card Gateway</span>
+            </div>
+          </div>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Everything in Growth, plus:</li>
-          <li>{{ icon('check-circle-2', size=15) }} AI/ML system design & deployment</li>
-          <li>{{ icon('check-circle-2', size=15) }} Cloud infrastructure (AWS/GCP/Azure)</li>
-          <li>{{ icon('check-circle-2', size=15) }} Microservices architecture</li>
-          <li>{{ icon('check-circle-2', size=15) }} Custom enterprise integrations</li>
-          <li>{{ icon('check-circle-2', size=15) }} Security audit & penetration testing</li>
-          <li>{{ icon('check-circle-2', size=15) }} Dedicated engineering team</li>
-          <li>{{ icon('check-circle-2', size=15) }} 12-month support & maintenance</li>
-          <li>{{ icon('check-circle-2', size=15) }} Quarterly business reviews</li>
-          <li>{{ icon('check-circle-2', size=15) }} SLA with uptime guarantees</li>
-        </ul>
+
         <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-outline">
-            Contact Sales {{ icon('arrow-right', size=15) }}
+          <a href="{{ url_for('main.contact') }}?package=pro" class="btn btn-outline">
+            Choose Pro (₹29,999 onwards) {{ icon('arrow-right', size=15) }}
           </a>
         </div>
       </div>
+
     </div>
 
-    <p style="text-align: center; margin-top: var(--space-2xl); color: var(--color-text-dim); font-size: 0.875rem;">
-      All projects include NDA, IP ownership transfer, and source code delivery.
-    </p>
+    <div style="background: rgba(5, 150, 105, 0.04); border: 1px solid rgba(5, 150, 105, 0.15); border-radius: var(--radius-lg); padding: var(--space-md) var(--space-xl); margin-top: var(--space-2xl); text-align: center;">
+      <p style="margin: 0; color: var(--color-text-dim); font-size: 0.88rem;">
+        {{ icon('shield-check', size=16, color='var(--color-primary)') }}
+        <strong>Client Transparency Note:</strong> Baseline prices cover complete design, development, free hosting, and 30-day support. Add-ons are completely optional and quoted upfront with zero surprise fees.
+      </p>
+    </div>
   </div>
 </section>
 
-<!-- Monthly Retainer -->
+{# ============================================================================
+   PACKAGE COMPARISON AT A GLANCE (MATRIX TABLE FROM PDF)
+   ============================================================================ #}
 <section class="section reveal" style="background: var(--color-bg-alt);">
   <div class="container">
     <div class="section-header centered">
-      <div class="badge">Ongoing Support</div>
-      <h2 style="color: #000000;">Monthly Retainer Plans</h2>
+      <div class="badge">{{ icon('layout', size=11) }} Feature Comparison</div>
+      <h2 style="color: #000000;">Package Comparison at a Glance</h2>
       <div class="divider center"></div>
-      <p>Keep your product growing with dedicated ongoing engineering and support. Per month, minimum 3 months.</p>
+      <p>Compare core features, inclusions, and add-on availability side-by-side across each tier.</p>
     </div>
 
-    <div class="pricing-grid">
-      {# Retainer 1 #}
-      <div class="pricing-card">
-        <div class="pricing-header">
-          <div class="pricing-name">Essential</div>
-          <div class="pricing-price">
-            <span class="pricing-currency">$</span>
-            <span class="pricing-amount">1,499</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-dim); margin-left: 4px;">/mo</span>
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th style="text-align: center;">Standard</th>
+            <th class="highlight-col">Professional (Popular)</th>
+            <th style="text-align: center;">Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pages Included</td>
+            <td style="text-align: center;">1 Static Page</td>
+            <td class="highlight-col" style="font-weight: 600;">Up to 5 Pages</td>
+            <td style="text-align: center; font-weight: 600;">Up to 10 Pages</td>
+          </tr>
+          <tr>
+            <td>SSL Certificate</td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+            <td class="highlight-col"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+          </tr>
+          <tr>
+            <td>SEO Optimization</td>
+            <td style="text-align: center;">Basic</td>
+            <td class="highlight-col" style="font-weight: 600; color: var(--color-primary-600);">Advanced</td>
+            <td style="text-align: center; font-weight: 600; color: var(--color-primary-600);">Advanced</td>
+          </tr>
+          <tr>
+            <td>Hosting & Support</td>
+            <td style="text-align: center;">Free Hosting, 30 Days</td>
+            <td class="highlight-col">Free Hosting, 30 Days</td>
+            <td style="text-align: center;">Free Hosting, 30 Days</td>
+          </tr>
+          <tr>
+            <td>Admin Dashboard</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+          </tr>
+          <tr>
+            <td>Online Appointment Booking</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Yes</span></td>
+          </tr>
+          <tr>
+            <td>Database System</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col" style="font-weight: 600;">Basic</td>
+            <td style="text-align: center; font-weight: 600; color: var(--color-primary-600);">Centralized</td>
+          </tr>
+          <tr>
+            <td>Login / Signup System</td>
+            <td style="text-align: center;"><span class="table-badge-addon">Add-on</span></td>
+            <td class="highlight-col"><span class="table-badge-addon">Add-on</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Included</span></td>
+          </tr>
+          <tr>
+            <td>AI Chatbot Assistant</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-addon">Add-on</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Included</span></td>
+          </tr>
+          <tr>
+            <td>AI Chatbot for Booking</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-dash">–</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Included</span></td>
+          </tr>
+          <tr>
+            <td>Payment Gateway (UPI/Cards)</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-addon">Add-on</span></td>
+            <td style="text-align: center;"><span class="table-badge-addon">Add-on</span></td>
+          </tr>
+          <tr>
+            <td>3D Animated Hero Section</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-dash">–</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Included</span></td>
+          </tr>
+          <tr>
+            <td>Notifications (Gmail & WhatsApp)</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-addon">Add-on</span></td>
+            <td style="text-align: center;"><span class="table-badge-yes">{{ icon('check', size=12) }} Included</span></td>
+          </tr>
+          <tr>
+            <td>Traffic & Funnel Tracking System</td>
+            <td style="text-align: center;"><span class="table-badge-dash">–</span></td>
+            <td class="highlight-col"><span class="table-badge-dash">–</span></td>
+            <td style="text-align: center;"><span class="table-badge-addon">Add-on</span></td>
+          </tr>
+          <tr>
+            <td style="font-size: 1.05rem;">Base Investment</td>
+            <td style="text-align: center; font-size: 1.05rem; color: #000000; font-family: var(--font-heading); font-weight: 700;">Starts ₹4,999 onwards</td>
+            <td class="highlight-col" style="font-size: 1.15rem; color: var(--color-primary-dark); font-family: var(--font-heading); font-weight: 800;">Starts ₹14,999 onwards</td>
+            <td style="text-align: center; font-size: 1.15rem; color: #000000; font-family: var(--font-heading); font-weight: 800;">Starts ₹29,999 onwards</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {# Strategic "Who Should Choose Which?" #}
+    <div style="margin-top: var(--space-3xl);">
+      <div class="section-header centered">
+        <h3 style="color: #000000; font-size: 1.5rem;">Who Should Choose Which?</h3>
+        <p>Match your specific business stage with the right package architecture.</p>
+      </div>
+
+      <div class="audience-grid">
+        <div class="audience-card">
+          <div class="audience-badge">Standard · Starts ₹4,999 onwards</div>
+          <div class="audience-title">First Website Ever</div>
+          <div class="audience-desc">
+            Perfect for solo clinics, independent doctors, home-based businesses, and new salons/spas. Just needs to look credible, trustworthy, and remove stranger hesitation online.
           </div>
-          <p class="pricing-desc">Up to 20 hours/month</p>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Bug fixes & updates</li>
-          <li>{{ icon('check-circle-2', size=15) }} Minor feature additions</li>
-          <li>{{ icon('check-circle-2', size=15) }} Performance monitoring</li>
-          <li>{{ icon('check-circle-2', size=15) }} Monthly report</li>
-        </ul>
-        <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-outline">
-            Get Started {{ icon('arrow-right', size=15) }}
-          </a>
+
+        <div class="audience-card featured">
+          <div class="audience-badge">Professional · Starts ₹14,999 onwards</div>
+          <div class="audience-title">Active Sales Engine</div>
+          <div class="audience-desc">
+            Established businesses ready to turn the site into an active tool — multi-doctor clinics, fitness gyms, and service centers needing automated bookings, alerts, and admin autonomy.
+          </div>
+        </div>
+
+        <div class="audience-card">
+          <div class="audience-badge">Pro · Starts ₹29,999 onwards</div>
+          <div class="audience-title">Full Digital Ecosystem</div>
+          <div class="audience-desc">
+            High-volume, ambitious enterprises wanting a full digital ecosystem: multi-branch architecture, centralized records, automated AI chat booking, and integrated payments.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Golden Rule Callout #}
+    <div class="golden-rule-box">
+      <div class="golden-rule-tag">
+        {{ icon('sparkles', size=14) }} Core Principle
+      </div>
+      <h3>"Golden rule: Never lead with price. Lead with the client's business goals, then map those goals to the package that naturally fits."</h3>
+    </div>
+
+  </div>
+</section>
+
+{# ============================================================================
+   ADD-ONS & SALES TOOL CATALOG (FROM PDF PAGES 2, 3 & 5)
+   ============================================================================ #}
+<section class="section reveal" style="background: var(--color-bg);">
+  <div class="container">
+    <div class="section-header centered">
+      <div class="badge">{{ icon('zap', size=11) }} Modular Enhancements</div>
+      <h2 style="color: #000000;">Add-Ons that Turn Your Site into a Sales Engine</h2>
+      <div class="divider center"></div>
+      <p>Every feature explained in one line with real-world business examples from our sales guide.</p>
+    </div>
+
+    <div class="addons-grid">
+      
+      {# Add-on 1 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('palette', size=20) }}</div>
+            <div class="addon-title">Customizable Design</div>
+          </div>
+          <div class="addon-desc">
+            Layout, colours, and fonts tailored to your brand instead of generic templates, creating instant trust and visual distinction.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> A boutique spa's site echoed the exact gold-and-cream tones of its physical interior.
         </div>
       </div>
 
-      {# Retainer 2 (Featured) #}
-      <div class="pricing-card featured">
-        <div class="pricing-badge">Best Value</div>
-        <div class="pricing-header">
-          <div class="pricing-name">Professional</div>
-          <div class="pricing-price">
-            <span class="pricing-currency">$</span>
-            <span class="pricing-amount">3,499</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-dim); margin-left: 4px;">/mo</span>
+      {# Add-on 2 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('map-pin', size=20) }}</div>
+            <div class="addon-title">Google Maps Integration</div>
           </div>
-          <p class="pricing-desc">Up to 50 hours/month</p>
+          <div class="addon-desc">
+            Interactive map embedded on your site so customers get instant directions and drive foot traffic directly to your physical address.
+          </div>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Everything in Essential</li>
-          <li>{{ icon('check-circle-2', size=15) }} New feature development</li>
-          <li>{{ icon('check-circle-2', size=15) }} SEO & content updates</li>
-          <li>{{ icon('check-circle-2', size=15) }} Priority support (24h SLA)</li>
-          <li>{{ icon('check-circle-2', size=15) }} Bi-weekly check-ins</li>
-        </ul>
-        <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-primary">
-            Get Started {{ icon('arrow-right', size=15) }}
-          </a>
+        <div class="addon-example">
+          <strong>Real example:</strong> A second-floor dental clinic saw more walk-ins and fewer 'where are you' calls.
         </div>
       </div>
 
-      {# Retainer 3 #}
-      <div class="pricing-card">
-        <div class="pricing-header">
-          <div class="pricing-name">Dedicated</div>
-          <div class="pricing-price">
-            <span class="pricing-currency">$</span>
-            <span class="pricing-amount">6,999</span>
-            <span style="font-size: 0.875rem; color: var(--color-text-dim); margin-left: 4px;">/mo</span>
+      {# Add-on 3 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('message-square', size=20) }}</div>
+            <div class="addon-title">WhatsApp Redirect Button</div>
           </div>
-          <p class="pricing-desc">Full-time dedicated engineer</p>
+          <div class="addon-desc">
+            One tap opens WhatsApp with your direct number. Customers convert faster on the app they already trust and use daily.
+          </div>
         </div>
-        <ul class="pricing-features">
-          <li>{{ icon('check-circle-2', size=15) }} Everything in Professional</li>
-          <li>{{ icon('check-circle-2', size=15) }} Unlimited hours</li>
-          <li>{{ icon('check-circle-2', size=15) }} 4h SLA response</li>
-          <li>{{ icon('check-circle-2', size=15) }} Weekly strategy calls</li>
-          <li>{{ icon('check-circle-2', size=15) }} Architecture reviews</li>
-          <li>{{ icon('check-circle-2', size=15) }} Direct Slack access</li>
-        </ul>
-        <div class="pricing-footer">
-          <a href="{{ url_for('main.contact') }}" class="btn btn-outline">
-            Get Started {{ icon('arrow-right', size=15) }}
-          </a>
+        <div class="addon-example">
+          <strong>Real example:</strong> A gym's WhatsApp enquiries overtook traditional phone calls within a month.
         </div>
       </div>
+
+      {# Add-on 4 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('mail', size=20) }}</div>
+            <div class="addon-title">Gmail + WhatsApp Combo Alerts</div>
+          </div>
+          <div class="addon-desc">
+            Instant alert on both channels whenever a lead books or submits a form, ensuring front desk and admin never miss a booking.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> A clinic's front desk (WhatsApp) and admin (email) both stay informed instantly.
+        </div>
+      </div>
+
+      {# Add-on 5 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('brain', size=20) }}</div>
+            <div class="addon-title">Admin AI Insights</div>
+          </div>
+          <div class="addon-desc">
+            Plain-language AI summaries of enquiries, bookings, and customer visitor trends so owners understand high-demand services.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> A gym owner added an early-morning class after AI insights revealed high search demand.
+        </div>
+      </div>
+
+      {# Add-on 6 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('sparkles', size=20) }}</div>
+            <div class="addon-title">AI Chatbot for Booking</div>
+          </div>
+          <div class="addon-desc">
+            An automated assistant that answers queries and completes confirmed appointment bookings directly inside the chat window 24/7.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> A busy clinic let patients check doctor availability and book, all in one chat.
+        </div>
+      </div>
+
+      {# Add-on 7 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('credit-card', size=20) }}</div>
+            <div class="addon-title">Payment Gateway (UPI / Cards)</div>
+          </div>
+          <div class="addon-desc">
+            Customers pay by UPI, Cards, or Net Banking directly on your website, eliminating payment friction and sealing conversions.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> Gym members now pay for annual memberships online right after deciding.
+        </div>
+      </div>
+
+      {# Add-on 8 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('trending-up', size=20) }}</div>
+            <div class="addon-title">Traffic & Funnel Tracking System</div>
+          </div>
+          <div class="addon-desc">
+            Monitors where your visitors originate, top visited services, and drop-off points so advertising spend is backed by hard data.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> An educational institute discovered one specific ad campaign was driving 80% of enquiries.
+        </div>
+      </div>
+
+      {# Add-on 9 #}
+      <div class="addon-card">
+        <div>
+          <div class="addon-header">
+            <div class="addon-icon">{{ icon('shield-check', size=20) }}</div>
+            <div class="addon-title">Extra Care+ Maintenance</div>
+          </div>
+          <div class="addon-desc">
+            Extended continuous maintenance beyond 30 days: seasonal offer updates, security audits, and priority developer support.
+          </div>
+        </div>
+        <div class="addon-example">
+          <strong>Real example:</strong> A medical clinic had an expired offer removed and a new doctor added within the same week.
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
 <!-- FAQ Accordion -->
-<section class="section reveal" style="background: var(--color-bg);">
-  <div class="container" style="maxWidth: 760px; margin: 0 auto;">
+<section class="section reveal" style="background: var(--color-bg-alt);">
+  <div class="container" style="max-width: 780px; margin: 0 auto;">
     <div class="section-header centered">
       <h2 style="color: #000000;">Frequently Asked Questions</h2>
       <div class="divider center"></div>
+      <p>Have questions about billing, timelines, or add-ons? Here are answers to common questions.</p>
     </div>
 
     <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
       {% set faqs = [
-        {'q': 'Do you offer a free consultation?', 'a': 'Yes. Every project starts with a free 30-minute discovery call where we understand your goals and provide tailored recommendations.'},
-        {'q': 'How long does a typical project take?', 'a': 'A Starter project typically takes 4–6 weeks. Growth packages are 8–16 weeks. Enterprise engagements are scoped individually based on complexity.'},
-        {'q': 'Can I upgrade my plan mid-project?', 'a': 'Absolutely. We structure our projects to be flexible. You can upgrade or expand scope at any point with a simple change order.'},
-        {'q': 'Do you offer payment plans?', 'a': 'We offer milestone-based billing: typically 30% upfront, 40% at mid-point, and 30% on delivery. Enterprise clients can negotiate custom payment schedules.'},
-        {'q': 'What technologies do you specialize in?', 'a': 'React, Next.js, Node.js, Python, React Native, Flutter, AWS, GCP, TensorFlow, and more. We choose the best technology for each specific problem.'}
+        {'q': 'Why do packages say "starts from ... onwards"?', 'a': 'Each package includes a robust, production-ready baseline of features. Because every client’s requirements are unique, you can add modular enhancements (like WhatsApp alerts, AI booking, or Payment Gateways) at transparent, fixed add-on rates.'},
+        {'q': 'Are all prices in Indian Rupees (INR)?', 'a': 'Yes. All prices are listed in Indian Rupees (₹) with clear, transparent milestone pricing and no hidden vendor surprises.'},
+        {'q': 'What is the 1 Year Zero Hidden Renewal Charges guarantee?', 'a': 'We include free managed cloud hosting and SSL certificate support for a full 365 days after launch, protecting you from unexpected renewal bills.'},
+        {'q': 'Can I add custom features like AI Chatbots or Payment Gateways later?', 'a': 'Yes. All our packages are built modularly. You can start with Standard or Professional and add any module (AI Chatbot, Payment Gateway, Extra Pages) whenever your business expands.'},
+        {'q': 'How long does development take for each package?', 'a': 'Standard packages typically launch within 5–7 business days. Professional packages take 10–14 business days. Pro packages take 2–3 weeks depending on custom integrations.'}
       ] %}
 
       {% for faq in faqs %}
-        <div class="faq-item-container" style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: rgba(255,255,255,0.02); transition: all 0.25s;">
+        <div class="faq-item-container" style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: #ffffff; transition: all 0.25s;">
           <button
             type="button"
             class="faq-toggle-btn"
@@ -236,10 +699,10 @@
             aria-expanded="false"
           >
             {{ faq.q }}
-            <span class="faq-icon" style="color: var(--color-primary-light); font-size: 1.25rem; flex-shrink: 0; transition: transform 0.25s;">+</span>
+            <span class="faq-icon" style="color: var(--color-primary); font-size: 1.25rem; flex-shrink: 0; transition: transform 0.25s;">+</span>
           </button>
           <div class="faq-answer-pane" style="display: none; padding: 0 var(--space-xl) var(--space-lg);">
-            <p>{{ faq.a }}</p>
+            <p style="color: var(--color-text-dim); line-height: 1.7;">{{ faq.a }}</p>
           </div>
         </div>
       {% endfor %}
@@ -250,10 +713,12 @@
 <!-- CTA -->
 <section class="cta-section reveal">
   <div class="container">
-    <h2>Can't find what you need?</h2>
-    <p>Every project is unique. Let's discuss your specific requirements and build a custom proposal.</p>
+    <h2>Ready to launch your high-converting website?</h2>
+    <p>Let's align on your business goals and configure the perfect package for your brand.</p>
     <div class="cta-actions">
-      <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg">Request Custom Quote {{ icon('arrow-right', size=17) }}</a>
+      <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg">
+        Schedule Discovery Consultation {{ icon('arrow-right', size=17) }}
+      </a>
     </div>
   </div>
 </section>

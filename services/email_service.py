@@ -704,14 +704,11 @@ def render_shortlisted_offer_email(application, custom_params=None):
     }
 
 
-def send_offer_letter_shortlisted_email(application_or_employee, start_date=None, force_resend=False):
+def send_offer_letter_shortlisted_email(application_or_employee, start_date=None):
     """
-    Sends the official Offer Letter / Shortlisted email with the candidate-specific Offer Letter PDF attached via Brevo.
-    Enforces strict ONE-TIME send protection (unless force_resend=True for explicit admin retry).
-    The PDF is generated directly from the candidate's existing, verified DOCX file.
+    Sends the official Offer Letter / Shortlisted email with the generated employee DOCX attached via Brevo.
+    Enforces strict ONE-TIME send protection.
     """
-    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
-
     # Normalize input
     if isinstance(application_or_employee, Employee):
         employee = application_or_employee
@@ -731,38 +728,13 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
 
     # Retrieve candidate-specific Offer Letter document
     emp_doc = app.offer_letter_doc
-    if not emp_doc:
+    if not emp_doc or not emp_doc.file_path or not os.path.exists(emp_doc.file_path):
         return False, "Offer Letter DOCX has not been generated yet. Please generate it first."
 
-    docx_path = _resolve_document_file_path(emp_doc)
-    if not docx_path or not os.path.exists(docx_path):
-        return False, "Offer Letter DOCX file not found on server storage. Please generate it first."
-
-    # ONE-TIME SEND PROTECTION (bypassable with force_resend for admin retries)
-    if emp_doc.email_status == 'sent' and not force_resend:
+    # ONE-TIME SEND PROTECTION
+    if emp_doc.email_status == 'sent':
         sent_time = emp_doc.sent_at.strftime('%b %d, %Y') if emp_doc.sent_at else 'earlier'
         return False, f"Offer Letter already sent on {sent_time}. Duplicate sending is prevented."
-
-    # Generate / retrieve faithful PDF from the exact candidate DOCX
-    conv_success, pdf_path, conv_err = convert_docx_to_pdf(docx_path)
-    if not conv_success or not pdf_path or not os.path.exists(pdf_path):
-        if current_app:
-            current_app.logger.error(f"Offer Letter PDF conversion failed before email dispatch: {conv_err}")
-        return False, "Offer Letter PDF could not be generated. The email was not sent."
-
-    # Verify generated PDF integrity before sending
-    try:
-        if os.path.getsize(pdf_path) == 0:
-            return False, "Offer Letter PDF could not be generated. The email was not sent."
-        with open(pdf_path, 'rb') as f:
-            if not f.read(5).startswith(b'%PDF-'):
-                return False, "Offer Letter PDF could not be generated. The email was not sent."
-    except Exception as verify_err:
-        if current_app:
-            current_app.logger.error(f"Error validating generated Offer Letter PDF before email dispatch: {verify_err}")
-        return False, "Offer Letter PDF could not be generated. The email was not sent."
-
-    pdf_filename = f"{os.path.splitext(emp_doc.file_name)[0]}.pdf"
 
     try:
         rendered = render_shortlisted_offer_email(app, custom_params={'start_date': start_date})
@@ -776,8 +748,8 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
             subject=subject,
             body_text=body_text,
             body_html=body_html,
-            attachment_path=pdf_path,
-            attachment_name=pdf_filename
+            attachment_path=emp_doc.file_path,
+            attachment_name=emp_doc.file_name
         )
 
         now_utc = datetime.now(timezone.utc)
@@ -807,7 +779,7 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
                 provider_message_id=provider_id,
                 error_message=error_msg,
                 has_attachment=True,
-                attachment_name=pdf_filename,
+                attachment_name=emp_doc.file_name,
                 sent_at=now_utc
             )
             db.session.add(email_log)

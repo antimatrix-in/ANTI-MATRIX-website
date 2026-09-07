@@ -549,15 +549,13 @@ def mark_application_offer_complete(app_id):
     """
     Stage 4: Mark as Complete.
     Validates employee and offer letter exist, updates status to OFFER_COMPLETED,
-    and automatically dispatches the Shortlisted / Offer Letter email with PDF attachment via Brevo.
+    and automatically dispatches the Shortlisted / Offer Letter email with DOCX attachment via Brevo.
     """
-    from services.document_preview_service import _resolve_document_file_path
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure Offer Letter is generated
     offer_doc = application.offer_letter_doc
-    resolved_path = _resolve_document_file_path(offer_doc) if offer_doc else None
-    if not offer_doc or not resolved_path or not os.path.exists(resolved_path):
+    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:
@@ -575,7 +573,7 @@ def mark_application_offer_complete(app_id):
         success, msg = send_offer_letter_email(application)
         if success:
             db.session.commit()
-            flash(f"Offer marked as Complete! Offer Letter email with PDF attachment sent successfully to {application.email}.", 'success')
+            flash(f"Offer marked as Complete! Offer Letter email with DOCX attachment sent successfully to {application.email}.", 'success')
         else:
             db.session.commit()
             flash(f"Offer marked as Complete. Notice on email delivery: {msg}", 'warning')
@@ -651,10 +649,6 @@ def send_joining_email_action(app_id):
 @admin_bp.route('/applications/<int:app_id>/send-shortlist-offer', methods=['POST'])
 @admin_required
 def send_shortlist_offer_action(app_id):
-    """Explicit action to send/resend Shortlisted & Offer Letter email with PDF attachment via Brevo."""
-    from services.document_preview_service import _resolve_document_file_path
-    from services.offer_letter_service import send_offer_letter_email
-
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure status is SHORTLISTED or OFFER_COMPLETED or HIRED
@@ -665,16 +659,21 @@ def send_shortlist_offer_action(app_id):
 
     # Ensure Offer Letter is generated
     offer_doc = application.offer_letter_doc
-    resolved_path = _resolve_document_file_path(offer_doc) if offer_doc else None
-    if not offer_doc or not resolved_path or not os.path.exists(resolved_path):
+    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:
             flash(f"Cannot send Offer Letter: {str(e)}", 'danger')
             return redirect(url_for('admin.application_detail', app_id=application.id))
 
-    # Explicit admin action: force resend is enabled
-    success, msg = send_offer_letter_email(application, force_resend=True)
+    # Check duplicate send
+    if offer_doc.email_status == 'sent':
+        flash('Offer Letter email has already been sent to this candidate.', 'warning')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
+
+    # Send Shortlisted email + Offer Letter attachment via Brevo
+    from services.offer_letter_service import send_offer_letter_email
+    success, msg = send_offer_letter_email(application)
 
     if not success:
         flash(f"Failed to send Offer Letter email: {msg}", 'danger')
@@ -709,12 +708,12 @@ def send_shortlist_offer_action(app_id):
                 'employee_id': employee.employee_id,
                 'temp_password': plaintext_password
             }
-            flash(f"Offer Letter email dispatched successfully via Brevo! Employee account ({employee.employee_id}) created automatically.", 'success')
+            flash(f"Offer Letter sent successfully! Employee account ({employee.employee_id}) created automatically.", 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f"Offer Letter email dispatched, but error creating employee account: {str(e)}", 'warning')
+            flash(f"Offer Letter sent, but error creating employee account: {str(e)}", 'warning')
     else:
-        flash(f"Offer Letter email with PDF attachment dispatched successfully to {application.full_name} ({application.email}) via Brevo.", 'success')
+        flash(f"Offer Letter sent successfully to candidate {application.full_name}.", 'success')
 
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
@@ -787,7 +786,7 @@ def preview_application_offer_letter_pdf(app_id):
     Admin-only endpoint: converts the candidate's generated Offer Letter DOCX to PDF
     using LibreOffice headless and streams the PDF for inline browser preview.
     """
-    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
+    from services.document_preview_service import convert_docx_to_pdf
 
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
@@ -795,9 +794,14 @@ def preview_application_offer_letter_pdf(app_id):
     if not offer_doc:
         abort(404)
 
-    fpath = _resolve_document_file_path(offer_doc)
+    fpath = offer_doc.file_path
     if not fpath or not os.path.exists(fpath):
-        abort(404)
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            abort(404)
 
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
@@ -836,12 +840,12 @@ def preview_application_offer_letter(app_id):
     - If direct browser GET: renders standalone document_preview.html with embedded PDF viewer.
     Does NOT modify the original DOCX or database records.
     """
-    from services.document_preview_service import get_application_offer_letter_preview, _resolve_document_file_path
+    from services.document_preview_service import get_application_offer_letter_preview
 
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
 
-    if not offer_doc:
+    if not offer_doc or not offer_doc.file_path:
         if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'status': 'error',
@@ -852,16 +856,21 @@ def preview_application_offer_letter(app_id):
         return redirect(url_for('admin.application_detail', app_id=app_id))
 
     # Resolve local path if needed
-    fpath = _resolve_document_file_path(offer_doc)
-    if not fpath or not os.path.exists(fpath):
-        if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({
-                'status': 'error',
-                'error_code': 'DOC_NOT_GENERATED',
-                'message': 'Offer Letter file not found on server.'
-            }), 400
-        flash('Offer Letter file not found on server.', 'warning')
-        return redirect(url_for('admin.application_detail', app_id=app_id))
+    fpath = offer_doc.file_path
+    if not os.path.exists(fpath):
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'status': 'error',
+                    'error_code': 'DOC_NOT_GENERATED',
+                    'message': 'Offer Letter file not found on server.'
+                }), 400
+            flash('Offer Letter file not found on server.', 'warning')
+            return redirect(url_for('admin.application_detail', app_id=app_id))
 
     # Serve PDF if requested
     if request.args.get('format') == 'pdf':
@@ -907,11 +916,11 @@ def preview_application_offer_letter(app_id):
 @admin_bp.route('/documents/<int:doc_id>/preview/file', methods=['GET'])
 @admin_required
 def preview_document_file_by_id(doc_id):
-    """Admin-only endpoint: serves raw EmployeeDocument DOCX binary."""
-    from services.document_preview_service import _resolve_document_file_path
-
+    """
+    Admin-only endpoint: serves raw EmployeeDocument DOCX binary.
+    """
     document = db.session.get(EmployeeDocument, doc_id) or abort(404)
-    fpath = _resolve_document_file_path(document)
+    fpath = document.file_path
     if not fpath or not os.path.exists(fpath):
         abort(404)
 
@@ -931,10 +940,10 @@ def preview_document_pdf_by_id(doc_id):
     Admin-only endpoint: converts EmployeeDocument DOCX to PDF using LibreOffice headless
     and streams PDF for inline viewing.
     """
-    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
+    from services.document_preview_service import convert_docx_to_pdf
 
     document = db.session.get(EmployeeDocument, doc_id) or abort(404)
-    fpath = _resolve_document_file_path(document)
+    fpath = document.file_path
     if not fpath or not os.path.exists(fpath):
         abort(404)
 
