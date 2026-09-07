@@ -11,7 +11,7 @@
     <div class="admin-header">
       <div class="admin-header-title">
         <h1>Money Management</h1>
-        <p>Monitor revenue, expenses, Cashfree application payments, and financial ledger records.</p>
+        <p>Monitor revenue, operational expenses, Cashfree payments, and ledger records.</p>
       </div>
       <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
         <button type="button" class="btn btn-outline btn-sm" onclick="exportTransactionsCSV()" style="gap: 6px;" title="Export filtered records to CSV">
@@ -19,7 +19,7 @@
         </button>
         <form method="POST" action="{{ url_for('admin.reconcile_payments') }}" style="display: inline; margin: 0;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px;" title="Reconcile any missing Cashfree payment records">
+          <button type="submit" class="btn btn-outline btn-sm" style="gap: 6px;" title="Reconcile Cashfree payment records">
             {{ icon('refresh-cw', size=14) }} Sync Payments
           </button>
         </form>
@@ -54,7 +54,7 @@
       </a>
     </div>
 
-    <!-- 1. Executive Summary Cards (Native Admin Stat Cards) -->
+    <!-- 1. Executive Summary Cards (Native Clean Admin Stat Cards) -->
     <div class="admin-stats-grid" style="margin-bottom: var(--space-xl);">
       
       <!-- Total Income -->
@@ -85,7 +85,7 @@
           {{ icon('wallet', size=20) }}
         </div>
         <div class="stat-info">
-          <div class="stat-value">₹{{ "{:,.2f}".format(summary.balance) }}</div>
+          <div class="stat-value" style="color: #0f172a;">₹{{ "{:,.2f}".format(summary.balance) }}</div>
           <div class="stat-label">Net Available Balance</div>
         </div>
       </div>
@@ -101,7 +101,9 @@
         </div>
       </div>
 
-    <!-- 2. Transaction History Section & Filter Controls -->
+    </div>
+
+    <!-- 2. Transaction History Section Header & Filter Controls -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
       <h2 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
         {{ icon('receipt', size=16, color='#059669') }} Transaction History
@@ -109,9 +111,9 @@
       </h2>
     </div>
 
-    <!-- Controls & Filter Bar -->
-    <div class="admin-controls-bar" style="margin-bottom: 0; border-bottom: none; border-radius: 10px 10px 0 0; background: #ffffff;">
-      <form method="GET" action="{{ url_for('admin.money_management') }}" class="admin-search-form" id="moneyFilterForm" style="flex: 1; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+    <!-- Filter & Search Controls Bar -->
+    <div class="admin-controls-bar" style="margin-bottom: 0; border-bottom: none; border-radius: 10px 10px 0 0; background: #ffffff; padding: 1rem 1.25rem; border: 1px solid #e2e8f0;">
+      <form method="GET" action="{{ url_for('admin.money_management') }}" class="admin-search-form" id="moneyFilterForm" style="flex: 1; max-width: 100%; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
         
         <!-- Search Input -->
         <input
@@ -124,14 +126,14 @@
         />
 
         <!-- Type Select -->
-        <select name="type" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 120px;">
+        <select name="type" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 120px; padding: 0.5rem 0.85rem; font-size: 0.875rem;">
           <option value="all" {{ 'selected' if type_filter == 'all' else '' }}>All Types</option>
           <option value="income" {{ 'selected' if type_filter == 'income' else '' }}>Inflow</option>
           <option value="expense" {{ 'selected' if type_filter == 'expense' else '' }}>Outflow</option>
         </select>
 
         <!-- Environment Select -->
-        <select name="env" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px;">
+        <select name="env" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px; padding: 0.5rem 0.85rem; font-size: 0.875rem;">
           <option value="all" {{ 'selected' if env_filter == 'all' else '' }}>All Environments</option>
           <option value="production" {{ 'selected' if env_filter == 'production' else '' }}>Production</option>
           <option value="sandbox" {{ 'selected' if env_filter == 'sandbox' else '' }}>Sandbox</option>
@@ -139,7 +141,7 @@
         </select>
 
         <!-- Category Select -->
-        <select name="category" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 140px;">
+        <select name="category" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 140px; padding: 0.5rem 0.85rem; font-size: 0.875rem;">
           <option value="all">All Categories</option>
           {% for cat in categories %}
             <option value="{{ cat }}" {{ 'selected' if category_filter == cat else '' }}>{{ cat }}</option>
@@ -147,7 +149,7 @@
         </select>
 
         <!-- Date Range Select -->
-        <select name="date" id="dateSelect" class="admin-select" onchange="handleDateSelect(this.value);" style="flex: 1; min-width: 120px;">
+        <select name="date" id="dateSelect" class="admin-select" onchange="handleDateSelect(this.value);" style="flex: 1; min-width: 120px; padding: 0.5rem 0.85rem; font-size: 0.875rem;">
           <option value="all" {{ 'selected' if date_filter == 'all' else '' }}>All Dates</option>
           <option value="today" {{ 'selected' if date_filter == 'today' else '' }}>Today</option>
           <option value="this_week" {{ 'selected' if date_filter == 'this_week' else '' }}>This Week</option>
@@ -156,7 +158,7 @@
         </select>
 
         <!-- Sort Select -->
-        <select name="sort" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px;">
+        <select name="sort" class="admin-select" onchange="this.form.submit();" style="flex: 1; min-width: 130px; padding: 0.5rem 0.85rem; font-size: 0.875rem;">
           <option value="newest" {{ 'selected' if sort_by == 'newest' else '' }}>Newest First</option>
           <option value="oldest" {{ 'selected' if sort_by == 'oldest' else '' }}>Oldest First</option>
           <option value="highest" {{ 'selected' if sort_by == 'highest' else '' }}>Highest Amount</option>
@@ -188,17 +190,17 @@
     </div>
 
     <!-- 3. Transactions Data Table (Main Component) -->
-    <div class="admin-table-wrapper" style="border-radius: 0 0 10px 10px; margin-bottom: var(--space-xl); background: #ffffff;">
-      <table class="admin-table" id="moneyTransactionsTable">
+    <div class="admin-table-wrapper" style="width: 100%; overflow-x: auto; border-radius: 0 0 10px 10px; margin-bottom: var(--space-xl); background: #ffffff; border: 1px solid #e2e8f0; border-top: none;">
+      <table class="admin-table" id="moneyTransactionsTable" style="width: 100%; min-width: 880px;">
         <thead>
           <tr>
-            <th style="min-width: 240px;">Transaction / Purpose</th>
-            <th style="min-width: 100px;">Type</th>
+            <th style="min-width: 260px;">Transaction / Purpose</th>
+            <th style="min-width: 105px;">Type</th>
             <th style="min-width: 120px;">Environment</th>
-            <th style="min-width: 120px;">Method</th>
+            <th style="min-width: 110px;">Method</th>
             <th style="min-width: 140px;">Date &amp; Time</th>
-            <th style="min-width: 120px; text-align: right;">Amount (INR)</th>
-            <th style="min-width: 90px; text-align: right;">Actions</th>
+            <th style="min-width: 130px; text-align: right;">Amount (INR)</th>
+            <th style="min-width: 95px; text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
