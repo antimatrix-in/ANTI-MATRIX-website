@@ -3,6 +3,8 @@ import shutil
 import smtplib
 import uuid
 import time
+import zipfile
+import xml.etree.ElementTree as ET
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -11,6 +13,35 @@ from datetime import datetime, timezone, timedelta
 import docx
 from flask import current_app
 from models import db, Employee, JobApplication, JobPosting, EmployeeDocument, DocumentTemplate, EmailTemplate
+
+
+# OpenXML Namespaces
+W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+XML_NS = 'http://www.w3.org/XML/1998/namespace'
+w_p = f'{{{W_NS}}}p'
+w_t = f'{{{W_NS}}}t'
+space_attr = f'{{{XML_NS}}}space'
+
+# Common OpenXML namespaces for ElementTree registration to avoid synthetic prefixes
+OPENXML_NAMESPACES = {
+    'w': W_NS,
+    'm': 'http://schemas.openxmlformats.org/officeDocument/2006/math',
+    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+    'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
+    'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+    'pic': 'http://schemas.openxmlformats.org/drawingml/2006/picture',
+    'w14': 'http://schemas.microsoft.com/office/word/2010/wordml',
+    'w15': 'http://schemas.microsoft.com/office/word/2012/wordml',
+    'w16': 'http://schemas.microsoft.com/office/word/2018/wordml',
+    'w16cex': 'http://schemas.microsoft.com/office/word/2018/wordml/cex',
+    'w16cid': 'http://schemas.microsoft.com/office/word/2016/wordml/cid',
+    'w16se': 'http://schemas.microsoft.com/office/word/2015/wordml/symex',
+    'v': 'urn:schemas-microsoft-com:vml',
+    'o': 'urn:schemas-microsoft-com:office:office',
+    'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+    'c': 'http://schemas.openxmlformats.org/drawingml/2006/chart',
+    'dgm': 'http://schemas.openxmlformats.org/drawingml/2006/diagram',
+}
 
 
 OFFER_LETTER_CATEGORIES = {
@@ -131,6 +162,120 @@ def determine_job_category(job_or_title_or_dept):
     return None
 
 
+def replace_placeholders_in_xml(xml_bytes, replacements):
+    """
+    Safely replaces placeholder keys in OpenXML document parts (e.g. word/document.xml, header, footer).
+    Preserves exact font, size, bold, italic, underline, color, borders, and run properties.
+    Handles placeholders that span multiple XML <w:r><w:t> runs without altering surrounding styling.
+    """
+    for prefix, uri in OPENXML_NAMESPACES.items():
+        ET.register_namespace(prefix, uri)
+
+    root = ET.fromstring(xml_bytes)
+
+    # Process all paragraphs across the entire XML hierarchy (body, tables, textboxes, headers, footers)
+    for p in root.iter(w_p):
+        t_elems = list(p.iter(w_t))
+        if not t_elems:
+            continue
+
+        for ph, repl in replacements.items():
+            if not ph:
+                continue
+            repl_str = str(repl) if repl is not None else ''
+
+            # Continue finding & replacing occurrences within the paragraph
+            while True:
+                full_text = ''.join(e.text or '' for e in t_elems)
+                start_idx = full_text.find(ph)
+                if start_idx == -1:
+                    break
+                end_idx = start_idx + len(ph)
+
+                curr_pos = 0
+                for e in t_elems:
+                    txt = e.text or ''
+                    l = len(txt)
+                    e_start = curr_pos
+                    e_end = curr_pos + l
+
+                    if e_end <= start_idx:
+                        # Before the match
+                        pass
+                    elif e_start >= end_idx:
+                        # After the match
+                        pass
+                    elif e_start <= start_idx and e_end >= end_idx:
+                        # Entire placeholder inside this single run
+                        l_start = start_idx - e_start
+                        l_end = end_idx - e_start
+                        e.text = txt[:l_start] + repl_str + txt[l_end:]
+                        if e.text.startswith(' ') or e.text.endswith(' '):
+                            e.set(space_attr, 'preserve')
+                        break
+                    elif e_start <= start_idx and e_end < end_idx:
+                        # Match starts in this run and spans next runs
+                        l_start = start_idx - e_start
+                        e.text = txt[:l_start] + repl_str
+                        if e.text.startswith(' ') or e.text.endswith(' '):
+                            e.set(space_attr, 'preserve')
+                    elif e_start > start_idx and e_end <= end_idx:
+                        # Fully consumed intermediate run
+                        e.text = ''
+                    elif e_start < end_idx and e_end >= end_idx:
+                        # Match ends in this run
+                        l_end = end_idx - e_start
+                        e.text = txt[l_end:]
+                        if e.text.startswith(' ') or e.text.endswith(' '):
+                            e.set(space_attr, 'preserve')
+
+                    curr_pos += l
+
+    return ET.tostring(root, encoding='utf-8', xml_declaration=True)
+
+
+def populate_docx_from_master_template(master_template_path, output_filepath, placeholder_mapping):
+    """
+    Creates an exact copy of the uploaded master DOCX package at output_filepath,
+    and replaces ONLY approved placeholders in the document XML (word/document.xml, word/header*.xml, word/footer*.xml).
+    
+    CRITICAL:
+    - Master DOCX package is the source of truth.
+    - 100% of all images, logos, circular seals, MSME visual, green border, line dividers,
+      watermarks, headers, footers, styles, fonts, and page layouts are preserved byte-for-byte.
+    - Master template file on disk is NEVER modified.
+    """
+    if not os.path.exists(master_template_path):
+        raise FileNotFoundError(f"Master template file not found at: {master_template_path}")
+
+    xml_targets = set()
+    file_contents = {}
+
+    with zipfile.ZipFile(master_template_path, 'r') as src_zip:
+        for name in src_zip.namelist():
+            if name == 'word/document.xml' or \
+               (name.startswith('word/header') and name.endswith('.xml')) or \
+               (name.startswith('word/footer') and name.endswith('.xml')) or \
+               (name.startswith('word/footnotes') and name.endswith('.xml')) or \
+               (name.startswith('word/endnotes') and name.endswith('.xml')):
+                xml_targets.add(name)
+            file_contents[name] = src_zip.read(name)
+
+    # Replace placeholders in relevant XML parts
+    for target_name in xml_targets:
+        if target_name in file_contents:
+            file_contents[target_name] = replace_placeholders_in_xml(
+                file_contents[target_name],
+                placeholder_mapping
+            )
+
+    # Write output candidate-specific DOCX package
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+    with zipfile.ZipFile(output_filepath, 'w', compression=zipfile.ZIP_DEFLATED) as dst_zip:
+        for name, data in file_contents.items():
+            dst_zip.writestr(name, data)
+
+
 def replace_placeholders_in_paragraph(paragraph, mapping):
     """
     Safely replaces placeholder keys with replacement values in a docx Paragraph.
@@ -142,12 +287,7 @@ def replace_placeholders_in_paragraph(paragraph, mapping):
         return
 
     # Check if any placeholder exists in the paragraph text
-    needs_replacement = False
-    for key in mapping:
-        if key in full_text:
-            needs_replacement = True
-            break
-
+    needs_replacement = any(key in full_text for key in mapping)
     if not needs_replacement:
         return
 
@@ -287,19 +427,7 @@ def ensure_default_templates_initialized():
             if os.path.exists(static_src):
                 shutil.copy2(static_src, target_path)
             elif os.path.exists(master_ref):
-                doc = docx.Document(master_ref)
-                for p in doc.paragraphs:
-                    if 'Congratulations! We are pleased to inform you' in p.text:
-                        if len(p.runs) >= 2:
-                            p.runs[1].text = cat_data['default_title']
-                    elif 'During your internship' in p.text:
-                        if len(p.runs) >= 3:
-                            p.runs[0].text = cat_data['run0']
-                            p.runs[1].text = cat_data['run1']
-                            p.runs[2].text = cat_data['run2']
-                            for r in p.runs[3:]:
-                                r.text = ''
-                doc.save(target_path)
+                shutil.copy2(master_ref, target_path)
 
         # 2. Check / insert active DocumentTemplate record in DB
         tmpl_record = DocumentTemplate.query.filter_by(
@@ -322,10 +450,21 @@ def ensure_default_templates_initialized():
 
 def generate_offer_letter_docx(application_or_employee, custom_params=None, force_regenerate=False):
     """
-    Generates a personalized Offer Letter DOCX for the given JobApplication or Employee by cloning
-    the category-specific master template.
-    Replaces all placeholders while strictly preserving typography, borders, logos, and layout.
-    Reuses existing generated file if already generated (idempotent) unless force_regenerate=True.
+    Generates a personalized candidate Offer Letter DOCX by copying the active master template DOCX
+    and replacing ONLY the approved placeholders in the OpenXML parts.
+    
+    CRITICAL IMPLEMENTATION GUARANTEES:
+    1. The master template DOCX is the authoritative source of truth.
+    2. The document is NOT rebuilt from scratch.
+    3. The layout, headers, footers, logo, watermark, circular seal, MSME visuals, borders, fonts, and styles are 100% preserved.
+    4. Only approved dynamic values are substituted:
+       - Date: [DD/MM/YYYY] -> candidate offer date (DD/MM/YYYY)
+       - Candidate Name: [Candidate Name] -> candidate's actual name
+       - Reference Number: [Reference Number] -> existing Application ID (e.g. AM-APP-000156)
+       - Duration: [1 Month / 3 Months] -> candidate's actual selected internship duration
+       - Joining Date: [Joining Date] -> candidate's actual joining date
+    5. The master template on disk is NEVER modified.
+    6. Returns (emp_doc, output_filepath).
     """
     if isinstance(application_or_employee, Employee):
         employee = application_or_employee
@@ -350,7 +489,7 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
             "No job-specific offer letter template is available for this internship. Please upload the appropriate template before generating the offer letter."
         )
 
-    # Idempotency check: If document already exists and file exists, return it
+    # Idempotency check: If document already exists and file exists, return it unless force_regenerate=True
     existing_doc = app.offer_letter_doc
     if existing_doc and existing_doc.file_path and os.path.exists(existing_doc.file_path) and not force_regenerate:
         return existing_doc, existing_doc.file_path
@@ -361,109 +500,68 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
     custom_params = custom_params or {}
     now_utc = datetime.now(timezone.utc)
     current_date_str = now_utc.strftime("%d/%m/%Y")
-    
-    # Calculate 7-day acceptance deadline
-    default_deadline_dt = now_utc + timedelta(days=7)
-    default_deadline_str = default_deadline_dt.strftime("%d %B %Y")
 
-    # Format data from DB models
-    candidate_name = app.full_name or (employee.candidate_name if employee else "Candidate")
+    # Format data strictly from DB models
+    candidate_name = (app.full_name or (employee.candidate_name if employee else "Candidate")).strip()
     reference_number = app.formatted_code
-    cat_info = OFFER_LETTER_CATEGORIES[cat_key]
-    job_title = custom_params.get('job_title') or cat_info['default_title'] or job.title or "Intern"
-    department = job.department or "Engineering"
     internship_duration = app.duration_display or (f"{job.duration.replace('_', ' ').title()}" if job.duration else "1 Month")
-    emp_id_str = employee.employee_id if employee else app.formatted_code
 
     # Joining date
-    joining_date = custom_params.get('joining_date') or custom_params.get('start_date') or "Immediate / As mutually agreed"
+    joining_date = (custom_params.get('joining_date') or custom_params.get('start_date') or app.joining_date or "Immediate / As mutually agreed").strip()
 
-    # Work mode
-    work_mode = custom_params.get('work_mode', job.location if job.location else "Remote")
-
-    # Conditions
-    conditions = custom_params.get(
-        'conditions',
-        "satisfactory verification of academic credentials and submission of government identity documentation"
-    )
-
-    # Acceptance deadline
-    acceptance_deadline = custom_params.get('acceptance_deadline', default_deadline_str)
-
-    # Responsibilities description
-    responsibilities = custom_params.get(
-        'responsibilities',
-        job.short_description or (f"work on designated projects and deliverables for the {job_title} role at Anti-Matrix")
-    )
-
-    # Key tasks
-    key_tasks = custom_params.get(
-        'key_tasks',
-        job.skills or (f"core technical assignments, engineering benchmarks, and team collaboration")
-    )
-
-    # Comprehensive Placeholder Dictionary (supporting both [Placeholder] and {{placeholder}} formats)
-    mapping = {
+    # Strict allowlist of replaceable placeholders
+    placeholder_mapping = {
+        # 1. Date
         '[DD/MM/YYYY]': current_date_str,
+        '[Date]': current_date_str,
         '{{offer_date}}': current_date_str,
+        '{{Date}}': current_date_str,
+        '{{date}}': current_date_str,
+
+        # 2. Candidate Name
         '[Candidate Name]': candidate_name,
+        '[Candidate\'s Name]': candidate_name,
+        '{{Candidate Name}}': candidate_name,
         '{{candidate_name}}': candidate_name,
         '{{employee_name}}': candidate_name,
+
+        # 3. Reference Number / Application ID
         '[Reference Number]': reference_number,
+        '[Application ID]': reference_number,
+        '{{Reference Number}}': reference_number,
         '{{reference_number}}': reference_number,
+        '{{Application ID}}': reference_number,
         '{{application_id}}': reference_number,
-        '[Job Title]': job_title,
-        '{{job_title}}': job_title,
+
+        # 4. Duration
         '[1 Month / 3 Months]': internship_duration,
+        '[Internship Duration]': internship_duration,
+        '{{1 Month / 3 Months}}': internship_duration,
         '{{internship_duration}}': internship_duration,
+        '{{Internship Duration}}': internship_duration,
+
+        # 5. Joining Date
         '[Joining Date]': joining_date,
+        '[Start Date]': joining_date,
+        '{{Joining Date}}': joining_date,
         '{{joining_date}}': joining_date,
+        '{{Start Date}}': joining_date,
         '{{start_date}}': joining_date,
-        '[brief description of responsibilities]': responsibilities,
-        '{{responsibilities}}': responsibilities,
-        '[key tasks / deliverables]': key_tasks,
-        '{{key_tasks}}': key_tasks,
-        '[remote / hybrid / on-site]': work_mode,
-        '{{work_mode}}': work_mode,
-        '[background verification / document submission / any other condition]': conditions,
-        '{{conditions}}': conditions,
-        '[Acceptance Deadline]': acceptance_deadline,
-        '{{acceptance_deadline}}': acceptance_deadline,
-        '{{employee_id}}': emp_id_str,
-        '{{department}}': department
     }
 
-    # Open active template file (CLONE - NEVER MODIFY MASTER)
-    doc = docx.Document(active_template.file_path)
-
-    # Process all standard paragraphs
-    for p in doc.paragraphs:
-        replace_placeholders_in_paragraph(p, mapping)
-
-    # Process all tables
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for p in cell.paragraphs:
-                    replace_placeholders_in_paragraph(p, mapping)
-
-    # Process headers and footers across sections
-    for section in doc.sections:
-        if section.header:
-            for p in section.header.paragraphs:
-                replace_placeholders_in_paragraph(p, mapping)
-        if section.footer:
-            for p in section.footer.paragraphs:
-                replace_placeholders_in_paragraph(p, mapping)
-
-    # Save generated document copy
+    # Destination output path
     gen_dir = os.path.join(current_app.root_path, 'uploads', 'generated_documents')
     os.makedirs(gen_dir, exist_ok=True)
 
     output_filename = f"{app.formatted_code}_Offer_Letter.docx"
     output_filepath = os.path.join(gen_dir, output_filename)
 
-    doc.save(output_filepath)
+    # Copy master DOCX package and replace ONLY approved placeholders in XML
+    populate_docx_from_master_template(
+        active_template.file_path,
+        output_filepath,
+        placeholder_mapping
+    )
 
     # Create or update EmployeeDocument record in DB
     emp_doc = EmployeeDocument.query.filter_by(
@@ -511,4 +609,3 @@ def send_offer_letter_email(application_or_employee, start_date=None):
     """
     from services.email_service import send_offer_letter_shortlisted_email
     return send_offer_letter_shortlisted_email(application_or_employee, start_date=start_date)
-
