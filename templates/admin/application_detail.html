@@ -941,6 +941,10 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- High-fidelity client-side DOCX renderer scripts -->
+<script src="{{ url_for('static', filename='js/vendor/jszip.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/docx-preview.min.js') }}"></script>
+
 <script>
 function openOfferLetterPreview(appId) {
   var overlay = document.getElementById('docx-preview-modal-overlay');
@@ -952,53 +956,75 @@ function openOfferLetterPreview(appId) {
 
   if (!overlay || !body) return;
 
-  // Reset body with spinner
-  body.innerHTML = '<div class="docx-preview-loading"><div class="docx-spinner"></div><div>Rendering document preview...</div></div>';
+  var downloadUrl = '/admin/applications/' + appId + '/offer-letter/download';
+  var fileUrl = '/admin/applications/' + appId + '/offer-letter/preview/file';
+
+  if (downloadBtn) downloadBtn.href = downloadUrl;
+  if (footerDownloadBtn) footerDownloadBtn.href = downloadUrl;
+
+  // Reset body with loading spinner
+  body.innerHTML = 
+    '<div class="docx-preview-loading">' +
+      '<div class="docx-spinner"></div>' +
+      '<div style="font-weight: 600; color: #f8fafc; font-size: 0.95rem;">Rendering actual Word document...</div>' +
+      '<div style="font-size: 0.8rem; color: #94a3b8;">Loading authentic DOCX layout, fonts, borders &amp; graphics</div>' +
+    '</div>';
+  
   overlay.style.display = 'flex';
   overlay.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 
-  fetch('/admin/applications/' + appId + '/offer-letter/preview?format=json', {
+  // Fetch actual DOCX binary
+  fetch(fileUrl, {
+    credentials: 'same-origin',
     headers: {
-      'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest'
     }
   })
   .then(function(res) {
     if (!res.ok) {
-      return res.json().then(function(data) {
-        throw new Error(data.message || 'Failed to load preview');
-      }).catch(function() {
-        throw new Error('Preview is currently unavailable. Please download the document to view it.');
-      });
+      throw new Error('Offer Letter file could not be retrieved from server storage.');
     }
-    return res.json();
+    return res.blob();
   })
-  .then(function(data) {
-    if (data.status === 'success' && data.html) {
-      if (titleEl && data.candidate_name) {
-        titleEl.innerText = 'Offer Letter Preview — ' + data.candidate_name;
-      }
-      if (badgeEl && data.application_code) {
-        badgeEl.innerText = data.application_code;
-      }
-      if (downloadBtn && data.download_url) {
-        downloadBtn.href = data.download_url;
-      }
-      if (footerDownloadBtn && data.download_url) {
-        footerDownloadBtn.href = data.download_url;
-      }
-      body.innerHTML = '<div class="docx-page-sheet">' + data.html + '</div>';
-    } else {
-      throw new Error(data.message || 'Preview is currently unavailable. Please download the document to view it.');
+  .then(function(blob) {
+    body.innerHTML = '';
+    var renderTarget = document.createElement('div');
+    renderTarget.className = 'docx-preview-render-target';
+    renderTarget.style.width = '100%';
+    renderTarget.style.display = 'flex';
+    renderTarget.style.flexDirection = 'column';
+    renderTarget.style.alignItems = 'center';
+    body.appendChild(renderTarget);
+
+    if (typeof docx === 'undefined' || typeof docx.renderAsync !== 'function') {
+      throw new Error('DOCX preview renderer engine is loading or unavailable.');
     }
+
+    return docx.renderAsync(blob, renderTarget, null, {
+      className: 'docx-preview',
+      inWrapper: true,
+      breakPages: true,
+      ignoreWidth: false,
+      ignoreHeight: false,
+      ignoreFonts: false,
+      renderHeaders: true,
+      renderFooters: true,
+      renderFootnotes: true,
+      renderEndnotes: true,
+      useBase64URL: true,
+      trimXmlDeclaration: true
+    });
+  })
+  .then(function() {
+    // Successfully rendered
   })
   .catch(function(err) {
-    var downloadUrl = '/admin/applications/' + appId + '/offer-letter/download';
+    console.error('Error rendering DOCX preview:', err);
     body.innerHTML = 
       '<div class="docx-preview-error">' +
         '<h4>Document Preview Unavailable</h4>' +
-        '<p>' + (err.message || 'Preview is currently unavailable. Please download the document to view it.') + '</p>' +
+        '<p>' + (err.message || 'Unable to render the Word document preview.') + '</p>' +
         '<div style="display: flex; justify-content: center; gap: 10px;">' +
           '<a href="' + downloadUrl + '" class="btn btn-primary btn-sm" style="gap: 6px;">' +
             'Download Document' +

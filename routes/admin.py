@@ -747,16 +747,93 @@ def download_application_offer_letter(app_id):
     )
 
 
+@admin_bp.route('/applications/<int:app_id>/offer-letter/preview/file', methods=['GET'])
+@admin_bp.route('/applications/<int:app_id>/offer-letter/preview-file', methods=['GET'])
+@admin_required
+def preview_application_offer_letter_file(app_id):
+    """
+    Admin-only endpoint: serves the raw candidate generated Offer Letter DOCX binary
+    for client-side rendering in docx-preview.
+    Strictly enforces admin authentication and read-only access.
+    """
+    application = db.session.get(JobApplication, app_id) or abort(404)
+    offer_doc = application.offer_letter_doc
+
+    if not offer_doc:
+        abort(404)
+
+    fpath = offer_doc.file_path
+    if not fpath or not os.path.exists(fpath):
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            abort(404)
+
+    return send_from_directory(
+        os.path.dirname(fpath),
+        os.path.basename(fpath),
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        as_attachment=False,
+        download_name=offer_doc.file_name
+    )
+
+
 @admin_bp.route('/applications/<int:app_id>/offer-letter/preview', methods=['GET'])
 @admin_required
 def preview_application_offer_letter(app_id):
     """
-    Admin-only endpoint: renders or returns in-browser HTML preview for generated Offer Letter DOCX.
-    Does NOT download the file; does NOT modify the original DOCX or database records.
+    Admin-only endpoint:
+    - If format=raw/file/docx: serves the raw DOCX binary.
+    - If format=json (or AJAX): returns metadata (candidate name, app code, file_url, download_url).
+    - If direct browser GET: renders standalone document_preview.html with docx-preview.
+    Does NOT modify the original DOCX or database records.
     """
     from services.document_preview_service import get_application_offer_letter_preview
 
     application = db.session.get(JobApplication, app_id) or abort(404)
+    offer_doc = application.offer_letter_doc
+
+    if not offer_doc or not offer_doc.file_path:
+        if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'status': 'error',
+                'error_code': 'DOC_NOT_GENERATED',
+                'message': 'Offer Letter has not been generated for this application yet.'
+            }), 400
+        flash('Offer Letter has not been generated for this application yet.', 'warning')
+        return redirect(url_for('admin.application_detail', app_id=app_id))
+
+    # Resolve local path if needed
+    fpath = offer_doc.file_path
+    if not os.path.exists(fpath):
+        basename = os.path.basename(fpath or offer_doc.file_name or '')
+        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
+        if os.path.exists(local_path):
+            fpath = local_path
+        else:
+            if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'status': 'error',
+                    'error_code': 'DOC_NOT_GENERATED',
+                    'message': 'Offer Letter file not found on server.'
+                }), 400
+            flash('Offer Letter file not found on server.', 'warning')
+            return redirect(url_for('admin.application_detail', app_id=app_id))
+
+    # Serve raw binary if requested
+    if request.args.get('format') in ['raw', 'file', 'docx', 'binary']:
+        return send_from_directory(
+            os.path.dirname(fpath),
+            os.path.basename(fpath),
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=False,
+            download_name=offer_doc.file_name
+        )
+
+    file_url = url_for('admin.preview_application_offer_letter_file', app_id=app_id)
+    download_url = url_for('admin.download_application_offer_letter', app_id=app_id)
     preview_data = get_application_offer_letter_preview(app_id)
 
     is_ajax = (
@@ -764,15 +841,6 @@ def preview_application_offer_letter(app_id):
         request.args.get('format') == 'json' or
         request.accept_mimetypes.best == 'application/json'
     )
-
-    if preview_data.get('status') == 'error':
-        error_code = preview_data.get('error_code')
-        if error_code == 'NOT_FOUND':
-            abort(404)
-        if is_ajax:
-            return jsonify(preview_data), 400
-        flash(preview_data.get('message', 'Offer letter preview unavailable.'), 'warning')
-        return redirect(url_for('admin.application_detail', app_id=app_id))
 
     if is_ajax:
         return jsonify(preview_data), 200
@@ -782,7 +850,30 @@ def preview_application_offer_letter(app_id):
         'admin/document_preview.html',
         preview=preview_data,
         app=application,
+        offer_doc=offer_doc,
+        file_url=file_url,
+        download_url=download_url,
         back_url=url_for('admin.application_detail', app_id=app_id)
+    )
+
+
+@admin_bp.route('/documents/<int:doc_id>/preview/file', methods=['GET'])
+@admin_required
+def preview_document_file_by_id(doc_id):
+    """
+    Admin-only endpoint: serves raw EmployeeDocument DOCX binary for client-side rendering.
+    """
+    document = db.session.get(EmployeeDocument, doc_id) or abort(404)
+    fpath = document.file_path
+    if not fpath or not os.path.exists(fpath):
+        abort(404)
+
+    return send_from_directory(
+        os.path.dirname(fpath),
+        os.path.basename(fpath),
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        as_attachment=False,
+        download_name=document.file_name
     )
 
 
@@ -790,7 +881,7 @@ def preview_application_offer_letter(app_id):
 @admin_required
 def preview_document_by_id(doc_id):
     """
-    Admin-only endpoint: returns HTML preview for any EmployeeDocument by ID.
+    Admin-only endpoint: returns preview metadata for any EmployeeDocument by ID.
     """
     from services.document_preview_service import get_document_preview_by_id
 

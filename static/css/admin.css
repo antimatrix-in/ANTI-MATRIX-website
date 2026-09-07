@@ -1775,133 +1775,47 @@
 }
 
 .docx-preview-body {
-  padding: 2.25rem 1.5rem;
-  background: #cbd5e1;
+  padding: 1.5rem 1rem;
+  background: #334155;
   overflow-y: auto;
+  overflow-x: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  min-height: 280px;
+  min-height: 320px;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Page-Like Paper Sheet (Resembles Physical Document Pages) */
-.docx-page-sheet {
-  background: #ffffff;
-  color: #1e293b;
+.docx-preview-render-target {
   width: 100%;
-  max-width: 820px;
-  min-height: 800px;
-  padding: 48px 56px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
-  border-radius: 2px;
-  box-sizing: border-box;
-  font-family: 'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 11pt;
-  line-height: 1.6;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Document Typography & Elements */
-.docx-page-sheet h1.doc-title,
-.docx-page-sheet h1 {
-  font-size: 16pt;
-  font-weight: 800;
-  color: #0f172a;
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 16px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+/* Ensure docx-wrapper rendered by docx-preview centers nicely and respects Word page sizes */
+.docx-preview-render-target .docx-wrapper,
+#standalone-render-target .docx-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
-.docx-page-sheet h2.doc-heading,
-.docx-page-sheet h2 {
-  font-size: 13pt;
-  font-weight: 700;
-  color: #0f172a;
-  margin-top: 18px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 4px;
-}
-
-.docx-page-sheet h3.doc-heading,
-.docx-page-sheet h3 {
-  font-size: 11.5pt;
-  font-weight: 700;
-  color: #0f172a;
-  margin-top: 14px;
-  margin-bottom: 6px;
-}
-
-.docx-page-sheet p {
-  margin-top: 0;
-  margin-bottom: 11px;
-  color: #1e293b;
-}
-
-.docx-page-sheet p.doc-subtitle {
-  font-size: 11pt;
-  color: #64748b;
-  text-align: center;
-  margin-top: -10px;
-  margin-bottom: 18px;
-}
-
-.docx-page-sheet strong,
-.docx-page-sheet b {
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.docx-page-sheet em,
-.docx-page-sheet i {
-  color: #334155;
-  font-style: italic;
-}
-
-.docx-page-sheet ul,
-.docx-page-sheet ol {
-  padding-left: 24px;
-  margin-top: 6px;
-  margin-bottom: 14px;
-  color: #1e293b;
-}
-
-.docx-page-sheet li {
-  margin-bottom: 5px;
-}
-
-.docx-page-sheet table.doc-table,
-.docx-page-sheet table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  border: 1px solid #cbd5e1;
-  font-size: 10pt;
-}
-
-.docx-page-sheet table td,
-.docx-page-sheet table th {
-  border: 1px solid #cbd5e1;
-  padding: 8px 12px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.docx-page-sheet table th {
-  background-color: #f1f5f9;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.docx-page-sheet img {
-  max-width: 100%;
-  height: auto;
-  display: inline-block;
-  margin: 6px 0;
+.docx-preview-render-target .docx-wrapper > section.docx-preview,
+.docx-preview-render-target .docx-wrapper > section.docx,
+.docx-preview-render-target .docx-wrapper > section,
+#standalone-render-target .docx-wrapper > section.docx-preview,
+#standalone-render-target .docx-wrapper > section.docx,
+#standalone-render-target .docx-wrapper > section {
+  background: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  margin-bottom: 24px !important;
+  border-radius: 2px !important;
+  box-sizing: border-box !important;
 }
 
 .docx-preview-footer {
