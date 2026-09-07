@@ -43,13 +43,18 @@ def admin_required(f):
 def dashboard():
     total_jobs = JobPosting.query.count()
     active_jobs = JobPosting.query.filter_by(is_active=True).count()
-    total_applications = JobApplication.query.count()
-    new_applications = JobApplication.query.filter_by(status='New').count()
-    paid_applications = JobApplication.query.filter_by(payment_status='paid').count()
+    paid_applications = JobApplication.query.filter(JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])).count()
+    total_applications = paid_applications
+    new_applications = JobApplication.query.filter(
+        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt']),
+        JobApplication.status.in_(['New', 'APPLIED', 'applied'])
+    ).count()
     total_employees = Employee.query.count()
 
     recent_jobs = JobPosting.query.order_by(JobPosting.created_at.desc()).limit(5).all()
-    recent_applications = JobApplication.query.order_by(JobApplication.created_at.desc()).limit(8).all()
+    recent_applications = JobApplication.query.filter(
+        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
+    ).order_by(JobApplication.created_at.desc()).limit(8).all()
 
     return render_template(
         'admin/dashboard.html',
@@ -277,25 +282,72 @@ def delete_job(job_id):
     return redirect(url_for('admin.jobs'))
 
 
+@admin_bp.route('/applications/clear-all', methods=['POST'])
+@admin_bp.route('/applications/delete-all', methods=['POST'])
+@admin_required
+def clear_all_applications():
+    """
+    Clear all candidate applications and related uploaded documents upon typing DELETE.
+    Strictly preserves job postings, employees, templates, money transactions, and email logs.
+    """
+    confirmation = (request.form.get('confirmation') or '').strip()
+    if confirmation != 'DELETE':
+        flash('Deletion cancelled. You must type DELETE to confirm.', 'danger')
+        return redirect(url_for('admin.applications'))
+
+    total_apps = JobApplication.query.count()
+    if total_apps == 0:
+        flash('There are no candidate applications to delete.', 'info')
+        return redirect(url_for('admin.applications'))
+
+    try:
+        # 1. Clean up candidate uploaded documents from disk
+        apps = JobApplication.query.all()
+        for app in apps:
+            for path_attr in ['resume_path', 'aadhaar_path', 'pan_path', 'college_id_path']:
+                fpath = getattr(app, path_attr, None)
+                if fpath and os.path.exists(fpath):
+                    try:
+                        os.remove(fpath)
+                    except Exception:
+                        pass
+
+        # 2. Preserve Employee, MoneyTransaction, and EmployeeDocument records
+        Employee.query.filter(Employee.application_id.isnot(None)).update({'application_id': None})
+        MoneyTransaction.query.filter(MoneyTransaction.application_id.isnot(None)).update({'application_id': None})
+        EmployeeDocument.query.filter(EmployeeDocument.employee_id.isnot(None)).update({'application_id': None})
+
+        # 3. Delete Payment and JobApplication records
+        Payment.query.delete()
+        JobApplication.query.delete()
+        db.session.commit()
+        flash('All candidate applications and associated files have been cleared successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error clearing candidate applications: {e}")
+        flash('Unable to clear candidate applications. No changes were made.', 'danger')
+
+    return redirect(url_for('admin.applications'))
+
+
 @admin_bp.route('/applications')
 @admin_required
 def applications():
     job_id_filter = request.args.get('job_id', type=int)
     duration_filter = request.args.get('duration', '').strip()
-    payment_status_filter = request.args.get('payment_status', 'all').strip()
     status_filter = request.args.get('status', 'all').strip()
     search_query = request.args.get('q', '').strip()
 
-    query = JobApplication.query.join(JobPosting)
+    # Strictly filter for fully paid applications (or exempt/free)
+    query = JobApplication.query.join(JobPosting).filter(
+        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
+    )
 
     if job_id_filter:
         query = query.filter(JobApplication.job_id == job_id_filter)
 
     if duration_filter and duration_filter.lower() != 'all':
         query = query.filter(JobApplication.duration == duration_filter)
-
-    if payment_status_filter and payment_status_filter.lower() != 'all':
-        query = query.filter(JobApplication.payment_status.ilike(payment_status_filter))
 
     if status_filter and status_filter.lower() != 'all':
         query = query.filter(JobApplication.status.ilike(status_filter))
@@ -313,14 +365,17 @@ def applications():
 
     all_applications = query.order_by(JobApplication.created_at.desc()).all()
     all_jobs = JobPosting.query.order_by(JobPosting.title.asc()).all()
+    total_unfiltered_applications = JobApplication.query.filter(
+        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
+    ).count()
 
     return render_template(
         'admin/applications.html',
         applications=all_applications,
         all_jobs=all_jobs,
+        total_unfiltered_applications=total_unfiltered_applications,
         selected_job_id=job_id_filter,
         selected_duration=duration_filter,
-        selected_payment_status=payment_status_filter,
         selected_status=status_filter,
         search_query=search_query
     )

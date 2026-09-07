@@ -161,7 +161,9 @@ class JobApplication(db.Model):
     def formatted_code(self):
         if self.application_code:
             return self.application_code
-        return f"AM-APP-{self.id:06d}"
+        if self.payment_status in ['paid', 'exempt']:
+            return f"AM-APP-{self.id:06d}"
+        return ""
 
     @property
     def duration_display(self):

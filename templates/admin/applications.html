@@ -13,6 +13,17 @@
         <h1>Candidate Applications</h1>
         <p>Review candidate profiles, evaluate credentials, check Cashfree payment stages, and manage recruitment pipeline stages.</p>
       </div>
+      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        {% if total_unfiltered_applications > 0 %}
+          <button type="button" class="btn btn-danger-outline" id="open-clear-all-modal-btn" style="gap: 6px;">
+            {{ icon('trash-2', size=15) }} Clear All Applications
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-danger-outline" disabled style="opacity: 0.5; cursor: not-allowed; gap: 6px;" title="There are no candidate applications to clear">
+            {{ icon('trash-2', size=15) }} Clear All Applications
+          </button>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Admin Nav Tabs -->
@@ -46,9 +57,6 @@
         {% if selected_duration %}
           <input type="hidden" name="duration" value="{{ selected_duration }}" />
         {% endif %}
-        {% if selected_payment_status and selected_payment_status != 'all' %}
-          <input type="hidden" name="payment_status" value="{{ selected_payment_status }}" />
-        {% endif %}
         {% if selected_status and selected_status != 'all' %}
           <input type="hidden" name="status" value="{{ selected_status }}" />
         {% endif %}
@@ -56,7 +64,7 @@
         <input
           type="text"
           name="q"
-          placeholder="Search name, email, ref ID, skills..."
+          placeholder="Search name, email, App ID, skills..."
           class="form-input"
           value="{{ search_query }}"
           style="padding: 0.55rem 0.875rem; font-size: 0.875rem;"
@@ -85,24 +93,16 @@
             <option value="3_months" {{ 'selected' if selected_duration == '3_months' else '' }}>3 Months</option>
           </select>
 
-          <select name="payment_status" class="admin-select" onchange="this.form.submit();">
-            <option value="all" {{ 'selected' if selected_payment_status == 'all' else '' }}>All Payment States</option>
-            <option value="paid" {{ 'selected' if selected_payment_status == 'paid' else '' }}>Paid</option>
-            <option value="pending" {{ 'selected' if selected_payment_status == 'pending' else '' }}>Pending</option>
-            <option value="failed" {{ 'selected' if selected_payment_status == 'failed' else '' }}>Failed</option>
-            <option value="exempt" {{ 'selected' if selected_payment_status == 'exempt' else '' }}>Exempt / Free</option>
-          </select>
-
           <select name="status" class="admin-select" onchange="this.form.submit();">
             <option value="all" {{ 'selected' if selected_status == 'all' else '' }}>All Stages</option>
             <option value="APPLIED" {{ 'selected' if selected_status in ['APPLIED', 'New'] else '' }}>Applied</option>
             <option value="UNDER_REVIEW" {{ 'selected' if selected_status in ['UNDER_REVIEW', 'Reviewed'] else '' }}>Under Review</option>
-            <option value="SHORTLISTED" {{ 'selected' if selected_status == 'SHORTLISTED' or selected_status == 'Shortlisted' else '' }}>Shortlisted</option>
+            <option value="SHORTLISTED" {{ 'selected' if selected_status in ['SHORTLISTED', 'Shortlisted'] else '' }}>Shortlisted</option>
             <option value="Rejected" {{ 'selected' if selected_status == 'Rejected' else '' }}>Not Selected</option>
             <option value="Hired" {{ 'selected' if selected_status == 'Hired' else '' }}>Hired</option>
           </select>
 
-          {% if selected_status != 'all' or selected_job_id or selected_duration or selected_payment_status != 'all' or search_query %}
+          {% if selected_status != 'all' or selected_job_id or selected_duration or search_query %}
             <a href="{{ url_for('admin.applications') }}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">Reset</a>
           {% endif %}
         </form>
@@ -115,14 +115,14 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>App ID & Candidate</th>
-              <th>Applied Position</th>
+              <th>Application ID</th>
+              <th>Candidate Name</th>
+              <th>Position</th>
               <th>Duration</th>
-              <th>Employee ID</th>
               <th>Application Fee</th>
               <th>Payment</th>
               <th>Stage</th>
-              <th>Applied On</th>
+              <th>Applied Date</th>
               <th style="text-align: right;">Actions</th>
             </tr>
           </thead>
@@ -130,9 +130,11 @@
             {% for app in applications %}
               <tr>
                 <td>
-                  <span style="font-size: 0.775rem; font-weight: 700; color: var(--color-primary-light); font-family: var(--font-mono, monospace);">
-                    {{ app.formatted_code }}
+                  <span style="font-size: 0.825rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace); background: rgba(16,185,129,0.1); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(16,185,129,0.25); display: inline-block;">
+                    {{ app.application_code or app.formatted_code }}
                   </span>
+                </td>
+                <td>
                   <span class="admin-table-title">{{ app.full_name }}</span>
                   <span class="admin-table-subtitle">{{ app.email }} &bull; {{ app.phone }}</span>
                 </td>
@@ -150,15 +152,6 @@
                   {% endif %}
                 </td>
                 <td>
-                  {% if app.employee %}
-                    <a href="{{ url_for('admin.view_employee', employee_id=app.employee.employee_id) }}" style="font-size: 0.825rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace); background: rgba(16,185,129,0.12); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(16,185,129,0.25); text-decoration: none; display: inline-block;">
-                      {{ app.employee.employee_id }}
-                    </a>
-                  {% else %}
-                    <span style="color: var(--color-text-muted); font-size: 0.75rem;">Not Generated</span>
-                  {% endif %}
-                </td>
-                <td>
                   {% if app.application_fee and app.application_fee > 0 %}
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-white); font-family: var(--font-mono, monospace);">
                       ₹{{ app.application_fee }}
@@ -168,15 +161,7 @@
                   {% endif %}
                 </td>
                 <td>
-                  {% if app.payment_status == 'paid' %}
-                    <span class="badge-status active">Paid</span>
-                  {% elif app.payment_status == 'pending' or app.payment_status == 'processing' %}
-                    <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3);">Pending</span>
-                  {% elif app.payment_status == 'failed' or app.payment_status == 'cancelled' %}
-                    <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Failed</span>
-                  {% else %}
-                    <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border-color: var(--color-border);">Exempt</span>
-                  {% endif %}
+                  <span class="badge-status active">Paid</span>
                 </td>
                 <td>
                   <span class="badge-status {{ app.status_badge_class }}">{{ app.status_display }}</span>
@@ -202,11 +187,137 @@
         <div style="text-align: center; padding: var(--space-3xl) var(--space-lg);">
           <div class="icon-box" style="margin: 0 auto var(--space-md);">{{ icon('users', size=24) }}</div>
           <h3 style="color: var(--color-text); margin-bottom: 0.5rem;">No Applications Found</h3>
-          <p style="color: var(--color-text-dim); margin-bottom: 0;">No candidate applications match the selected filter criteria.</p>
+          <p style="color: var(--color-text-dim); margin-bottom: 0;">No paid candidate applications match the selected filter criteria.</p>
         </div>
       {% endif %}
     </div>
 
   </div>
 </section>
+
+<!-- Clear All Applications Confirmation Modal -->
+<div id="clear-all-modal-backdrop" class="modal-backdrop" style="display: none;" aria-hidden="true">
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="clear-modal-title">
+    <div class="modal-header">
+      <div class="modal-icon-danger">{{ icon('trash-2', size=22) }}</div>
+      <div>
+        <h3 id="clear-modal-title" style="color: #f87171; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem;">
+          Clear All Applications
+        </h3>
+        <p style="color: var(--color-text-dim); font-size: 0.85rem; margin-bottom: 0;">
+          Permanent destructive action
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-warning-box">
+        <strong>Delete all candidate applications? This action cannot be undone.</strong>
+        <p style="margin-top: 0.4rem; margin-bottom: 0.4rem; font-size: 0.875rem;">
+          You are about to permanently delete <strong style="color: #f87171;">{{ total_unfiltered_applications }}</strong> candidate application{% if total_unfiltered_applications != 1 %}s{% endif %} and all associated uploaded documents.
+        </p>
+        <p style="margin-bottom: 0; font-size: 0.825rem; color: var(--color-text-muted);">
+          Job postings, employees, templates, money transactions, and email logs will NOT be deleted.
+        </p>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.clear_all_applications') }}" id="clear-all-apps-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="form-group" style="margin-bottom: var(--space-xl);">
+          <label for="clear-confirm-input" class="form-label" style="font-size: 0.875rem; color: var(--color-text);">
+            Type <strong style="color: #f87171; letter-spacing: 0.05em; font-family: var(--font-mono, monospace);">DELETE</strong> to confirm:
+          </label>
+          <input
+            type="text"
+            id="clear-confirm-input"
+            name="confirmation"
+            class="form-input"
+            placeholder="Type DELETE"
+            autocomplete="off"
+            required
+            style="border-color: rgba(239, 68, 68, 0.4); font-family: var(--font-mono, monospace); font-weight: 700; letter-spacing: 0.05em;"
+          />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancel-clear-all-btn">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-danger-solid" id="confirm-clear-all-btn" disabled style="gap: 6px;">
+            {{ icon('trash-2', size=15) }} <span id="confirm-clear-btn-text">Clear All Applications</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var openModalBtn = document.getElementById('open-clear-all-modal-btn');
+  var modalBackdrop = document.getElementById('clear-all-modal-backdrop');
+  var cancelBtn = document.getElementById('cancel-clear-all-btn');
+  var confirmInput = document.getElementById('clear-confirm-input');
+  var confirmBtn = document.getElementById('confirm-clear-all-btn');
+
+  function openModal() {
+    if (modalBackdrop) {
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('aria-hidden', 'false');
+      if (confirmInput) {
+        confirmInput.value = '';
+        confirmInput.focus();
+      }
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+      }
+    }
+  }
+
+  function closeModal() {
+    if (modalBackdrop) {
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden', 'true');
+      if (confirmInput) {
+        confirmInput.value = '';
+      }
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+      }
+    }
+  }
+
+  if (openModalBtn) {
+    openModalBtn.addEventListener('click', openModal);
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
+
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', function(e) {
+      if (e.target === modalBackdrop) {
+        closeModal();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modalBackdrop && modalBackdrop.style.display === 'flex') {
+      closeModal();
+    }
+  });
+
+  if (confirmInput && confirmBtn) {
+    confirmInput.addEventListener('input', function() {
+      var isMatch = (confirmInput.value.trim() === 'DELETE');
+      confirmBtn.disabled = !isMatch;
+    });
+  }
+});
+</script>
 {% endblock %}

@@ -266,7 +266,7 @@ class AdminCareersTestCase(unittest.TestCase):
         """Test admin reviewing applications, updating status, and downloading resumes."""
         job = self.get_or_create_test_job()
         
-        # Ensure candidate application exists
+        # Ensure candidate application exists and is marked paid
         app_record = JobApplication.query.filter_by(email='priya.sharma@example.com').first()
         if not app_record:
             app_record = JobApplication(
@@ -286,12 +286,19 @@ class AdminCareersTestCase(unittest.TestCase):
                 cover_letter='Cover letter text...',
                 resume_filename='test_resume.pdf',
                 resume_path=os.path.join(self.app.config['UPLOAD_FOLDER'], 'test_resume.pdf'),
-                status='New'
+                status='New',
+                payment_status='paid',
+                application_code='AM-APP-000001'
             )
             os.makedirs(self.app.config['UPLOAD_FOLDER'], exist_ok=True)
             with open(app_record.resume_path, 'wb') as f:
                 f.write(b'%PDF-1.4 Mock resume content for download test')
             db.session.add(app_record)
+            db.session.commit()
+        else:
+            app_record.payment_status = 'paid'
+            if not app_record.application_code:
+                app_record.application_code = f"AM-APP-{app_record.id:06d}"
             db.session.commit()
 
         self.login_user('admin@antimatrix.ai', 'Admin@AntiMatrix2026!')
@@ -336,6 +343,61 @@ class AdminCareersTestCase(unittest.TestCase):
             res = self.client.get(r)
             self.assertEqual(res.status_code, 200, f"Route {r} failed with status {res.status_code}")
 
+    def test_07_clear_all_applications_and_hide_pending(self):
+        """Verify that pending applications are hidden and clear-all with DELETE works while preserving jobs."""
+        job = self.get_or_create_test_job()
+
+        # Create 1 pending application and 1 paid application
+        pending_app = JobApplication(
+            job_id=job.id,
+            full_name='Pending Candidate',
+            email='pending.cand@example.com',
+            phone='+1 (555) 000-1111',
+            payment_status='pending',
+            status='New',
+            resume_filename='test_pending.pdf',
+            resume_path=os.path.join(self.app.config['UPLOAD_FOLDER'], 'test_pending.pdf')
+        )
+        paid_app = JobApplication(
+            job_id=job.id,
+            full_name='Paid Candidate',
+            email='paid.cand@example.com',
+            phone='+1 (555) 000-2222',
+            payment_status='paid',
+            application_code='AM-APP-000099',
+            status='New',
+            resume_filename='test_paid.pdf',
+            resume_path=os.path.join(self.app.config['UPLOAD_FOLDER'], 'test_paid.pdf')
+        )
+        db.session.add_all([pending_app, paid_app])
+        db.session.commit()
+
+        self.login_user('admin@antimatrix.ai', 'Admin@AntiMatrix2026!')
+
+        # 1. Verify pending application is hidden and paid application is shown
+        res = self.client.get('/admin/applications')
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'Paid Candidate', res.data)
+        self.assertNotIn(b'Pending Candidate', res.data)
+        self.assertIn(b'AM-APP-000099', res.data)
+        self.assertIn(b'Paid', res.data)
+
+        # 2. Attempt to clear all without typing DELETE
+        res_invalid = self.client.post('/admin/applications/clear-all', data={'confirmation': 'NO'}, follow_redirects=True)
+        self.assertIn(b'You must type DELETE to confirm', res_invalid.data)
+        self.assertGreater(JobApplication.query.count(), 0)
+
+        # 3. Clear all with confirmation = DELETE
+        job_count_before = JobPosting.query.count()
+        res_clear = self.client.post('/admin/applications/clear-all', data={'confirmation': 'DELETE'}, follow_redirects=True)
+        self.assertIn(b'cleared successfully', res_clear.data)
+        self.assertEqual(JobApplication.query.count(), 0)
+        # Job postings must be strictly preserved
+        self.assertEqual(JobPosting.query.count(), job_count_before)
+
+        self.logout_user()
+
 
 if __name__ == '__main__':
     unittest.main()
+

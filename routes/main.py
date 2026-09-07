@@ -337,7 +337,10 @@ def apply_job(job_id):
             )
             db.session.add(application)
             db.session.flush()
-            application.application_code = f"AM-APP-{application.id:06d}"
+            if not is_internship or fee_inr == 0:
+                application.application_code = f"AM-APP-{application.id:06d}"
+            else:
+                application.application_code = None
         else:
             # Update existing draft application
             application.user_id = current_user.id
@@ -381,8 +384,9 @@ def apply_job(job_id):
             application.payment_status = 'pending' if is_internship else 'exempt'
             application.application_status = 'pending_payment' if is_internship else 'APPLIED'
             application.status = 'APPLIED' if not is_internship else 'New'
-            if not application.application_code:
-                application.application_code = f"AM-APP-{application.id:06d}"
+            if not is_internship or fee_inr == 0:
+                if not application.application_code:
+                    application.application_code = f"AM-APP-{application.id:06d}"
 
         db.session.commit()
 
@@ -538,6 +542,13 @@ def job_apply_test_payment(app_id):
         record_cashfree_income(application, payment, {"simulated": True}, env='TEST')
     except Exception as e:
         current_app.logger.warning(f"Failed to record money transaction for test payment: {e}")
+
+    # Send application success email notification
+    try:
+        from services.email_service import send_application_successful_email
+        send_application_successful_email(application)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to send confirmation email for test application {application.id}: {e}")
 
     flash("Test payment completed successfully! Your application has been submitted.", "success")
     return redirect(url_for('main.job_apply_success', app_id=application.id))
