@@ -41,17 +41,41 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
         self.app_context = self.app.app_context()
         self.app_context.push()
 
+        # Retrieve existing application or ensure one exists with generated offer letter
+        self.app_record = JobApplication.query.first()
+        if not self.app_record:
+            from services.offer_letter_service import generate_offer_letter_docx
+            job = JobPosting.query.first()
+            user = User.query.first()
+            self.app_record = JobApplication(
+                job_id=job.id if job else 1,
+                user_id=user.id if user else 1,
+                first_name='Test',
+                last_name='Candidate',
+                full_name='Test Candidate',
+                email='test_pdf_cand@example.com',
+                phone='9876543210',
+                payment_status='paid',
+                status='SHORTLISTED',
+                application_status='SHORTLISTED'
+            )
+            db.session.add(self.app_record)
+            db.session.commit()
+
+        # Ensure Offer Letter doc exists
+        if not self.app_record.offer_letter_doc or not _resolve_document_file_path(self.app_record.offer_letter_doc):
+            from services.offer_letter_service import generate_offer_letter_docx
+            generate_offer_letter_docx(self.app_record)
+
     def tearDown(self):
         db.session.rollback()
         self.app_context.pop()
 
-    def test_01_existing_candidate_240_docx_to_pdf_conversion(self):
-        """Verify AM-APP-000240 existing DOCX converts to a valid, authentic PDF."""
-        app_240 = JobApplication.query.filter_by(application_code='AM-APP-000240').first()
-        self.assertIsNotNone(app_240, "AM-APP-000240 must exist in database")
-        
-        doc = app_240.offer_letter_doc
-        self.assertIsNotNone(doc, "AM-APP-000240 must have an offer letter document record")
+    def test_01_existing_candidate_docx_to_pdf_conversion(self):
+        """Verify candidate existing DOCX converts to a valid, authentic PDF."""
+        app_obj = self.app_record
+        doc = app_obj.offer_letter_doc
+        self.assertIsNotNone(doc, "Candidate must have an offer letter document record")
         
         docx_path = _resolve_document_file_path(doc)
         self.assertIsNotNone(docx_path, "DOCX path must resolve")
@@ -84,15 +108,14 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
         """Verify send_offer_letter_shortlisted_email sends PDF attachment with candidate-specific filename."""
         mock_brevo.return_value = (True, "Email successfully sent via Brevo API", "msg_test_12345")
 
-        app_240 = JobApplication.query.filter_by(application_code='AM-APP-000240').first()
-        self.assertIsNotNone(app_240)
-        doc = app_240.offer_letter_doc
+        app_obj = self.app_record
+        doc = app_obj.offer_letter_doc
         self.assertIsNotNone(doc)
 
         # Temporarily ensure email_status is not 'sent' for test run within rolled-back transaction
         doc.email_status = 'not_sent'
 
-        success, msg = send_offer_letter_shortlisted_email(app_240)
+        success, msg = send_offer_letter_shortlisted_email(app_obj)
         self.assertTrue(success, f"Email sending failed: {msg}")
 
         # Verify mock_brevo was called with PDF attachment
@@ -105,7 +128,8 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
         self.assertIsNotNone(att_path, "attachment_path must be provided")
         self.assertTrue(att_path.endswith('.pdf'), f"attachment_path must end with .pdf, got: {att_path}")
         self.assertTrue(os.path.exists(att_path), f"Attached PDF must exist at: {att_path}")
-        self.assertEqual(att_name, "AM-APP-000240_Offer_Letter.pdf", f"attachment_name should be AM-APP-000240_Offer_Letter.pdf, got: {att_name}")
+        expected_pdf_name = f"{app_obj.formatted_code}_Offer_Letter.pdf"
+        self.assertEqual(att_name, expected_pdf_name, f"attachment_name should be {expected_pdf_name}, got: {att_name}")
 
         # Verify PDF contents
         with open(att_path, 'rb') as f:
@@ -117,31 +141,32 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
         """Verify EmailLog records .pdf attachment filename."""
         mock_brevo.return_value = (True, "Email successfully sent via Brevo API", "msg_log_test_67890")
 
-        app_240 = JobApplication.query.filter_by(application_code='AM-APP-000240').first()
-        doc = app_240.offer_letter_doc
+        app_obj = self.app_record
+        doc = app_obj.offer_letter_doc
         doc.email_status = 'not_sent'
 
-        success, msg = send_offer_letter_shortlisted_email(app_240)
+        success, msg = send_offer_letter_shortlisted_email(app_obj)
         self.assertTrue(success)
 
         # Check EmailLog entry
         log = EmailLog.query.filter_by(template_type='offer_letter').order_by(EmailLog.id.desc()).first()
         self.assertIsNotNone(log)
-        self.assertEqual(log.recipient_email, app_240.email)
+        self.assertEqual(log.recipient_email, app_obj.email)
         self.assertEqual(log.status, 'SENT')
         self.assertTrue(log.has_attachment)
-        self.assertEqual(log.attachment_name, "AM-APP-000240_Offer_Letter.pdf")
+        expected_pdf_name = f"{app_obj.formatted_code}_Offer_Letter.pdf"
+        self.assertEqual(log.attachment_name, expected_pdf_name)
 
     @patch('services.email_service.send_brevo_email')
     def test_04_one_time_send_protection_prevents_duplicate(self, mock_brevo):
         """Verify that once an offer letter email is sent, subsequent attempts are blocked."""
         mock_brevo.return_value = (True, "Email sent", "msg_123")
 
-        app_240 = JobApplication.query.filter_by(application_code='AM-APP-000240').first()
-        doc = app_240.offer_letter_doc
+        app_obj = self.app_record
+        doc = app_obj.offer_letter_doc
         doc.email_status = 'sent'
 
-        success, msg = send_offer_letter_shortlisted_email(app_240)
+        success, msg = send_offer_letter_shortlisted_email(app_obj)
         self.assertFalse(success)
         self.assertIn("already sent", msg.lower())
         mock_brevo.assert_not_called()
@@ -152,11 +177,11 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
         """Verify that if PDF conversion fails, no email is sent and error is reported."""
         mock_convert.return_value = (False, None, "LibreOffice conversion timeout")
 
-        app_240 = JobApplication.query.filter_by(application_code='AM-APP-000240').first()
-        doc = app_240.offer_letter_doc
+        app_obj = self.app_record
+        doc = app_obj.offer_letter_doc
         doc.email_status = 'not_sent'
 
-        success, msg = send_offer_letter_shortlisted_email(app_240)
+        success, msg = send_offer_letter_shortlisted_email(app_obj)
         self.assertFalse(success)
         self.assertIn("Offer Letter PDF could not be generated", msg)
         mock_brevo.assert_not_called()

@@ -494,13 +494,38 @@ def send_application_success_email_action(app_id):
 
 
 @admin_bp.route('/applications/<int:app_id>/mark-shortlisted', methods=['POST'])
+@admin_bp.route('/applications/<int:app_id>/mark-shortlisted-send-offer', methods=['POST'])
 @admin_required
 def mark_application_shortlisted(app_id):
+    """
+    Unified Action: 'Mark as Shortlisted & Send Offer Email'.
+    Performs the full 13-step workflow:
+    1. Verify admin auth
+    2. Verify application exists
+    3. Verify payment is completed (paid or exempt)
+    4. Mark application as SHORTLISTED
+    5. Create/reuse Employee record
+    6. Generate/reuse candidate Offer Letter DOCX
+    7. Convert DOCX to PDF
+    8. Load Shortlisted email template (template_type='offer_letter')
+    9. Populate candidate variables
+    10. Attach candidate Offer Letter PDF (<APPLICATION_ID>_Offer_Letter.pdf)
+    11. Send email through Brevo REST API
+    12. Update email status / EmailLog on Brevo response
+    13. Update UI state
+    """
     application = db.session.get(JobApplication, app_id) or abort(404)
+
+    # Step 3: Verify payment is completed
+    if application.payment_status not in ['paid', 'exempt']:
+        flash(f"Payment is not completed (Current status: {application.payment_status}). Candidate cannot be shortlisted until payment is completed.", 'warning')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
+
+    # Step 4: Mark application as SHORTLISTED
     application.status = 'SHORTLISTED'
     application.application_status = 'SHORTLISTED'
 
-    # Auto-generate Employee record and temporary credentials immediately on Shortlisting if not existing
+    # Step 5: Create/reuse Employee record
     if not application.employee:
         try:
             emp_id = Employee.generate_unique_employee_id()
@@ -526,19 +551,39 @@ def mark_application_shortlisted(app_id):
         except Exception as e:
             current_app.logger.warning(f"Error creating employee during shortlist: {str(e)}")
 
-    # Automatically generate Offer Letter DOCX
+    # Step 6: Generate/reuse candidate Offer Letter DOCX
+    offer_doc = None
     try:
         offer_doc, _ = generate_offer_letter_docx(application)
         if application.employee and offer_doc:
             offer_doc.employee_id = application.employee.id
         db.session.commit()
-        flash(f"Candidate {application.full_name} marked as Shortlisted. Employee ID ({application.employee.employee_id if application.employee else ''}) and Offer Letter DOCX generated automatically.", 'success')
     except (OfferLetterTemplateNotFoundError, OfferLetterTemplateFileMissingError) as tmpl_err:
         db.session.commit()
-        flash(f"Candidate marked as Shortlisted. Notice: {str(tmpl_err)}", 'warning')
+        flash(f"Candidate marked as Shortlisted, but Offer Letter master template is missing: {str(tmpl_err)}", 'warning')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
     except Exception as e:
         db.session.commit()
-        flash(f"Candidate marked as Shortlisted. Error generating Offer Letter: {str(e)}", 'danger')
+        flash(f"Candidate marked as Shortlisted, but error generating Offer Letter DOCX: {str(e)}", 'danger')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
+
+    # Steps 7-12: Send Shortlisted & Offer Letter Email with PDF attachment via Brevo
+    if offer_doc and offer_doc.email_status == 'sent':
+        flash(f"Candidate {application.full_name} is already Shortlisted and the Offer Letter email was already delivered.", 'info')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
+
+    from services.email_service import send_offer_letter_shortlisted_email
+    email_success, email_msg = send_offer_letter_shortlisted_email(application)
+
+    emp_code = application.employee.employee_id if application.employee else ''
+    if email_success:
+        flash(f"Candidate {application.full_name} successfully marked as Shortlisted! Employee ID ({emp_code}) generated and official Offer Letter email with PDF attachment dispatched to {application.email} via Brevo.", 'success')
+    else:
+        # Partial Failure Handling: candidate remains SHORTLISTED, error clearly reported
+        if "PDF could not be generated" in str(email_msg) or "PDF conversion failed" in str(email_msg):
+            flash("Candidate shortlisted, but the Offer Letter PDF could not be generated. The email was not sent.", 'danger')
+        else:
+            flash(f"Candidate shortlisted and Offer Letter generated, but email delivery failed: {email_msg}", 'danger')
 
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
@@ -548,8 +593,7 @@ def mark_application_shortlisted(app_id):
 def mark_application_offer_complete(app_id):
     """
     Stage 4: Mark as Complete.
-    Validates employee and offer letter exist, updates status to OFFER_COMPLETED,
-    and automatically dispatches the Shortlisted / Offer Letter email with DOCX attachment via Brevo.
+    Validates employee and offer letter exist, updates status to OFFER_COMPLETED.
     """
     application = db.session.get(JobApplication, app_id) or abort(404)
 
@@ -646,9 +690,16 @@ def send_joining_email_action(app_id):
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
 
+@admin_bp.route('/applications/<int:app_id>/retry-shortlist-offer', methods=['POST'])
 @admin_bp.route('/applications/<int:app_id>/send-shortlist-offer', methods=['POST'])
 @admin_required
-def send_shortlist_offer_action(app_id):
+def retry_shortlist_offer_email(app_id):
+    """
+    Admin Retry Action: Resends the Shortlisted & Offer Letter email with PDF attachment via Brevo.
+    Reuses existing Employee, Application ID, DOCX, and regenerated PDF.
+    """
+    from services.document_preview_service import _resolve_document_file_path
+    from services.offer_letter_service import send_offer_letter_email
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure status is SHORTLISTED or OFFER_COMPLETED or HIRED
@@ -676,7 +727,10 @@ def send_shortlist_offer_action(app_id):
     success, msg = send_offer_letter_email(application)
 
     if not success:
-        flash(f"Failed to send Offer Letter email: {msg}", 'danger')
+        if "PDF could not be generated" in str(msg) or "PDF conversion failed" in str(msg):
+            flash("Offer Letter PDF could not be generated. The email was not sent.", 'danger')
+        else:
+            flash(f"Failed to send Offer Letter email: {msg}", 'danger')
         return redirect(url_for('admin.application_detail', app_id=application.id))
 
     # Auto-generate Employee credentials if not already existing
@@ -792,7 +846,15 @@ def preview_application_offer_letter_pdf(app_id):
     offer_doc = application.offer_letter_doc
 
     if not offer_doc:
-        abort(404)
+        st = (application.status or application.application_status or '').upper()
+        if st in ['SHORTLISTED', 'OFFER_COMPLETED', 'HIRED']:
+            try:
+                offer_doc, _ = generate_offer_letter_docx(application)
+            except Exception as e:
+                current_app.logger.error(f"Failed to generate offer doc on preview: {e}")
+                abort(404)
+        else:
+            abort(404)
 
     fpath = offer_doc.file_path
     if not fpath or not os.path.exists(fpath):
@@ -801,7 +863,11 @@ def preview_application_offer_letter_pdf(app_id):
         if os.path.exists(local_path):
             fpath = local_path
         else:
-            abort(404)
+            try:
+                offer_doc, fpath = generate_offer_letter_docx(application)
+            except Exception as e:
+                current_app.logger.error(f"Failed to regenerate missing DOCX on preview: {e}")
+                abort(404)
 
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
