@@ -573,7 +573,7 @@ def mark_application_offer_complete(app_id):
         success, msg = send_offer_letter_email(application)
         if success:
             db.session.commit()
-            flash(f"Offer marked as Complete! Offer Letter email with DOCX attachment sent successfully to {application.email}.", 'success')
+            flash(f"Offer marked as Complete! Offer Letter email with PDF attachment sent successfully to {application.email}.", 'success')
         else:
             db.session.commit()
             flash(f"Offer marked as Complete. Notice on email delivery: {msg}", 'warning')
@@ -786,7 +786,7 @@ def preview_application_offer_letter_pdf(app_id):
     Admin-only endpoint: converts the candidate's generated Offer Letter DOCX to PDF
     using LibreOffice headless and streams the PDF for inline browser preview.
     """
-    from services.document_preview_service import convert_docx_to_pdf
+    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
 
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
@@ -794,14 +794,9 @@ def preview_application_offer_letter_pdf(app_id):
     if not offer_doc:
         abort(404)
 
-    fpath = offer_doc.file_path
+    fpath = _resolve_document_file_path(offer_doc)
     if not fpath or not os.path.exists(fpath):
-        basename = os.path.basename(fpath or offer_doc.file_name or '')
-        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
-        if os.path.exists(local_path):
-            fpath = local_path
-        else:
-            abort(404)
+        abort(404)
 
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
@@ -840,12 +835,12 @@ def preview_application_offer_letter(app_id):
     - If direct browser GET: renders standalone document_preview.html with embedded PDF viewer.
     Does NOT modify the original DOCX or database records.
     """
-    from services.document_preview_service import get_application_offer_letter_preview
+    from services.document_preview_service import get_application_offer_letter_preview, _resolve_document_file_path
 
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
 
-    if not offer_doc or not offer_doc.file_path:
+    if not offer_doc:
         if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'status': 'error',
@@ -856,21 +851,16 @@ def preview_application_offer_letter(app_id):
         return redirect(url_for('admin.application_detail', app_id=app_id))
 
     # Resolve local path if needed
-    fpath = offer_doc.file_path
-    if not os.path.exists(fpath):
-        basename = os.path.basename(fpath or offer_doc.file_name or '')
-        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
-        if os.path.exists(local_path):
-            fpath = local_path
-        else:
-            if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    'status': 'error',
-                    'error_code': 'DOC_NOT_GENERATED',
-                    'message': 'Offer Letter file not found on server.'
-                }), 400
-            flash('Offer Letter file not found on server.', 'warning')
-            return redirect(url_for('admin.application_detail', app_id=app_id))
+    fpath = _resolve_document_file_path(offer_doc)
+    if not fpath or not os.path.exists(fpath):
+        if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'status': 'error',
+                'error_code': 'DOC_NOT_GENERATED',
+                'message': 'Offer Letter file not found on server.'
+            }), 400
+        flash('Offer Letter file not found on server.', 'warning')
+        return redirect(url_for('admin.application_detail', app_id=app_id))
 
     # Serve PDF if requested
     if request.args.get('format') == 'pdf':
@@ -916,11 +906,11 @@ def preview_application_offer_letter(app_id):
 @admin_bp.route('/documents/<int:doc_id>/preview/file', methods=['GET'])
 @admin_required
 def preview_document_file_by_id(doc_id):
-    """
-    Admin-only endpoint: serves raw EmployeeDocument DOCX binary.
-    """
+    """Admin-only endpoint: serves raw EmployeeDocument DOCX binary."""
+    from services.document_preview_service import _resolve_document_file_path
+
     document = db.session.get(EmployeeDocument, doc_id) or abort(404)
-    fpath = document.file_path
+    fpath = _resolve_document_file_path(document)
     if not fpath or not os.path.exists(fpath):
         abort(404)
 
@@ -940,10 +930,10 @@ def preview_document_pdf_by_id(doc_id):
     Admin-only endpoint: converts EmployeeDocument DOCX to PDF using LibreOffice headless
     and streams PDF for inline viewing.
     """
-    from services.document_preview_service import convert_docx_to_pdf
+    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
 
     document = db.session.get(EmployeeDocument, doc_id) or abort(404)
-    fpath = document.file_path
+    fpath = _resolve_document_file_path(document)
     if not fpath or not os.path.exists(fpath):
         abort(404)
 

@@ -38,9 +38,15 @@ def _resolve_document_file_path(doc) -> Optional[str]:
     basename = os.path.basename(fpath or doc.file_name or '')
     if basename:
         root_path = _get_root_path()
-        local_path = os.path.join(root_path, 'uploads', 'generated_documents', basename)
-        if os.path.exists(local_path):
-            return os.path.abspath(local_path)
+        candidates = [
+            os.path.join(root_path, 'uploads', 'generated_documents', basename),
+            os.path.join(root_path, 'uploads', 'documents', basename),
+            os.path.join(root_path, 'uploads', basename),
+            os.path.join(root_path, 'uploads', 'resumes', basename),
+        ]
+        for cp in candidates:
+            if os.path.exists(cp):
+                return os.path.abspath(cp)
     return None
 
 
@@ -76,15 +82,25 @@ def find_libreoffice_binary() -> Optional[str]:
             return os.path.abspath(cand)
 
     # 4. Standard Linux / Render / Docker locations
+    root_path = _get_root_path()
     linux_candidates = [
         "/usr/bin/libreoffice",
         "/usr/bin/soffice",
         "/usr/local/bin/libreoffice",
         "/usr/local/bin/soffice",
         "/usr/lib/libreoffice/program/soffice",
+        "/opt/libreoffice/program/soffice",
     ]
     linux_candidates.extend(glob.glob("/opt/libreoffice*/program/soffice"))
     linux_candidates.extend(glob.glob("/usr/lib/libreoffice*/program/soffice"))
+    linux_candidates.extend(glob.glob(os.path.expanduser("~/.local/bin/libreoffice*")))
+    linux_candidates.extend(glob.glob(os.path.expanduser("~/.local/bin/soffice*")))
+    linux_candidates.extend(glob.glob(os.path.expanduser("~/.libreoffice*/program/soffice")))
+    linux_candidates.extend(glob.glob(os.path.join(root_path, "libreoffice", "usr", "bin", "soffice")))
+    linux_candidates.extend(glob.glob(os.path.join(root_path, "libreoffice", "opt", "libreoffice*", "program", "soffice")))
+    linux_candidates.extend(glob.glob(os.path.join(root_path, "libreoffice", "program", "soffice")))
+    linux_candidates.extend(glob.glob(os.path.join(root_path, "squashfs-root", "AppRun")))
+    linux_candidates.extend(glob.glob(os.path.join(root_path, "squashfs-root", "usr", "bin", "soffice")))
 
     for cand in linux_candidates:
         if os.path.isfile(cand):

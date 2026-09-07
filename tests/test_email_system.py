@@ -22,8 +22,10 @@ from services.offer_letter_service import generate_offer_letter_docx
 class TestAntiMatrixEmailSystem(unittest.TestCase):
     def setUp(self):
         """Set up test application with in-memory database."""
+        os.environ['BREVO_API_KEY'] = ''
         self.app = create_app('testing')
         self.app.config['WTF_CSRF_ENABLED'] = False
+        self.app.config['BREVO_API_KEY'] = ''
 
         self.client = self.app.test_client()
         self.ctx = self.app.app_context()
@@ -223,7 +225,7 @@ class TestAntiMatrixEmailSystem(unittest.TestCase):
         self.assertEqual(log.recipient_email, 'rahul.kumar@example.com')
         self.assertEqual(log.status, 'SENT')
         self.assertTrue(log.has_attachment)
-        self.assertIn('Offer_Letter.docx', log.attachment_name)
+        self.assertIn('Offer_Letter.pdf', log.attachment_name)
         self.assertIn('Congratulations! You Have Been Shortlisted', log.subject)
 
         # Second send attempt -> MUST be blocked
@@ -294,7 +296,7 @@ class TestAntiMatrixEmailSystem(unittest.TestCase):
         updated_app = db.session.get(JobApplication, self.app_record.id)
         self.assertEqual(updated_app.payment_status, 'paid')
         self.assertEqual(updated_app.status, 'APPLIED')
-        self.assertEqual(updated_app.application_success_email_status, 'PENDING')
+        self.assertEqual(updated_app.application_success_email_status, 'SENT')
 
     def test_08_get_request_on_send_application_email_redirects_safely(self):
         """GET request on send-application-email should safely redirect without 500 error."""
