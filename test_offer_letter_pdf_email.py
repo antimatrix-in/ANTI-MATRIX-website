@@ -173,18 +173,33 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
 
     @patch('services.document_preview_service.convert_docx_to_pdf')
     @patch('services.email_service.send_brevo_email')
-    def test_05_conversion_failure_prevents_email_dispatch(self, mock_brevo, mock_convert):
-        """Verify that if PDF conversion fails, no email is sent and error is reported."""
+    def test_05_conversion_failure_falls_back_to_docx_attachment(self, mock_brevo, mock_convert):
+        """Verify that if PDF conversion fails, the email is still sent with the DOCX as fallback attachment.
+        This is critical for production environments (Render/Linux) where LibreOffice may not be installed.
+        The old behavior (blocking the email) is replaced with a DOCX-fallback so candidates always receive
+        their Offer Letter regardless of server PDF capability."""
         mock_convert.return_value = (False, None, "LibreOffice conversion timeout")
+        mock_brevo.return_value = (True, "Email sent via DOCX fallback", "msg_fallback_001")
 
         app_obj = self.app_record
         doc = app_obj.offer_letter_doc
         doc.email_status = 'not_sent'
 
         success, msg = send_offer_letter_shortlisted_email(app_obj)
-        self.assertFalse(success)
-        self.assertIn("Offer Letter PDF could not be generated", msg)
-        mock_brevo.assert_not_called()
+        # Email should be SENT with DOCX fallback, not blocked
+        self.assertTrue(success, "Email must be sent even when PDF conversion fails (DOCX fallback)")
+        # Brevo must have been called with the DOCX path
+        mock_brevo.assert_called_once()
+        call_kwargs = mock_brevo.call_args
+        # attachment_name should be the DOCX filename, not a .pdf filename
+        attach_name = call_kwargs.kwargs.get('attachment_name') or (
+            call_kwargs.args[4] if len(call_kwargs.args) > 4 else None
+        )
+        if attach_name:
+            self.assertTrue(
+                attach_name.endswith('.docx'),
+                f"Expected DOCX fallback attachment, got: {attach_name}"
+            )
 
 
 if __name__ == '__main__':

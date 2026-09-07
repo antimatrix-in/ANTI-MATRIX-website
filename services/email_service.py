@@ -743,26 +743,46 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
         sent_time = emp_doc.sent_at.strftime('%b %d, %Y') if emp_doc.sent_at else 'earlier'
         return False, f"Offer Letter already sent on {sent_time}. Duplicate sending is prevented."
 
-    # Generate / retrieve faithful PDF from the exact candidate DOCX
+    # Generate / retrieve faithful PDF from the exact candidate DOCX.
+    # If LibreOffice is unavailable on this server, fall back to attaching the DOCX directly
+    # so the email is always delivered — the candidate still receives their Offer Letter.
     conv_success, pdf_path, conv_err = convert_docx_to_pdf(docx_path)
-    if not conv_success or not pdf_path or not os.path.exists(pdf_path):
-        if current_app:
-            current_app.logger.error(f"Offer Letter PDF conversion failed before email dispatch: {conv_err}")
-        return False, "Offer Letter PDF could not be generated. The email was not sent."
+    if conv_success and pdf_path and os.path.exists(pdf_path):
+        # Verify generated PDF integrity before sending
+        try:
+            valid_pdf = os.path.getsize(pdf_path) > 0
+            if valid_pdf:
+                with open(pdf_path, 'rb') as _f:
+                    valid_pdf = _f.read(5).startswith(b'%PDF-')
+        except Exception as verify_err:
+            if current_app:
+                current_app.logger.warning(
+                    f"PDF integrity check failed ({verify_err}); falling back to DOCX attachment."
+                )
+            valid_pdf = False
 
-    # Verify generated PDF integrity before sending
-    try:
-        if os.path.getsize(pdf_path) == 0:
-            return False, "Offer Letter PDF could not be generated. The email was not sent."
-        with open(pdf_path, 'rb') as f:
-            if not f.read(5).startswith(b'%PDF-'):
-                return False, "Offer Letter PDF could not be generated. The email was not sent."
-    except Exception as verify_err:
+        if valid_pdf:
+            attachment_path = pdf_path
+            attachment_name = f"{os.path.splitext(emp_doc.file_name)[0]}.pdf"
+        else:
+            # PDF file is present but corrupt — fall back to DOCX
+            if current_app:
+                current_app.logger.warning(
+                    "Generated PDF failed integrity check. Falling back to DOCX attachment for email."
+                )
+            attachment_path = docx_path
+            attachment_name = emp_doc.file_name
+    else:
+        # LibreOffice not available or conversion failed — fall back to DOCX attachment
         if current_app:
-            current_app.logger.error(f"Error validating generated Offer Letter PDF before email dispatch: {verify_err}")
-        return False, "Offer Letter PDF could not be generated. The email was not sent."
+            current_app.logger.warning(
+                f"Offer Letter PDF conversion unavailable ({conv_err}). "
+                f"Sending DOCX as email attachment instead."
+            )
+        attachment_path = docx_path
+        attachment_name = emp_doc.file_name
 
-    pdf_filename = f"{os.path.splitext(emp_doc.file_name)[0]}.pdf"
+    pdf_filename = attachment_name  # kept for backward compat with log/db fields below
 
     try:
         rendered = render_shortlisted_offer_email(app, custom_params={'start_date': start_date})
@@ -776,8 +796,8 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
             subject=subject,
             body_text=body_text,
             body_html=body_html,
-            attachment_path=pdf_path,
-            attachment_name=pdf_filename
+            attachment_path=attachment_path,
+            attachment_name=attachment_name
         )
 
         now_utc = datetime.now(timezone.utc)
