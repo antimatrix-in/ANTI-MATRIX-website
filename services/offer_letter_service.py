@@ -234,49 +234,7 @@ def replace_placeholders_in_xml(xml_bytes, replacements):
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
-def populate_docx_from_master_template(master_template_path, output_filepath, placeholder_mapping):
-    """
-    Creates an exact copy of the uploaded master DOCX package at output_filepath,
-    and replaces ONLY approved placeholders in the document XML (word/document.xml, word/header*.xml, word/footer*.xml).
-    
-    CRITICAL:
-    - Master DOCX package is the source of truth.
-    - 100% of all images, logos, circular seals, MSME visual, green border, line dividers,
-      watermarks, headers, footers, styles, fonts, and page layouts are preserved byte-for-byte.
-    - Master template file on disk is NEVER modified.
-    """
-    if not os.path.exists(master_template_path):
-        raise FileNotFoundError(f"Master template file not found at: {master_template_path}")
-
-    xml_targets = set()
-    file_contents = {}
-
-    with zipfile.ZipFile(master_template_path, 'r') as src_zip:
-        for name in src_zip.namelist():
-            if name == 'word/document.xml' or \
-               (name.startswith('word/header') and name.endswith('.xml')) or \
-               (name.startswith('word/footer') and name.endswith('.xml')) or \
-               (name.startswith('word/footnotes') and name.endswith('.xml')) or \
-               (name.startswith('word/endnotes') and name.endswith('.xml')):
-                xml_targets.add(name)
-            file_contents[name] = src_zip.read(name)
-
-    # Replace placeholders in relevant XML parts
-    for target_name in xml_targets:
-        if target_name in file_contents:
-            file_contents[target_name] = replace_placeholders_in_xml(
-                file_contents[target_name],
-                placeholder_mapping
-            )
-
-    # Write output candidate-specific DOCX package
-    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-    with zipfile.ZipFile(output_filepath, 'w', compression=zipfile.ZIP_DEFLATED) as dst_zip:
-        for name, data in file_contents.items():
-            dst_zip.writestr(name, data)
-
-
-def replace_placeholders_in_paragraph(paragraph, mapping):
+def safe_replace_in_runs(paragraph, mapping):
     """
     Safely replaces placeholder keys with replacement values in a docx Paragraph.
     Preserves exact font, size, bold, italic, color, and run-level styles.
@@ -297,21 +255,113 @@ def replace_placeholders_in_paragraph(paragraph, mapping):
 
         str_val = str(val) if val is not None else ''
 
-        # 1. First attempt: check if placeholder is contained entirely in a single run
-        replaced_in_single_run = False
-        for run in paragraph.runs:
-            if key in run.text:
-                run.text = run.text.replace(key, str_val)
-                replaced_in_single_run = True
+        # While key exists in paragraph text, replace it
+        while key in paragraph.text:
+            # 1. First attempt: check if placeholder is contained entirely in a single run
+            single_run_found = False
+            for run in paragraph.runs:
+                if key in run.text:
+                    run.text = run.text.replace(key, str_val, 1)
+                    single_run_found = True
+                    break
 
-        # 2. Fallback: if placeholder spans multiple adjacent runs
-        if not replaced_in_single_run and key in paragraph.text:
-            combined = "".join([r.text for r in paragraph.runs])
-            new_text = combined.replace(key, str_val)
-            if paragraph.runs:
-                paragraph.runs[0].text = new_text
-                for r in paragraph.runs[1:]:
+            if single_run_found:
+                continue
+
+            # 2. Multi-run split placeholder replacement
+            run_texts = [r.text for r in paragraph.runs]
+            combined = "".join(run_texts)
+            start_idx = combined.find(key)
+            if start_idx == -1:
+                break
+            end_idx = start_idx + len(key)
+
+            curr_pos = 0
+            for r in paragraph.runs:
+                txt = r.text
+                r_len = len(txt)
+                r_start = curr_pos
+                r_end = curr_pos + r_len
+                curr_pos += r_len
+
+                if r_end <= start_idx or r_start >= end_idx:
+                    continue
+
+                if r_start <= start_idx and r_end < end_idx:
+                    offset = start_idx - r_start
+                    r.text = txt[:offset] + str_val
+                elif r_start > start_idx and r_end <= end_idx:
                     r.text = ""
+                elif r_start < end_idx and r_end >= end_idx:
+                    offset = end_idx - r_start
+                    r.text = txt[offset:]
+
+
+def replace_placeholders_in_paragraph(paragraph, mapping):
+    """Alias for safe_replace_in_runs for backwards compatibility."""
+    return safe_replace_in_runs(paragraph, mapping)
+
+
+def populate_docx_from_master_template(master_template_path, output_filepath, placeholder_mapping, cat_key='AI_ML'):
+    """
+    Creates an exact copy of the uploaded master DOCX package at output_filepath,
+    and replaces ONLY approved placeholders at the Word run level.
+    
+    CRITICAL:
+    - Master DOCX package is the source of truth.
+    - 100% of all images, logos, circular seals, MSME visual, green border, line dividers,
+      watermarks, headers, footers, styles, fonts, and page layouts are preserved byte-for-byte.
+    - Master template file on disk is NEVER modified.
+    - Uses Word run-level replacement so no formatting, bolding, font sizes, or alignments are lost.
+    """
+    if not os.path.exists(master_template_path):
+        raise FileNotFoundError(f"Master template file not found at: {master_template_path}")
+
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+    # 1. Bit-for-bit copy of the master DOCX package
+    shutil.copy2(master_template_path, output_filepath)
+
+    # 2. Open copied candidate document for run-level replacement
+    doc = docx.Document(output_filepath)
+
+    # 3. Replace placeholders in all body paragraphs
+    for p in doc.paragraphs:
+        safe_replace_in_runs(p, placeholder_mapping)
+
+    # 4. Replace placeholders in all tables (e.g. signature / seal section)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for cp in cell.paragraphs:
+                    safe_replace_in_runs(cp, placeholder_mapping)
+
+    # 5. Replace placeholders in headers & footers
+    for section in doc.sections:
+        for hp in section.header.paragraphs:
+            safe_replace_in_runs(hp, placeholder_mapping)
+        for fp in section.footer.paragraphs:
+            safe_replace_in_runs(fp, placeholder_mapping)
+
+    # 6. Job-specific content updates if domain differs from AI & ML (Section 15)
+    if cat_key and cat_key != 'AI_ML' and cat_key in OFFER_LETTER_CATEGORIES:
+        cat_info = OFFER_LETTER_CATEGORIES[cat_key]
+        default_title = cat_info.get('default_title')
+        # Check Paragraph 4 for role title
+        for p in doc.paragraphs:
+            if 'selected for the position of' in p.text:
+                for r in p.runs:
+                    if 'AI & ML Intern' in r.text or 'Intern' in r.text:
+                        r.text = default_title
+                        break
+            # Check Paragraph 5 for role description
+            if 'During your internship, you will work on' in p.text:
+                if len(p.runs) >= 3:
+                    p.runs[0].text = cat_info.get('run0', p.runs[0].text)
+                    p.runs[1].text = cat_info.get('run1', p.runs[1].text)
+                    p.runs[2].text = cat_info.get('run2', p.runs[2].text)
+
+    # 7. Save candidate-specific DOCX
+    doc.save(output_filepath)
 
 
 class OfferLetterTemplateNotFoundError(Exception):
@@ -384,10 +434,12 @@ def get_active_offer_letter_template(category_or_job=None):
         # Fallback to local filename in uploads/templates or static/default_templates
         candidate_paths = [
             os.path.join(current_app.root_path, 'uploads', 'templates', os.path.basename(active_template.file_path or active_template.filename or '')),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix) with pages removed (1).docx'),
             os.path.join(current_app.root_path, 'uploads', 'templates', cat_info['default_filename']),
             os.path.join(current_app.root_path, 'static', 'default_templates', cat_info['default_filename']),
-            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix).docx'),
+            os.path.join(current_app.root_path, 'static', 'default_templates', 'offer_letter_ai_ml_master.docx'),
             os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_master.docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix).docx'),
         ]
         found = False
         for cpath in candidate_paths:
@@ -412,11 +464,19 @@ def ensure_default_templates_initialized():
     os.makedirs(templates_dir, exist_ok=True)
 
     static_defaults_dir = os.path.join(current_app.root_path, 'static', 'default_templates')
-    master_ref = os.path.join(templates_dir, 'offer letter (Anti-matrix).docx')
+    master_ref = os.path.join(templates_dir, 'offer letter (Anti-matrix) with pages removed (1).docx')
     if not os.path.exists(master_ref):
-        alt_ref = os.path.join(templates_dir, 'offer_letter_master.docx')
+        alt_ref = os.path.join(templates_dir, 'offer_letter_ai_ml_master.docx')
         if os.path.exists(alt_ref):
             master_ref = alt_ref
+        else:
+            alt_ref2 = os.path.join(templates_dir, 'offer_letter_master.docx')
+            if os.path.exists(alt_ref2):
+                master_ref = alt_ref2
+            else:
+                alt_ref3 = os.path.join(templates_dir, 'offer letter (Anti-matrix).docx')
+                if os.path.exists(alt_ref3):
+                    master_ref = alt_ref3
 
     for cat_key, cat_data in OFFER_LETTER_CATEGORIES.items():
         target_path = os.path.join(templates_dir, cat_data['default_filename'])
@@ -556,11 +616,12 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
     output_filename = f"{app.formatted_code}_Offer_Letter.docx"
     output_filepath = os.path.join(gen_dir, output_filename)
 
-    # Copy master DOCX package and replace ONLY approved placeholders in XML
+    # Copy master DOCX package and replace ONLY approved placeholders at Word run level
     populate_docx_from_master_template(
         active_template.file_path,
         output_filepath,
-        placeholder_mapping
+        placeholder_mapping,
+        cat_key=cat_key
     )
 
     # Create or update EmployeeDocument record in DB

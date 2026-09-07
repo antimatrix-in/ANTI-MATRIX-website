@@ -876,101 +876,15 @@ def preview_application_offer_letter_pdf(app_id):
     success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
     if not success or not pdf_path or not os.path.exists(pdf_path):
         current_app.logger.warning(
-            f"Offer letter PDF conversion unavailable for app {app_id} ({err_msg}). "
-            f"Attempting mammoth HTML fallback for preview."
+            f"Offer letter PDF conversion unavailable for app {app_id} ({err_msg})."
         )
-        # --- MAMMOTH HTML FALLBACK ---
-        # When LibreOffice is not installed on the server (e.g. Render free tier),
-        # fall back to a mammoth-rendered HTML page so the admin can still view content.
         if request.args.get('format') == 'json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'status': 'error',
                 'error_code': 'CONVERSION_FAILED',
-                'message': err_msg or 'Preview is temporarily unavailable. Please use Download DOCX.'
+                'message': err_msg or 'Offer letter preview could not be generated right now. Please use Download DOCX.'
             }), 503
-        try:
-            from services.document_preview_service import convert_docx_to_html
-            html_ok, html_content, html_err = convert_docx_to_html(fpath)
-            if html_ok and html_content:
-                candidate_name = application.full_name or ''
-                app_code = application.application_code or application.formatted_code or ''
-                download_url = url_for('admin.download_application_offer_letter', app_id=app_id)
-                html_page = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offer Letter Preview — {candidate_name}</title>
-  <style>
-    body {{
-      margin: 0;
-      padding: 2rem;
-      background: #f8fafc;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #1e293b;
-      max-width: 860px;
-      margin-left: auto;
-      margin-right: auto;
-    }}
-    .preview-notice {{
-      background: #fef9c3;
-      border: 1px solid #fcd34d;
-      color: #92400e;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }}
-    .doc-content {{
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 3rem 4rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      line-height: 1.7;
-    }}
-    .doc-content img {{ max-width: 100%; }}
-    .doc-content table {{ border-collapse: collapse; width: 100%; }}
-    .doc-content td, .doc-content th {{
-      border: 1px solid #cbd5e1;
-      padding: 0.5rem 0.75rem;
-    }}
-    .download-btn {{
-      display: inline-block;
-      background: #6366f1;
-      color: #fff;
-      padding: 0.6rem 1.4rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-    }}
-    .download-btn:hover {{ background: #4f46e5; }}
-  </style>
-</head>
-<body>
-  <a href="{download_url}" class="download-btn">&#8675; Download DOCX</a>
-  <div class="preview-notice">
-    &#9432;&nbsp; <strong>HTML Preview Mode</strong> — PDF rendering is unavailable on this server.
-    This is an approximate text preview. Download the DOCX for the official formatted version.
-  </div>
-  <div class="doc-content">
-    {html_content}
-  </div>
-</body>
-</html>"""
-                from flask import Response
-                return Response(html_page, mimetype='text/html', status=200)
-        except Exception as fallback_err:
-            current_app.logger.error(
-                f"Mammoth HTML fallback also failed for app {app_id}: {fallback_err}"
-            )
 
-        # Both PDF and HTML fallback failed — show error page
         return render_template(
             'admin/preview_error.html',
             app=application,
