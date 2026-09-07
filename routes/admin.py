@@ -1166,80 +1166,9 @@ def employees():
 @admin_bp.route('/employees/create', methods=['GET', 'POST'])
 @admin_required
 def create_employee():
-    """Create unique Employee ID and random secure password for a paid application."""
-    if request.method == 'POST':
-        app_id_raw = request.form.get('application_id')
-        if not app_id_raw:
-            flash('Please select an application to create an Employee ID.', 'danger')
-            return redirect(url_for('admin.create_employee'))
-
-        try:
-            app_id = int(app_id_raw)
-        except ValueError:
-            flash('Invalid application identifier provided.', 'danger')
-            return redirect(url_for('admin.create_employee'))
-
-        application = db.session.get(JobApplication, app_id)
-        if not application:
-            flash('Selected candidate application does not exist.', 'danger')
-            return redirect(url_for('admin.create_employee'))
-
-        # Security Check 1: Must have completed payment
-        if application.payment_status != 'paid':
-            flash('Employee ID cannot be created until the application payment is completed.', 'danger')
-            return redirect(url_for('admin.application_detail', app_id=application.id))
-
-        # Security Check 2: Only 1 employee account per application
-        if application.employee:
-            flash(f"Employee ID already exists: {application.employee.employee_id} for candidate {application.full_name}.", 'warning')
-            return redirect(url_for('admin.view_employee', employee_id=application.employee.employee_id))
-
-        try:
-            emp_id = Employee.generate_unique_employee_id()
-            plaintext_password = Employee.generate_secure_password(12)
-
-            employee = Employee(
-                employee_id=emp_id,
-                application_id=application.id,
-                account_status='active'
-            )
-            employee.set_password(plaintext_password)
-            secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
-            employee.set_temp_password(plaintext_password, secret_key)
-
-            db.session.add(employee)
-            db.session.commit()
-
-            # Render confirmation screen displaying credentials for copying
-            return render_template(
-                'admin/employee_credentials.html',
-                employee=employee,
-                plaintext_password=plaintext_password,
-                app=application,
-                job=application.job
-            )
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error creating employee account: {str(e)}", 'danger')
-            return redirect(url_for('admin.create_employee', application_id=application.id))
-
-    # GET request
-    preselected_app_id = request.args.get('application_id', type=int)
-    selected_app = None
-    if preselected_app_id:
-        selected_app = db.session.get(JobApplication, preselected_app_id)
-
-    # Fetch eligible applications: paid applications that do not already have an employee account
-    eligible_applications = JobApplication.query.outerjoin(Employee).filter(
-        JobApplication.payment_status == 'paid',
-        Employee.id.is_(None)
-    ).order_by(JobApplication.created_at.desc()).all()
-
-    return render_template(
-        'admin/employee_create.html',
-        eligible_applications=eligible_applications,
-        selected_app=selected_app
-    )
+    """Manual employee creation has been moved to the external employee management website."""
+    flash('Manual employee creation is managed through the external employee management portal.', 'info')
+    return redirect(url_for('admin.employees'))
 
 
 @admin_bp.route('/employees/<string:employee_id>', methods=['GET'])

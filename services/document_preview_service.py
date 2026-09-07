@@ -32,15 +32,21 @@ def _resolve_document_file_path(doc) -> Optional[str]:
     """Resolves document file path with fallback to local generated_documents folder for cross-platform portability."""
     if not doc:
         return None
-    fpath = doc.file_path
+    fpath = getattr(doc, 'file_path', None) or (str(doc) if isinstance(doc, str) else None)
     if fpath and os.path.exists(fpath):
         return os.path.abspath(fpath)
-    basename = os.path.basename(fpath or doc.file_name or '')
+    basename = os.path.basename(fpath or getattr(doc, 'file_name', None) or '')
     if basename:
         root_path = _get_root_path()
-        local_path = os.path.join(root_path, 'uploads', 'generated_documents', basename)
-        if os.path.exists(local_path):
-            return os.path.abspath(local_path)
+        candidates = [
+            os.path.join(root_path, 'uploads', 'generated_documents', basename),
+            os.path.join(root_path, 'uploads', 'documents', basename),
+            os.path.join(root_path, 'uploads', 'templates', basename),
+            os.path.join(root_path, 'static', 'default_templates', basename),
+        ]
+        for cand in candidates:
+            if os.path.exists(cand):
+                return os.path.abspath(cand)
     return None
 
 
@@ -103,10 +109,16 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
         logger.error("convert_docx_to_pdf called with empty file_path.")
         return False, None, "Document file not found on server storage."
 
+    # If direct path does not exist, resolve via _resolve_document_file_path
+    if not os.path.exists(file_path):
+        resolved = _resolve_document_file_path(file_path)
+        if resolved and os.path.exists(resolved):
+            file_path = resolved
+        else:
+            logger.error(f"convert_docx_to_pdf: file does not exist at '{file_path}'.")
+            return False, None, "Document file not found on server storage."
+
     abs_file_path = os.path.abspath(file_path)
-    if not os.path.exists(abs_file_path):
-        logger.error(f"convert_docx_to_pdf: file does not exist at '{abs_file_path}'.")
-        return False, None, "Document file not found on server storage."
 
     try:
         file_size = os.path.getsize(abs_file_path)
@@ -163,15 +175,21 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
             '--nofirststartwizard',
             '--nolockcheck',
             '--nologo',
+            '--norestore',
             '--convert-to',
-            'pdf',
+            'pdf:writer_pdf_Export',
             '--outdir',
             temp_outdir,
             abs_file_path
         ]
 
+        # Windows-specific: suppress console window popup
+        extra_kwargs = {}
+        if hasattr(subprocess, 'CREATE_NO_WINDOW'):
+            extra_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
         logger.info(f"Executing LibreOffice conversion for file: {os.path.basename(abs_file_path)}")
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, **extra_kwargs)
         if res.returncode != 0:
             stderr_msg = res.stderr.decode('utf-8', errors='ignore')
             logger.error(f"LibreOffice conversion failed with exit code {res.returncode}. Stderr: {stderr_msg}")

@@ -323,8 +323,8 @@ def send_brevo_email(recipient_email, recipient_name, subject, body_text, body_h
         'Anti Matrix'
     )
 
-    # If Brevo API key is not present, use SMTP / Simulation mode
-    if not api_key:
+    # If Brevo API key is not present or is a placeholder, use SMTP / Simulation mode
+    if not api_key or 'your-brevo' in api_key.lower() or 'placeholder' in api_key.lower():
         return send_mime_email(recipient_email, subject, body_text, body_html, attachment_path, attachment_name)
 
     import base64

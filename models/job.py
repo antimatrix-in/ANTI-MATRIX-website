@@ -195,6 +195,20 @@ class JobApplication(db.Model):
             for doc in self.employee.documents:
                 if doc.document_type == 'offer_letter':
                     return doc
+        try:
+            from models.document import EmployeeDocument
+            doc = EmployeeDocument.query.filter_by(application_id=self.id, document_type='offer_letter').first()
+            if doc:
+                return doc
+            if self.formatted_code:
+                doc = EmployeeDocument.query.filter(
+                    EmployeeDocument.document_type == 'offer_letter',
+                    EmployeeDocument.file_name.ilike(f"%{self.formatted_code}%")
+                ).first()
+                if doc:
+                    return doc
+        except Exception:
+            pass
         return None
 
     @property

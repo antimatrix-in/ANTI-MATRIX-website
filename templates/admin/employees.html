@@ -13,11 +13,6 @@
         <h1>Employees & Credentials</h1>
         <p>Manage generated Employee IDs, credential statuses, and linked candidate internship applications.</p>
       </div>
-      <div style="display: flex; gap: var(--space-sm);">
-        <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary" style="gap: 6px;">
-          {{ icon('plus', size=15) }} Create Employee ID
-        </a>
-      </div>
     </div>
 
     <!-- Admin Nav Tabs -->
@@ -168,10 +163,7 @@
         <div style="text-align: center; padding: var(--space-3xl) var(--space-lg);">
           <div class="icon-box" style="margin: 0 auto var(--space-md);">{{ icon('user-check', size=24) }}</div>
           <h3 style="color: var(--color-text); margin-bottom: 0.5rem;">No Employees Found</h3>
-          <p style="color: var(--color-text-dim); margin-bottom: var(--space-lg);">No employee accounts have been created yet or none match your search criteria.</p>
-          <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary btn-sm">
-            {{ icon('plus', size=14) }} Create First Employee ID
-          </a>
+          <p style="color: var(--color-text-dim); margin-bottom: 0;">No employee records are currently found matching your criteria.</p>
         </div>
       {% endif %}
     </div>
