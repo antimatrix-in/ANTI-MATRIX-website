@@ -704,10 +704,10 @@ def render_shortlisted_offer_email(application, custom_params=None):
     }
 
 
-def send_offer_letter_shortlisted_email(application_or_employee, start_date=None):
+def send_offer_letter_shortlisted_email(application_or_employee, start_date=None, force_resend=False):
     """
     Sends the official Offer Letter / Shortlisted email with the candidate-specific Offer Letter PDF attached via Brevo.
-    Enforces strict ONE-TIME send protection.
+    Enforces strict ONE-TIME send protection (unless force_resend=True for explicit admin retry).
     The PDF is generated directly from the candidate's existing, verified DOCX file.
     """
     from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
@@ -738,8 +738,8 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
     if not docx_path or not os.path.exists(docx_path):
         return False, "Offer Letter DOCX file not found on server storage. Please generate it first."
 
-    # ONE-TIME SEND PROTECTION
-    if emp_doc.email_status == 'sent':
+    # ONE-TIME SEND PROTECTION (bypassable with force_resend for admin retries)
+    if emp_doc.email_status == 'sent' and not force_resend:
         sent_time = emp_doc.sent_at.strftime('%b %d, %Y') if emp_doc.sent_at else 'earlier'
         return False, f"Offer Letter already sent on {sent_time}. Duplicate sending is prevented."
 

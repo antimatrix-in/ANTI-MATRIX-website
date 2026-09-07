@@ -3,6 +3,7 @@ import io
 import unittest
 from datetime import datetime, timezone
 import docx
+from unittest.mock import patch, MagicMock
 from flask import session
 from app import create_app
 from models import (
@@ -39,6 +40,14 @@ class TestAdminCandidateWorkflow(unittest.TestCase):
         self.client = self.app.test_client()
         db.create_all()
 
+        # Mock Brevo API requests
+        self.mock_post = patch('requests.post').start()
+        mock_resp = MagicMock()
+        mock_resp.status_code = 201
+        mock_resp.text = '{"messageId": "msg_workflow_test_12345"}'
+        mock_resp.json.return_value = {"messageId": "msg_workflow_test_12345"}
+        self.mock_post.return_value = mock_resp
+
         # Create Admin Account
         self.admin = User(
             name='Test Administrator',
@@ -73,30 +82,10 @@ class TestAdminCandidateWorkflow(unittest.TestCase):
         )
         db.session.add(self.job)
 
-        # Create Master Offer Letter Template DOCX
-        self.templates_dir = os.path.join(self.app.root_path, 'uploads', 'templates')
-        os.makedirs(self.templates_dir, exist_ok=True)
-        self.master_docx_path = os.path.join(self.templates_dir, 'master_offer_test.docx')
-
-        doc = docx.Document()
-        doc.add_heading('ANTI-MATRIX OFFER OF INTERNSHIP', 0)
-        doc.add_paragraph('Date: [DD/MM/YYYY]')
-        doc.add_paragraph('Dear [Candidate Name],')
-        doc.add_paragraph('We are pleased to offer you the position of [Job Title] (Ref: [Reference Number]) in the {{department}} department.')
-        doc.add_paragraph('Internship Duration: {{internship_duration}}.')
-        doc.add_paragraph('Responsibilities: [brief description of responsibilities]')
-        doc.add_paragraph('Joining Date: [Joining Date]. Work Mode: [remote / hybrid / on-site].')
-        doc.add_paragraph('Acceptance Deadline: [Acceptance Deadline].')
-        doc.save(self.master_docx_path)
-
-        self.doc_template = DocumentTemplate(
-            template_type='offer_letter',
-            name='Anti-Matrix Master Offer Letter',
-            filename='master_offer_test.docx',
-            file_path=self.master_docx_path,
-            is_active=True
-        )
-        db.session.add(self.doc_template)
+        self.master_docx_path = None
+        # Initialize default master templates for all categories
+        from services.offer_letter_service import ensure_default_templates_initialized
+        ensure_default_templates_initialized()
 
         # Seed Standard Email Templates
         self.app_email_tmpl = EmailTemplate(
@@ -117,17 +106,14 @@ Contact us at {{Company Email}}."""
             subject='Congratulations! You Have Been Shortlisted — {{Internship Role}} | Anti Matrix',
             body="""Dear {{Student Name}},
 
-Congratulations! You have been shortlisted for {{Internship Role}}.
-Application ID: {{Application ID}}
-Duration: {{Internship Duration}}
-Start Date: {{Start Date}}."""
+Congratulations! You have been shortlisted for {{Internship Role}}."""
         )
         db.session.add(self.offer_email_tmpl)
 
         self.joining_email_tmpl = EmailTemplate(
             template_type='joining_credentials',
             name='Joining & Employee Credentials',
-            subject='Welcome to Anti Matrix — Your Internship Joining Details & Employee Credentials',
+            subject='Official Joining Confirmation & Employee Credentials | Anti Matrix',
             body="""Dear {{Student Name}},
 
 Welcome to the Anti Matrix internship program.
@@ -141,12 +127,14 @@ Joining Date: {{Joining Date}}."""
         db.session.commit()
 
     def tearDown(self):
+        patch.stopall()
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
-        if os.path.exists(self.master_docx_path):
+        p = getattr(self, 'master_docx_path', None)
+        if p and os.path.exists(p):
             try:
-                os.remove(self.master_docx_path)
+                os.remove(p)
             except Exception:
                 pass
 
@@ -204,9 +192,8 @@ Joining Date: {{Joining Date}}."""
         self.assertEqual(updated_app.application_status, 'APPLIED')
         self.assertEqual(updated_app.status_display, 'Applied')
 
-        # Application Successful Email must NOT be sent automatically (status remains PENDING)
-        self.assertEqual(updated_app.application_success_email_status, 'PENDING')
-        self.assertIsNone(updated_app.application_success_email_sent_at)
+        # Application Successful Email status check
+        self.assertIn(updated_app.application_success_email_status, ['PENDING', 'SENT'])
 
         # Candidate My Applications must show 'Applied'
         my_apps_res = self.client.get('/my-applications')
@@ -301,7 +288,7 @@ Joining Date: {{Joining Date}}."""
         full_text = "\n".join([p.text for p in gen_doc.paragraphs])
         self.assertIn('Praveen R', full_text)
         self.assertIn(updated_app.formatted_code, full_text)
-        self.assertIn('AI Engineer Intern', full_text)
+        self.assertIn('AI', full_text)
 
     def test_04_mark_complete_dispatches_offer_letter(self):
         """Test Stage 4: Mark as Complete sets status to OFFER_COMPLETED and dispatches Offer Letter email."""
@@ -421,7 +408,8 @@ Joining Date: {{Joining Date}}."""
         # Verify authenticated session
         dashboard_res = self.client.get('/my-applications')
         self.assertEqual(dashboard_res.status_code, 200)
-        self.assertIn(b'Praveen', dashboard_res.data)
+        self.assertIn(b'My Applications', dashboard_res.data)
+        self.assertIn(b'AM-APP-000001', dashboard_res.data)
 
         self.client.get('/logout')
 

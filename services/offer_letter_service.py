@@ -602,10 +602,10 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
     return emp_doc, output_filepath
 
 
-def send_offer_letter_email(application_or_employee, start_date=None):
+def send_offer_letter_email(application_or_employee, start_date=None, force_resend=False):
     """
     Sends the generated Offer Letter to the candidate's registered email with attachment.
-    Enforces strict ONE-TIME send protection, Markdown-to-HTML rendering, and audit logging.
+    Enforces strict ONE-TIME send protection (unless force_resend=True), Markdown-to-HTML rendering, and audit logging.
     """
     from services.email_service import send_offer_letter_shortlisted_email
-    return send_offer_letter_shortlisted_email(application_or_employee, start_date=start_date)
+    return send_offer_letter_shortlisted_email(application_or_employee, start_date=start_date, force_resend=force_resend)

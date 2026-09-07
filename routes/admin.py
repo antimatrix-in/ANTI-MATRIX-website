@@ -549,13 +549,15 @@ def mark_application_offer_complete(app_id):
     """
     Stage 4: Mark as Complete.
     Validates employee and offer letter exist, updates status to OFFER_COMPLETED,
-    and automatically dispatches the Shortlisted / Offer Letter email with DOCX attachment via Brevo.
+    and automatically dispatches the Shortlisted / Offer Letter email with PDF attachment via Brevo.
     """
+    from services.document_preview_service import _resolve_document_file_path
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure Offer Letter is generated
     offer_doc = application.offer_letter_doc
-    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
+    resolved_path = _resolve_document_file_path(offer_doc) if offer_doc else None
+    if not offer_doc or not resolved_path or not os.path.exists(resolved_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:
@@ -649,6 +651,10 @@ def send_joining_email_action(app_id):
 @admin_bp.route('/applications/<int:app_id>/send-shortlist-offer', methods=['POST'])
 @admin_required
 def send_shortlist_offer_action(app_id):
+    """Explicit action to send/resend Shortlisted & Offer Letter email with PDF attachment via Brevo."""
+    from services.document_preview_service import _resolve_document_file_path
+    from services.offer_letter_service import send_offer_letter_email
+
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure status is SHORTLISTED or OFFER_COMPLETED or HIRED
@@ -659,21 +665,16 @@ def send_shortlist_offer_action(app_id):
 
     # Ensure Offer Letter is generated
     offer_doc = application.offer_letter_doc
-    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
+    resolved_path = _resolve_document_file_path(offer_doc) if offer_doc else None
+    if not offer_doc or not resolved_path or not os.path.exists(resolved_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:
             flash(f"Cannot send Offer Letter: {str(e)}", 'danger')
             return redirect(url_for('admin.application_detail', app_id=application.id))
 
-    # Check duplicate send
-    if offer_doc.email_status == 'sent':
-        flash('Offer Letter email has already been sent to this candidate.', 'warning')
-        return redirect(url_for('admin.application_detail', app_id=application.id))
-
-    # Send Shortlisted email + Offer Letter attachment via Brevo
-    from services.offer_letter_service import send_offer_letter_email
-    success, msg = send_offer_letter_email(application)
+    # Explicit admin action: force resend is enabled
+    success, msg = send_offer_letter_email(application, force_resend=True)
 
     if not success:
         flash(f"Failed to send Offer Letter email: {msg}", 'danger')
@@ -708,12 +709,12 @@ def send_shortlist_offer_action(app_id):
                 'employee_id': employee.employee_id,
                 'temp_password': plaintext_password
             }
-            flash(f"Offer Letter sent successfully! Employee account ({employee.employee_id}) created automatically.", 'success')
+            flash(f"Offer Letter email dispatched successfully via Brevo! Employee account ({employee.employee_id}) created automatically.", 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f"Offer Letter sent, but error creating employee account: {str(e)}", 'warning')
+            flash(f"Offer Letter email dispatched, but error creating employee account: {str(e)}", 'warning')
     else:
-        flash(f"Offer Letter sent successfully to candidate {application.full_name}.", 'success')
+        flash(f"Offer Letter email with PDF attachment dispatched successfully to {application.full_name} ({application.email}) via Brevo.", 'success')
 
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
