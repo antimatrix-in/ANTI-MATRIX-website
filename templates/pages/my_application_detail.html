@@ -1,45 +1,45 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}Application Details: {{ app.formatted_code }} | Anti-Matrix{% endblock %}
+{% block title %}Application: {{ app.formatted_code }} | Anti-Matrix Careers{% endblock %}
 
 {% block content %}
-<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: var(--color-bg); min-height: 85vh;">
-  <div class="container">
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: #f8fafc; min-height: 88vh; padding-bottom: 5rem;">
+  <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-md);">
 
     <!-- Header Navigation -->
-    <div style="margin-bottom: var(--space-xl);">
-      <a href="{{ url_for('main.my_applications') }}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-md); display: inline-flex; align-items: center; gap: 6px;">
+    <div style="margin-bottom: 2rem;">
+      <a href="{{ url_for('main.my_applications') }}" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 6px; color: #64748b; font-weight: 600; margin-bottom: 0.75rem; padding: 0.35rem 0.65rem;">
         {{ icon('arrow-left', size=14) }} Back to My Applications
       </a>
 
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-md);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
         <div>
-          <div style="display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: 0.35rem;">
-            <span style="font-family: var(--font-mono, monospace); font-size: 0.95rem; font-weight: 800; color: var(--color-primary-light); background: rgba(16,185,129,0.1); padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 0.5rem;">
+            <span style="font-family: var(--font-mono, monospace); font-size: 0.9rem; font-weight: 800; color: #0f172a; background: #ffffff; padding: 0.25rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
               {{ app.formatted_code }}
             </span>
             {% if app.duration_display %}
-              <span style="font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25);">
+              <span style="font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">
                 {{ app.duration_display }}
               </span>
             {% endif %}
-            <span class="badge-status {{ app.status_badge_class }}" style="font-weight: 700;">
+            <span class="badge-status {{ app.status_badge_class }}" style="font-weight: 700; font-size: 0.8rem; padding: 0.25rem 0.65rem;">
               {{ app.status_display }}
             </span>
           </div>
 
-          <h1 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: var(--color-text); margin-bottom: 0.35rem;">
+          <h1 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">
             {{ job.title if job else 'Internship Application' }}
           </h1>
-          <p style="color: var(--color-text-dim); margin-bottom: 0;">
+          <p style="color: #64748b; font-size: 0.9rem; margin: 0.35rem 0 0 0;">
             {{ job.department if job else 'Engineering' }} &bull; Applied on {{ app.created_at.strftime('%d %B %Y') }}
           </p>
         </div>
 
         <div>
           {% if app.payment_status != 'paid' and app.duration %}
-            <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary" style="gap: 6px;">
+            <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary" style="gap: 6px; font-weight: 700;">
               {{ icon('credit-card', size=15) }} Complete Payment
             </a>
           {% endif %}
@@ -48,66 +48,66 @@
     </div>
 
     <!-- Application Recruitment Timeline -->
-    <div class="card" style="margin-bottom: var(--space-xl); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02); padding: var(--space-lg) var(--space-xl);">
-      <div style="font-size: 0.8rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: var(--space-lg);">
+    <div class="card" style="margin-bottom: 2rem; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+      <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 1.25rem;">
         Recruitment Pipeline Status
       </div>
 
       {% set cur_st = (app.status or 'New')|lower %}
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); position: relative;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; position: relative;">
         
         <!-- Step 1: Application Submitted -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(16,185,129,0.2); border: 2px solid var(--color-primary-light); color: var(--color-primary-light); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: #ecfdf5; border: 2px solid #059669; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
               ✓
             </div>
-            <span style="font-weight: 700; color: var(--color-text); font-size: 0.9rem;">Submitted</span>
+            <span style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">Submitted</span>
           </div>
-          <span style="font-size: 0.775rem; color: var(--color-text-dim); padding-left: 36px;">
+          <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
             {{ app.created_at.strftime('%d %b %Y') }}
           </span>
         </div>
 
         <!-- Step 2: Under Review -->
         {% set is_reviewed = cur_st in ['reviewed', 'under_review', 'shortlisted', 'rejected', 'hired'] %}
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: {{ 'rgba(16,185,129,0.2)' if is_reviewed else 'rgba(255,255,255,0.05)' }}; border: 2px solid {{ 'var(--color-primary-light)' if is_reviewed else 'var(--color-border)' }}; color: {{ 'var(--color-primary-light)' if is_reviewed else 'var(--color-text-dim)' }}; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if is_reviewed else '#f8fafc' }}; border: 2px solid {{ '#059669' if is_reviewed else '#cbd5e1' }}; color: {{ '#059669' if is_reviewed else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
               {{ '✓' if is_reviewed else '2' }}
             </div>
-            <span style="font-weight: 700; color: {{ 'var(--color-text)' if is_reviewed else 'var(--color-text-dim)' }}; font-size: 0.9rem;">Under Review</span>
+            <span style="font-weight: 700; color: {{ '#0f172a' if is_reviewed else '#64748b' }}; font-size: 0.9rem;">Under Review</span>
           </div>
-          <span style="font-size: 0.775rem; color: var(--color-text-dim); padding-left: 36px;">
+          <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
             {{ 'In Evaluation' if is_reviewed else 'Pending Evaluation' }}
           </span>
         </div>
 
         <!-- Step 3: Final Decision -->
         {% if cur_st in ['rejected', 'not selected'] %}
-          <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 2px solid #f87171; color: #f87171; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: #fef2f2; border: 2px solid #dc2626; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
                 ✕
               </div>
-              <span style="font-weight: 700; color: #f87171; font-size: 0.9rem;">Not Selected</span>
+              <span style="font-weight: 700; color: #dc2626; font-size: 0.9rem;">Not Selected</span>
             </div>
-            <span style="font-size: 0.775rem; color: var(--color-text-dim); padding-left: 36px;">
+            <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
               Application Concluded
             </span>
           </div>
         {% else %}
           {% set is_shortlisted = cur_st in ['shortlisted', 'hired'] %}
-          <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: {{ 'rgba(16,185,129,0.2)' if is_shortlisted else 'rgba(255,255,255,0.05)' }}; border: 2px solid {{ 'var(--color-primary-light)' if is_shortlisted else 'var(--color-border)' }}; color: {{ 'var(--color-primary-light)' if is_shortlisted else 'var(--color-text-dim)' }}; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if is_shortlisted else '#f8fafc' }}; border: 2px solid {{ '#059669' if is_shortlisted else '#cbd5e1' }}; color: {{ '#059669' if is_shortlisted else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
                 {{ '★' if is_shortlisted else '3' }}
               </div>
-              <span style="font-weight: 700; color: {{ 'var(--color-primary-light)' if is_shortlisted else 'var(--color-text-dim)' }}; font-size: 0.9rem;">
+              <span style="font-weight: 700; color: {{ '#059669' if is_shortlisted else '#64748b' }}; font-size: 0.9rem;">
                 {{ 'Hired' if cur_st == 'hired' else 'Shortlisted' }}
               </span>
             </div>
-            <span style="font-size: 0.775rem; color: var(--color-text-dim); padding-left: 36px;">
+            <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
               {{ 'Offer Process' if is_shortlisted else 'Awaiting Decision' }}
             </span>
           </div>
@@ -116,75 +116,81 @@
       </div>
     </div>
 
-    <!-- Dossier Content Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-xl);">
+    <!-- Dossier Content Grid (2 Columns) -->
+    <div style="display: grid; grid-template-columns: 1fr 360px; gap: 2rem; align-items: start;" class="dossier-grid-layout">
       
       <!-- Left Column: Personal, Education, Professional -->
-      <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
         
         <!-- 1. Personal & Contact Details -->
-        <div class="card">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-            {{ icon('user', size=16, color='var(--color-primary-light)') }} Personal Information
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+              {{ icon('user', size=15) }}
+            </div>
+            Personal Information
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;">
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Full Name</div>
-              <div style="color: var(--color-text); font-weight: 600;">{{ app.full_name }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Full Name</div>
+              <div style="color: #0f172a; font-weight: 600; font-size: 0.9rem;">{{ app.full_name }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Email Address</div>
-              <div style="color: var(--color-text);">{{ app.email }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Email Address</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.email }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Phone Number</div>
-              <div style="color: var(--color-text);">{{ app.phone }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Phone Number</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.phone }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Location</div>
-              <div style="color: var(--color-text);">{{ app.city or '' }}{% if app.city and app.state %}, {% endif %}{{ app.state or '' }} {{ app.pincode or '' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Location</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.city or '' }}{% if app.city and app.state %}, {% endif %}{{ app.state or '' }} {{ app.pincode or '' }}</div>
             </div>
             {% if app.address %}
-              <div style="grid-column: 1 / -1;">
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Address</div>
-                <div style="color: var(--color-text);">{{ app.address }}</div>
+              <div style="grid-column: 1 / -1; padding-top: 0.5rem; border-top: 1px dashed #f1f5f9;">
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Residential Address</div>
+                <div style="color: #334155; font-size: 0.875rem;">{{ app.address }}</div>
               </div>
             {% endif %}
           </div>
         </div>
 
         <!-- 2. Academic & Education Details -->
-        <div class="card">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-            {{ icon('award', size=16, color='var(--color-primary-light)') }} Academic Details
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+              {{ icon('award', size=15) }}
+            </div>
+            Academic Details
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;">
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Education Level</div>
-              <div style="color: var(--color-text); font-weight: 600;">{{ app.education_level or 'Not specified' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Education Level</div>
+              <div style="color: #0f172a; font-weight: 600; font-size: 0.9rem;">{{ app.education_level or 'Not specified' }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Degree</div>
-              <div style="color: var(--color-text);">{{ app.degree or 'Not specified' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Degree</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.degree or 'Not specified' }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Major / Specialization</div>
-              <div style="color: var(--color-text);">{{ app.major or app.department or 'Not specified' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Major / Specialization</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.major or app.department or 'Not specified' }}</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Graduation Year</div>
-              <div style="color: var(--color-text);">{{ app.graduation_year or 'Not specified' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Graduation Year</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.graduation_year or 'Not specified' }}</div>
             </div>
             {% if app.college %}
-              <div style="grid-column: 1 / -1;">
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Institution / College</div>
-                <div style="color: var(--color-text);">{{ app.college }}</div>
+              <div>
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Institution / College</div>
+                <div style="color: #0f172a; font-size: 0.9rem;">{{ app.college }}</div>
               </div>
             {% endif %}
             {% if app.current_cgpa %}
               <div>
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">CGPA</div>
-                <div style="color: var(--color-primary-light); font-weight: 700;">{{ app.current_cgpa }}</div>
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">CGPA</div>
+                <div style="color: #059669; font-weight: 700; font-size: 0.9rem;">{{ app.current_cgpa }}</div>
               </div>
             {% endif %}
           </div>
@@ -192,20 +198,23 @@
 
         <!-- 3. Professional Statements & Cover Letter -->
         {% if app.cover_letter or app.why_join %}
-          <div class="card">
-            <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-              {{ icon('file-text', size=16, color='var(--color-primary-light)') }} Statements & Cover Letter
+          <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('file-text', size=15) }}
+              </div>
+              Statements &amp; Cover Letter
             </div>
             {% if app.cover_letter %}
-              <div style="margin-bottom: var(--space-md);">
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Cover Letter / Statement</div>
-                <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.6; white-space: pre-line;">{{ app.cover_letter }}</p>
+              <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Cover Letter / Statement</div>
+                <p style="color: #334155; font-size: 0.875rem; line-height: 1.6; white-space: pre-line; margin: 0;">{{ app.cover_letter }}</p>
               </div>
             {% endif %}
             {% if app.why_join %}
               <div>
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Why Anti-Matrix?</div>
-                <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.6; white-space: pre-line;">{{ app.why_join }}</p>
+                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Why Anti-Matrix?</div>
+                <p style="color: #334155; font-size: 0.875rem; line-height: 1.6; white-space: pre-line; margin: 0;">{{ app.why_join }}</p>
               </div>
             {% endif %}
           </div>
@@ -214,17 +223,20 @@
       </div>
 
       <!-- Right Column: Documents & Payment Summary -->
-      <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
         
         <!-- Payment Record Card -->
-        <div class="card" style="border-color: rgba(16, 185, 129, 0.25);">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-            {{ icon('credit-card', size=16, color='var(--color-primary-light)') }} Payment Record
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+              {{ icon('credit-card', size=15) }}
+            </div>
+            Payment Record
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
-            <span style="font-size: 0.85rem; color: var(--color-text-dim);">Application Fee</span>
-            <span style="font-size: 1.15rem; font-weight: 800; color: var(--color-text); font-family: var(--font-mono, monospace);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="font-size: 0.85rem; color: #64748b;">Application Fee</span>
+            <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">
               {% if app.application_fee and app.application_fee > 0 %}
                 ₹{{ app.application_fee }}
               {% else %}
@@ -233,25 +245,25 @@
             </span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
-            <span style="font-size: 0.85rem; color: var(--color-text-dim);">Payment Status</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="font-size: 0.85rem; color: #64748b;">Payment Status</span>
             {% if app.payment_status == 'paid' %}
               <span class="badge-status active">Paid</span>
             {% elif app.payment_status == 'pending' %}
-              <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3);">Pending</span>
+              <span class="badge-status" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Pending</span>
             {% elif app.payment_status == 'failed' %}
-              <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Failed</span>
+              <span class="badge-status" style="background: #fef2f2; color: #dc2626; border-color: #fecaca;">Failed</span>
             {% else %}
-              <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border-color: var(--color-border);">Exempt</span>
+              <span class="badge-status" style="background: #f1f5f9; color: #64748b; border-color: #e2e8f0;">Exempt</span>
             {% endif %}
           </div>
 
           {% if app.payments %}
             {% set pay = app.latest_payment %}
             {% if pay %}
-              <div style="padding-top: var(--space-sm); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 4px;">
-                <span style="font-size: 0.75rem; color: var(--color-text-dim);">Transaction Order Reference:</span>
-                <span style="font-size: 0.8rem; font-family: var(--font-mono, monospace); color: var(--color-text-muted); word-break: break-all;">
+              <div style="padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Order Reference:</span>
+                <span style="font-size: 0.8rem; font-family: var(--font-mono, monospace); color: #0f172a; word-break: break-all;">
                   {{ pay.cashfree_order_id }}
                 </span>
               </div>
@@ -260,31 +272,34 @@
         </div>
 
         <!-- Secure Uploaded Documents Card -->
-        <div class="card">
-          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-            {{ icon('file-text', size=16, color='var(--color-primary-light)') }} Uploaded Documents
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+              {{ icon('file-text', size=15) }}
+            </div>
+            Uploaded Documents
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
             <!-- Resume (Always present) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                {{ icon('file-text', size=14, color='var(--color-primary-light)') }}
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text);">Resume / CV</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                <div style="color: #059669;">{{ icon('file-text', size=15) }}</div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Resume / CV</span>
               </div>
-              <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='resume') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+              <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='resume') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; gap: 4px;">
                 {{ icon('download', size=12) }} Download
               </a>
             </div>
 
             <!-- Aadhaar (3 Months) -->
             {% if app.aadhaar_filename %}
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  {{ icon('shield', size=14, color='var(--color-primary-light)') }}
-                  <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text);">Aadhaar Card</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <div style="color: #059669;">{{ icon('shield', size=15) }}</div>
+                  <span style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Aadhaar Card</span>
                 </div>
-                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='aadhaar') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='aadhaar') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; gap: 4px;">
                   {{ icon('download', size=12) }} Download
                 </a>
               </div>
@@ -292,12 +307,12 @@
 
             <!-- PAN Card -->
             {% if app.pan_filename %}
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  {{ icon('credit-card', size=14, color='var(--color-primary-light)') }}
-                  <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text);">PAN Card</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <div style="color: #059669;">{{ icon('credit-card', size=15) }}</div>
+                  <span style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">PAN Card</span>
                 </div>
-                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='pan') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='pan') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; gap: 4px;">
                   {{ icon('download', size=12) }} Download
                 </a>
               </div>
@@ -305,12 +320,12 @@
 
             <!-- College ID -->
             {% if app.college_id_filename %}
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  {{ icon('award', size=14, color='var(--color-primary-light)') }}
-                  <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text);">College ID</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <div style="color: #059669;">{{ icon('award', size=15) }}</div>
+                  <span style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">College ID</span>
                 </div>
-                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='college_id') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+                <a href="{{ url_for('main.my_application_document', app_id=app.id, doc_type='college_id') }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; gap: 4px;">
                   {{ icon('download', size=12) }} Download
                 </a>
               </div>
@@ -320,24 +335,27 @@
 
         <!-- Social Profiles Card -->
         {% if app.portfolio_url or app.linkedin_url or app.github_url %}
-          <div class="card">
-            <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--color-text); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-border);">
-              {{ icon('globe', size=16, color='var(--color-primary-light)') }} Online Profiles
+          <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid #f1f5f9;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('globe', size=15) }}
+              </div>
+              Online Profiles
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
               {% if app.portfolio_url %}
-                <a href="{{ app.portfolio_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: var(--color-primary-light); font-size: 0.875rem; text-decoration: none;">
+                <a href="{{ app.portfolio_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: #059669; font-size: 0.85rem; text-decoration: none; font-weight: 500;">
                   {{ icon('globe', size=14) }} Portfolio Website {{ icon('external-link', size=11) }}
                 </a>
               {% endif %}
               {% if app.linkedin_url %}
-                <a href="{{ app.linkedin_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: var(--color-primary-light); font-size: 0.875rem; text-decoration: none;">
+                <a href="{{ app.linkedin_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: #059669; font-size: 0.85rem; text-decoration: none; font-weight: 500;">
                   {{ icon('users', size=14) }} LinkedIn Profile {{ icon('external-link', size=11) }}
                 </a>
               {% endif %}
               {% if app.github_url %}
-                <a href="{{ app.github_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: var(--color-primary-light); font-size: 0.875rem; text-decoration: none;">
+                <a href="{{ app.github_url }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 8px; color: #059669; font-size: 0.85rem; text-decoration: none; font-weight: 500;">
                   {{ icon('zap', size=14) }} GitHub Profile {{ icon('external-link', size=11) }}
                 </a>
               {% endif %}
@@ -351,4 +369,12 @@
 
   </div>
 </section>
+
+<style>
+  @media (max-width: 860px) {
+    .dossier-grid-layout {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
 {% endblock %}

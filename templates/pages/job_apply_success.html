@@ -4,79 +4,104 @@
 {% block title %}Application Submitted | Anti-Matrix Careers{% endblock %}
 
 {% block content %}
-<section class="section" style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.08) 0%, var(--color-bg) 70%);">
-  <div class="container" style="max-width: 680px; text-align: center;">
-    <div class="card" style="padding: var(--space-3xl) var(--space-2xl); border-color: rgba(16, 185, 129, 0.35); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.1);">
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2.5rem); background: #f8fafc; min-height: 88vh; padding-bottom: 5rem; display: flex; align-items: center; justify-content: center;">
+  <div class="container" style="max-width: 660px; margin: 0 auto; padding: 0 var(--space-md);">
+    
+    <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2.5rem 2rem; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06); text-align: center;">
       
-      <!-- Green Success Icon -->
-      <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 2px solid var(--color-primary-light); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); color: var(--color-primary-light);">
-        {{ icon('check', size=36) }}
+      <!-- Success Icon -->
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: #059669;">
+        {{ icon('check', size=28) }}
       </div>
 
-      <div class="badge" style="margin: 0 auto var(--space-md);">
-        {{ icon('briefcase', size=11) }} Application Confirmed
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; background: #ecfdf5; padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid #a7f3d0; margin-bottom: 0.75rem;">
+        {{ icon('check-circle', size=12) }} Submission Confirmed
       </div>
 
-      <h1 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: #000000; margin-bottom: var(--space-sm);">
+      <h1 style="font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0; letter-spacing: -0.02em;">
         Application Submitted Successfully
       </h1>
       
-      <p style="color: var(--color-text-dim); font-size: 1rem; margin-bottom: var(--space-xl); line-height: 1.6;">
-        Thank you for applying to Anti-Matrix, <strong style="color: #000000;">{{ app.full_name }}</strong>. We have received your application for the <strong style="color: var(--color-primary-light);">{{ job.title }}</strong> role and our talent acquisition team will review your qualifications.
-        <br />
-        <span style="font-size: 0.9rem; color: var(--color-primary-light); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-top: 0.5rem;">
-          {{ icon('mail', size=14) }} A confirmation email has been sent to your registered email address ({{ app.email }}).
-        </span>
+      <p style="color: #475569; font-size: 0.95rem; margin: 0 auto 1.5rem auto; line-height: 1.55; max-width: 520px;">
+        Thank you for applying to Anti-Matrix, <strong style="color: #0f172a;">{{ app.full_name }}</strong>. We have received your application for the <strong style="color: #059669;">{{ job.title }}</strong> role and our talent acquisition team is reviewing your profile.
       </p>
 
-      <!-- Application Details Dossier Card -->
-      <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-lg); margin-bottom: var(--space-2xl); text-align: left;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md);">
+      <!-- Confirmation Email Notice Box -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.75rem; font-size: 0.85rem; color: #166534; font-weight: 500;">
+        {{ icon('mail', size=15, color='#059669') }}
+        <span>Confirmation sent to <strong>{{ app.email }}</strong></span>
+      </div>
+
+      <!-- Application Details Receipt Box -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; text-align: left;">
+        
+        <div style="font-size: 0.725rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <span>Application Summary</span>
+          <span style="color: #059669; font-weight: 700;">Verified Record</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; font-size: 0.875rem;">
+          
           <div>
-            <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Application Reference ID</div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace);">{{ app.formatted_code }}</div>
+            <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Reference Code</div>
+            <div style="font-size: 1rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">
+              {{ app.formatted_code }}
+            </div>
           </div>
+
           <div>
-            <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Candidate Email</div>
-            <div style="font-size: 0.95rem; color: #000000; font-weight: 600;">{{ app.email }}</div>
+            <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Position</div>
+            <div style="font-size: 0.9rem; color: #0f172a; font-weight: 600;">
+              {{ job.title }}
+            </div>
           </div>
-          <div>
-            <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Position</div>
-            <div style="font-size: 0.95rem; color: var(--color-text); font-weight: 600;">{{ job.title }}</div>
-          </div>
+
           {% if app.duration_display %}
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Internship Duration</div>
-              <div style="font-size: 0.95rem; color: #60a5fa; font-weight: 700;">{{ app.duration_display }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Track Duration</div>
+              <div style="font-size: 0.9rem; color: #0f172a; font-weight: 600;">
+                {{ app.duration_display }}
+              </div>
             </div>
           {% endif %}
+
           {% if app.application_fee and app.application_fee > 0 %}
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Application Fee</div>
-              <div style="font-size: 0.95rem; color: var(--color-primary-light); font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ app.application_fee }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Application Fee</div>
+              <div style="font-size: 0.95rem; color: #059669; font-weight: 800; font-family: var(--font-mono, monospace);">
+                ₹{{ app.application_fee }}
+              </div>
             </div>
+
             <div>
-              <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Payment Status</div>
-              <div><span class="badge-status active">Paid</span></div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Payment Status</div>
+              <div>
+                <span class="badge-status active" style="font-size: 0.75rem; padding: 2px 7px;">Paid</span>
+              </div>
             </div>
           {% endif %}
+
           <div>
-            <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Application Status</div>
-            <div><span class="badge-status new">{{ app.status }}</span></div>
+            <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Current Status</div>
+            <div>
+              <span class="badge-status new" style="font-size: 0.75rem; padding: 2px 7px;">{{ app.status_display or app.status }}</span>
+            </div>
           </div>
+
         </div>
+
       </div>
 
       <!-- Action Buttons -->
-      <div style="display: flex; justify-content: center; gap: var(--space-md); flex-wrap: wrap;">
-        <a href="{{ url_for('main.my_applications') }}" class="btn btn-primary btn-lg" style="gap: 8px;">
-          {{ icon('briefcase', size=16) }} View My Applications
+      <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('main.my_application_detail', app_id=app.id) }}" class="btn btn-primary" style="gap: 8px; font-weight: 700; padding: 0.65rem 1.4rem;">
+          {{ icon('file-text', size=15) }} View Application
         </a>
-        <a href="{{ url_for('main.careers') }}" class="btn btn-outline btn-lg" style="gap: 8px;">
-          {{ icon('arrow-left', size=16) }} Back to Careers
+        <a href="{{ url_for('main.my_applications') }}" class="btn btn-outline" style="gap: 8px; font-weight: 600; padding: 0.65rem 1.25rem;">
+          {{ icon('briefcase', size=15) }} All Applications
         </a>
-        <a href="{{ url_for('main.home') }}" class="btn btn-ghost btn-lg">
-          Return Home
+        <a href="{{ url_for('main.careers') }}" class="btn btn-ghost" style="color: #64748b; font-weight: 600; padding: 0.65rem 1rem;">
+          Back to Careers
         </a>
       </div>
 

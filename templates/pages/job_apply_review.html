@@ -4,196 +4,333 @@
 {% block title %}Review Application & Pay | Anti-Matrix Careers{% endblock %}
 
 {% block content %}
-<section class="apply-hero">
-  <div class="container" style="max-width: 840px;">
-    <a href="{{ url_for('main.apply_job', job_id=job.id) }}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-md); display: inline-flex; align-items: center; gap: 6px;">
-      {{ icon('arrow-left', size=14) }} Edit Application Details
-    </a>
-
-    <div class="badge" style="margin-bottom: var(--space-sm);">
-      {{ icon('check-circle', size=11) }} Step 2 of 2: Review Application & Complete Payment
-    </div>
-
-    <h1 style="font-size: clamp(1.75rem, 3.5vw, 2.35rem); font-weight: 800; color: var(--color-white); margin-bottom: var(--space-xs);">
-      Application Review
-    </h1>
-    <p style="color: var(--color-text-dim); font-size: 0.95rem;">
-      Please review your submitted details carefully. Complete the application fee payment via Cashfree to finalize your application.
-    </p>
-  </div>
-</section>
-
-<section class="section" style="padding-top: 0; background: var(--color-bg); min-height: 70vh;">
-  <div class="container" style="max-width: 840px;">
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: #f8fafc; min-height: 88vh; padding-bottom: 5rem;">
+  <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-md);">
     
-    <!-- Review Card -->
-    <div class="card" style="padding: var(--space-2xl); border-color: rgba(16, 185, 129, 0.25); box-shadow: 0 15px 40px rgba(0,0,0,0.4);">
-      
-      <!-- Position Applied -->
-      <div style="border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-lg); margin-bottom: var(--space-lg);">
-        <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
-          Internship Position
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-sm);">
-          <div>
-            <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--color-white); margin-bottom: 0.25rem;">
-              {{ job.title }}
-            </h2>
-            <div style="font-size: 0.85rem; color: var(--color-text-dim);">
-              {{ job.department }} &bull; {{ job.location }} &bull; {{ job.employment_type }}
-            </div>
-          </div>
-          <div style="text-align: right;">
-            <span style="font-size: 0.85rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 4px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-              {{ icon('clock', size=12) }} Duration: {{ duration_label }}
-            </span>
-          </div>
-        </div>
-      </div>
+    <!-- Top Bar Navigation & Header -->
+    <div style="margin-bottom: 2rem;">
+      <a href="{{ url_for('main.apply_job', job_id=job.id) }}" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 6px; color: #64748b; font-weight: 600; margin-bottom: 0.75rem; padding: 0.35rem 0.65rem;">
+        {{ icon('arrow-left', size=14) }} Edit Application Details
+      </a>
 
-      <!-- 1. Personal Information Review -->
-      <div style="margin-bottom: var(--space-xl);">
-        <div style="font-size: 0.85rem; color: var(--color-primary-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px;">
-          {{ icon('user', size=14) }} Personal Information
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md); background: rgba(0,0,0,0.2); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">First Name</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.first_name or (app.full_name.split()[0] if app.full_name else '') }}</div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; background: #ecfdf5; padding: 0.25rem 0.65rem; border-radius: 6px; border: 1px solid #a7f3d0; margin-bottom: 0.5rem;">
+            {{ icon('check-circle', size=12) }} Final Step &bull; Review &amp; Pay
           </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Last Name</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.last_name or (app.full_name.split()[1:]|join(' ') if app.full_name else '') }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Email ID</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.email }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Phone Number</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.phone }}</div>
-          </div>
-          <div style="grid-column: 1 / -1;">
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Address</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.address }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">State</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.state }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">City</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.city }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Pincode</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.pincode }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. Education Review -->
-      <div style="margin-bottom: var(--space-xl);">
-        <div style="font-size: 0.85rem; color: var(--color-primary-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px;">
-          {{ icon('award', size=14) }} Education Details
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md); background: rgba(0,0,0,0.2); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Education</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.education_level or 'Bachelor\'s Degree' }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Degree</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.degree }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Major / Specialization</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.major or app.department }}</div>
-          </div>
-          <div>
-            <div style="font-size: 0.725rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 600;">Graduation Year</div>
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-white);">{{ app.graduation_year }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Documents Review -->
-      <div style="margin-bottom: var(--space-xl);">
-        <div style="font-size: 0.85rem; color: var(--color-primary-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-sm); display: flex; align-items: center; gap: 6px;">
-          {{ icon('file-text', size=14) }} Uploaded Documents
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); background: rgba(0,0,0,0.2); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-          <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-primary-light);">
-            {{ icon('check-circle', size=14) }} Resume: <span style="color: var(--color-white); font-weight: 600;">{{ app.resume_filename or 'resume.pdf' }}</span>
-          </div>
-          {% if app.duration == '3_months' or job.duration == '3_months' %}
-            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-primary-light);">
-              {{ icon('check-circle', size=14) }} Aadhaar Card: <span style="color: var(--color-white); font-weight: 600;">{{ app.aadhaar_filename or 'aadhaar.pdf' }}</span>
-            </div>
-            {% if app.pan_filename %}
-              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-primary-light);">
-                {{ icon('check-circle', size=14) }} PAN Card: <span style="color: var(--color-white); font-weight: 600;">{{ app.pan_filename }}</span>
-              </div>
-            {% endif %}
-            {% if app.college_id_filename %}
-              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-primary-light);">
-                {{ icon('check-circle', size=14) }} College ID: <span style="color: var(--color-white); font-weight: 600;">{{ app.college_id_filename }}</span>
-              </div>
-            {% endif %}
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Application Fee Calculation Breakdown & Payment Action -->
-      <div style="background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.12) 0%, rgba(0, 0, 0, 0.4) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-lg); padding: var(--space-xl); text-align: center;">
-        <div style="font-size: 0.85rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.25rem;">
-          Application Fee
-        </div>
-        <div style="font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 900; color: var(--color-primary-light); font-family: var(--font-mono, monospace); margin-bottom: 0.25rem;">
-          ₹{{ fee_inr }}
-        </div>
-        <p style="font-size: 0.85rem; color: var(--color-text-dim); max-width: 480px; margin: 0 auto var(--space-md);">
-          One-time non-refundable application fee for <strong>{{ duration_label }}</strong> internship program.
-        </p>
-
-        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); max-width: 520px; margin: 0 auto var(--space-lg); text-align: left; font-size: 0.8rem; color: var(--color-text-dim); line-height: 1.6;">
-          <p style="margin-bottom: var(--space-xs);">
-            By submitting this application and paying the applicable Application Fee, I confirm that the information and documents provided by me are accurate and belong to me. I understand that payment of the Application Fee does not guarantee selection or an internship offer.
+          <h1 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">
+            Application Review
+          </h1>
+          <p style="color: #64748b; font-size: 0.95rem; margin: 0.35rem 0 0 0;">
+            Please review your submitted details carefully before proceeding to secure payment.
           </p>
-          <div style="font-size: 0.75rem; color: var(--color-text-muted);">
-            Governed by Anti Matrix <a href="{{ url_for('main.terms') }}" target="_blank" style="color: var(--color-primary-light);">Terms &amp; Conditions</a>, <a href="{{ url_for('main.privacy') }}" target="_blank" style="color: var(--color-primary-light);">Privacy Policy</a>, and <a href="{{ url_for('main.refund_policy') }}" target="_blank" style="color: var(--color-primary-light);">Refund &amp; Cancellation Policy</a>.
-          </div>
         </div>
 
-        {% if is_test_mode %}
-          <form method="POST" action="{{ url_for('main.job_apply_test_payment', app_id=app.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            
-            <button type="submit" class="btn btn-primary btn-lg" id="complete-test-payment-btn" style="width: 100%; max-width: 380px; margin: 0 auto; justify-content: center; font-size: 1.05rem; gap: 8px;">
-              {{ icon('check-circle', size=18) }} Complete Test Payment (₹{{ fee_inr }})
-            </button>
-          </form>
-
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: var(--space-md); font-size: 0.775rem; color: #60a5fa;">
-            {{ icon('zap', size=12) }} Temporary Payment Test Mode Active &bull; No actual card/UPI required
-          </div>
-        {% else %}
-          <form method="POST" action="{{ url_for('main.job_apply_checkout', app_id=app.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            
-            <button type="submit" class="btn btn-primary btn-lg" id="pay-application-fee-btn" style="width: 100%; max-width: 380px; margin: 0 auto; justify-content: center; font-size: 1.05rem; gap: 8px;">
-              {{ icon('credit-card', size=18) }} Pay Application Fee (₹{{ fee_inr }})
-            </button>
-          </form>
-
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: var(--space-md); font-size: 0.775rem; color: var(--color-text-muted);">
-            {{ icon('lock', size=12) }} Secured with 256-bit encryption via Cashfree Payments
+        {% if app.formatted_code %}
+          <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Application ID</span>
+            <span style="font-family: var(--font-mono, monospace); font-size: 0.95rem; font-weight: 800; color: #0f172a; background: #ffffff; padding: 0.25rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+              {{ app.formatted_code }}
+            </span>
           </div>
         {% endif %}
       </div>
+    </div>
+
+    <!-- 2-Column Responsive Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 360px; gap: 2rem; align-items: start;" class="review-grid-layout">
+      
+      <!-- Left Column: Dossier Details -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- 1. Position Applied Card -->
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <span style="font-size: 0.725rem; color: #059669; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">
+                Target Position
+              </span>
+              <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0;">
+                {{ job.title }}
+              </h2>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #64748b; flex-wrap: wrap;">
+                <span>{{ job.department }}</span>
+                <span style="color: #cbd5e1;">&bull;</span>
+                <span>{{ job.location }}</span>
+                <span style="color: #cbd5e1;">&bull;</span>
+                <span>{{ job.employment_type }}</span>
+              </div>
+            </div>
+            <div>
+              <span style="font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 6px;">
+                {{ icon('clock', size=13) }} {{ duration_label }} Track
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Personal Information -->
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.85rem; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('user', size=15) }}
+              </div>
+              Personal Information
+            </div>
+            <a href="{{ url_for('main.apply_job', job_id=job.id) }}" style="font-size: 0.8rem; color: #059669; font-weight: 600; text-decoration: none;">Edit</a>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;">
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Full Name</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.full_name }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Email Address</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.email }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Phone Number</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.phone }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Location</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.city }}{% if app.city and app.state %}, {% endif %}{{ app.state }} ({{ app.pincode }})</div>
+            </div>
+            {% if app.address %}
+              <div style="grid-column: 1 / -1; padding-top: 0.5rem; border-top: 1px dashed #f1f5f9;">
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Residential Address</div>
+                <div style="font-size: 0.875rem; color: #334155;">{{ app.address }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 3. Education & Academic Details -->
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.85rem; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('award', size=15) }}
+              </div>
+              Education Details
+            </div>
+            <a href="{{ url_for('main.apply_job', job_id=job.id) }}" style="font-size: 0.8rem; color: #059669; font-weight: 600; text-decoration: none;">Edit</a>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;">
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Education Level</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.education_level or 'Bachelor\'s Degree' }}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Degree / Major</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.degree }} {% if app.major or app.department %}&bull; {{ app.major or app.department }}{% endif %}</div>
+            </div>
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Graduation Year</div>
+              <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.graduation_year }}</div>
+            </div>
+            {% if app.college %}
+              <div>
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Institution / College</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: #0f172a;">{{ app.college }}</div>
+              </div>
+            {% endif %}
+            {% if app.current_cgpa %}
+              <div>
+                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Current CGPA / Score</div>
+                <div style="font-size: 0.9rem; font-weight: 700; color: #059669;">{{ app.current_cgpa }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 4. Uploaded Verification Documents -->
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.85rem; margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('file-text', size=15) }}
+              </div>
+              Attached Documents
+            </div>
+            <span style="font-size: 0.75rem; color: #059669; font-weight: 600; background: #ecfdf5; padding: 2px 8px; border-radius: 4px;">Verified</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
+            <!-- Resume Chip -->
+            <div style="display: flex; align-items: center; gap: 10px; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <div style="color: #059669;">{{ icon('file-text', size=16) }}</div>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Resume / CV</div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {{ app.resume_filename or 'resume.pdf' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Aadhaar Card Chip -->
+            {% if app.aadhaar_filename %}
+              <div style="display: flex; align-items: center; gap: 10px; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <div style="color: #059669;">{{ icon('shield', size=16) }}</div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Aadhaar Card</div>
+                  <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ app.aadhaar_filename }}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- PAN Card Chip -->
+            {% if app.pan_filename %}
+              <div style="display: flex; align-items: center; gap: 10px; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <div style="color: #059669;">{{ icon('credit-card', size=16) }}</div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">PAN Card</div>
+                  <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ app.pan_filename }}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- College ID Chip -->
+            {% if app.college_id_filename %}
+              <div style="display: flex; align-items: center; gap: 10px; padding: 0.65rem 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <div style="color: #059669;">{{ icon('award', size=16) }}</div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">College ID</div>
+                  <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ app.college_id_filename }}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 5. Online Profiles (if provided) -->
+        {% if app.portfolio_url or app.linkedin_url or app.github_url %}
+          <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid #f1f5f9;">
+              <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
+                {{ icon('globe', size=15) }}
+              </div>
+              Candidate Profiles &amp; Portfolio
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+              {% if app.portfolio_url %}
+                <a href="{{ app.portfolio_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="font-size: 0.8rem; gap: 6px;">
+                  {{ icon('globe', size=13) }} Portfolio Website {{ icon('external-link', size=11) }}
+                </a>
+              {% endif %}
+              {% if app.linkedin_url %}
+                <a href="{{ app.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="font-size: 0.8rem; gap: 6px;">
+                  {{ icon('users', size=13) }} LinkedIn Profile {{ icon('external-link', size=11) }}
+                </a>
+              {% endif %}
+              {% if app.github_url %}
+                <a href="{{ app.github_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="font-size: 0.8rem; gap: 6px;">
+                  {{ icon('zap', size=13) }} GitHub Profile {{ icon('external-link', size=11) }}
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Right Column: Sticky Payment & Order Summary -->
+      <div style="position: sticky; top: calc(var(--nav-height, 80px) + 2rem);">
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.75rem; box-shadow: 0 4px 20px rgba(15,23,42,0.06);">
+          
+          <div style="padding-bottom: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0;">
+              Order Summary
+            </h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+              Secure payment via Cashfree Gateway
+            </p>
+          </div>
+
+          <!-- Price Breakdown Rows -->
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; font-size: 0.875rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
+              <span>Application Fee</span>
+              <span style="font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ fee_inr }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
+              <span>Program Duration</span>
+              <span style="font-weight: 600; color: #0f172a;">{{ duration_label }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
+              <span>Technical Verification</span>
+              <span style="font-weight: 600; color: #059669;">Included</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
+              <span>Processing Taxes</span>
+              <span style="font-weight: 600; color: #059669;">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- Total Due Row -->
+          <div style="padding: 1rem 1.15rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Payable</div>
+              <div style="font-size: 0.75rem; color: #94a3b8;">One-time processing</div>
+            </div>
+            <div style="font-size: 1.75rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace); line-height: 1;">
+              ₹{{ fee_inr }}
+            </div>
+          </div>
+
+          <!-- Payment Form & Primary Action Button -->
+          {% if is_test_mode %}
+            <form method="POST" action="{{ url_for('main.job_apply_test_payment', app_id=app.id) }}" style="margin: 0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-primary btn-lg" id="complete-test-payment-btn" style="width: 100%; justify-content: center; font-size: 1rem; font-weight: 700; padding: 0.85rem 1rem; gap: 8px;">
+                {{ icon('check-circle', size=18) }} Complete Test Payment (₹{{ fee_inr }})
+              </button>
+            </form>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0.85rem; font-size: 0.75rem; color: #2563eb; font-weight: 500;">
+              {{ icon('zap', size=12) }} Sandbox Test Mode &bull; No live charge
+            </div>
+          {% else %}
+            <form method="POST" action="{{ url_for('main.job_apply_checkout', app_id=app.id) }}" style="margin: 0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-primary btn-lg" id="pay-application-fee-btn" style="width: 100%; justify-content: center; font-size: 1rem; font-weight: 700; padding: 0.85rem 1rem; gap: 8px;">
+                {{ icon('credit-card', size=18) }} Pay Application Fee (₹{{ fee_inr }})
+              </button>
+            </form>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0.85rem; font-size: 0.75rem; color: #64748b;">
+              {{ icon('lock', size=13, color='#059669') }} 256-bit SSL encrypted via Cashfree Payments
+            </div>
+          {% endif %}
+
+          <!-- Terms & Compliance Notice -->
+          <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; font-size: 0.725rem; color: #64748b; line-height: 1.5;">
+            By proceeding, you confirm all details provided are accurate. Governed by Anti Matrix
+            <a href="{{ url_for('main.terms') }}" target="_blank" style="color: #059669; text-decoration: underline;">Terms</a>,
+            <a href="{{ url_for('main.privacy') }}" target="_blank" style="color: #059669; text-decoration: underline;">Privacy</a>, &amp;
+            <a href="{{ url_for('main.refund_policy') }}" target="_blank" style="color: #059669; text-decoration: underline;">Refund Policy</a>.
+          </div>
+
+        </div>
+      </div>
 
     </div>
 
   </div>
 </section>
+
+<style>
+  @media (max-width: 860px) {
+    .review-grid-layout {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
 {% endblock %}

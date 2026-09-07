@@ -1,110 +1,111 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}My Applications | Anti-Matrix{% endblock %}
+{% block title %}My Applications | Anti-Matrix Careers{% endblock %}
 
 {% block content %}
 <!-- Page Hero -->
-<section class="page-hero">
-  <div class="container">
-    <h1>My Applications</h1>
-    <p>Track your submitted applications, review evaluation stages, and verify payment records.</p>
-  </div>
-</section>
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: #f8fafc; min-height: 88vh; padding-bottom: 5rem;">
+  <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 0 var(--space-md);">
 
-<section class="section" style="background: var(--color-bg); min-height: 60vh;">
-  <div class="container">
+    <!-- Header Section -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+      <div>
+        <h1 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">
+          My Applications
+        </h1>
+        <p style="color: #64748b; font-size: 0.95rem; margin: 0.35rem 0 0 0;">
+          Track your submitted applications, review evaluation stages, and verify payment records.
+        </p>
+      </div>
 
-    <!-- Sub-header actions -->
-    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: var(--space-2xl);">
-      <a href="{{ url_for('main.careers') }}" class="btn btn-outline btn-sm" style="gap: 6px;">
+      <a href="{{ url_for('main.careers') }}" class="btn btn-outline btn-sm" style="gap: 6px; font-weight: 600;">
         {{ icon('search', size=14) }} Browse Careers
       </a>
     </div>
 
-    <!-- Flash Messages are handled by base.html -->
-
     <!-- Applications List -->
     {% if applications %}
-      <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
         {% for app in applications %}
-          <div class="card animate-fade-up" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02); transition: all 0.25s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-md); padding-bottom: var(--space-md); border-bottom: 1px solid var(--color-border);">
+          <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04); transition: border-color 0.15s ease;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9;">
               
               <div style="display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span style="font-family: var(--font-mono, monospace); font-size: 0.85rem; font-weight: 800; color: var(--color-primary-light); background: rgba(16, 185, 129, 0.1); padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.25);">
+                  <span style="font-family: var(--font-mono, monospace); font-size: 0.85rem; font-weight: 800; color: #0f172a; background: #f8fafc; padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                     {{ app.formatted_code }}
                   </span>
                   {% if app.duration_display %}
-                    <span style="font-size: 0.775rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25);">
+                    <span style="font-size: 0.775rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 4px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">
                       {{ app.duration_display }}
                     </span>
                   {% endif %}
                 </div>
-                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text); margin: 0.25rem 0 0 0;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0.35rem 0 0 0;">
                   {{ app.job.title if app.job else 'Position' }}
                 </h3>
-                <span style="font-size: 0.85rem; color: var(--color-text-dim);">
+                <span style="font-size: 0.85rem; color: #64748b;">
                   {{ app.job.department if app.job else 'Anti-Matrix' }} &bull; Applied on {{ app.created_at.strftime('%d %b %Y') }}
                 </span>
               </div>
 
               <!-- Badges & Action -->
-              <div style="display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <!-- Payment Status -->
                 {% if app.payment_status == 'paid' %}
-                  <span class="badge-status active" style="font-size: 0.775rem;">
-                    {{ icon('check', size=11) }} Payment: Paid
+                  <span class="badge-status active" style="font-size: 0.775rem; padding: 3px 8px;">
+                    {{ icon('check', size=11) }} Paid
                   </span>
                 {% elif app.payment_status == 'pending' %}
-                  <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 0.775rem;">
-                    {{ icon('clock', size=11) }} Payment: Pending
+                  <span class="badge-status" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.775rem; padding: 3px 8px;">
+                    {{ icon('clock', size=11) }} Payment Pending
                   </span>
                 {% elif app.payment_status == 'failed' %}
-                  <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.775rem;">
-                    Payment: Failed
+                  <span class="badge-status" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.775rem; padding: 3px 8px;">
+                    Payment Failed
                   </span>
                 {% else %}
-                  <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border: 1px solid var(--color-border); font-size: 0.775rem;">
+                  <span class="badge-status" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.775rem; padding: 3px 8px;">
                     Exempt / Free
                   </span>
                 {% endif %}
 
                 <!-- Application Status -->
-                <span class="badge-status {{ app.status_badge_class }}" style="font-size: 0.775rem; font-weight: 700;">
+                <span class="badge-status {{ app.status_badge_class }}" style="font-size: 0.775rem; font-weight: 700; padding: 3px 8px;">
                   {{ app.status_display }}
                 </span>
               </div>
             </div>
 
             <!-- Card Bottom Meta & Actions -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md);">
-              <div style="display: flex; gap: var(--space-lg); flex-wrap: wrap;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+              <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem;">
                 {% if app.application_fee and app.application_fee > 0 %}
                   <div>
-                    <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Application Fee</span>
-                    <div style="font-size: 0.95rem; font-weight: 700; color: var(--color-text); font-family: var(--font-mono, monospace);">₹{{ app.application_fee }}</div>
+                    <span style="font-size: 0.725rem; color: #64748b; text-transform: uppercase; font-weight: 600; display: block;">Application Fee</span>
+                    <div style="font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ app.application_fee }}</div>
                   </div>
                 {% endif %}
                 <div>
-                  <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Registered Email</span>
-                  <div style="font-size: 0.95rem; color: var(--color-text-muted);">{{ app.email }}</div>
+                  <span style="font-size: 0.725rem; color: #64748b; text-transform: uppercase; font-weight: 600; display: block;">Candidate Email</span>
+                  <div style="color: #475569; font-weight: 500;">{{ app.email }}</div>
                 </div>
                 <div>
-                  <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Current Stage</span>
-                  <div style="font-size: 0.95rem; font-weight: 600; color: var(--color-primary-light);">{{ app.status_display }}</div>
+                  <span style="font-size: 0.725rem; color: #64748b; text-transform: uppercase; font-weight: 600; display: block;">Current Stage</span>
+                  <div style="font-weight: 600; color: #059669;">{{ app.status_display }}</div>
                 </div>
               </div>
 
-              <div style="display: flex; gap: var(--space-sm); align-items: center;">
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
                 {% if app.payment_status != 'paid' and app.duration %}
-                  <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 5px;">
+                  <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 5px; font-weight: 700;">
                     {{ icon('credit-card', size=13) }} Complete Payment
                   </a>
                 {% endif %}
-                <a href="{{ url_for('main.my_application_detail', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 5px;">
-                  View Details {{ icon('arrow-right', size=13) }}
+                <a href="{{ url_for('main.my_application_detail', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 5px; font-weight: 600;">
+                  View Dossier {{ icon('arrow-right', size=13) }}
                 </a>
               </div>
             </div>
@@ -114,18 +115,18 @@
       </div>
     {% else %}
       <!-- Empty State -->
-      <div class="card" style="text-align: center; padding: var(--space-3xl) var(--space-xl); border-color: rgba(16, 185, 129, 0.2);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 64px; height: 64px; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
-          {{ icon('briefcase', size=28, color='var(--color-primary-light)') }}
+      <div class="card" style="text-align: center; padding: 4rem 2rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+        <div style="margin: 0 auto 1rem; width: 56px; height: 56px; border-radius: 50%; background: #ecfdf5; border: 1.5px solid #a7f3d0; display: flex; align-items: center; justify-content: center; color: #059669;">
+          {{ icon('briefcase', size=24) }}
         </div>
-        <h2 style="font-size: 1.35rem; color: var(--color-text); margin-bottom: 0.5rem;">
-          No Applications Yet
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;">
+          No Applications Found
         </h2>
-        <p style="color: var(--color-text-dim); max-width: 480px; margin: 0 auto var(--space-xl); line-height: 1.6;">
-          You haven't submitted any job or internship applications yet. Explore our open positions and start your career journey at Anti-Matrix.
+        <p style="color: #64748b; max-width: 440px; margin: 0 auto 1.5rem; line-height: 1.5; font-size: 0.9rem;">
+          You haven't submitted any job or internship applications yet. Explore our open positions and apply online.
         </p>
-        <a href="{{ url_for('main.careers') }}" class="btn btn-primary btn-lg" style="gap: 8px;">
-          {{ icon('search', size=16) }} Browse Open Roles
+        <a href="{{ url_for('main.careers') }}" class="btn btn-primary" style="gap: 8px; font-weight: 700;">
+          {{ icon('search', size=15) }} Browse Open Roles
         </a>
       </div>
     {% endif %}
