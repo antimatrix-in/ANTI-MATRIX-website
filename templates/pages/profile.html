@@ -118,12 +118,14 @@
             Navigation Shortcuts
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
+            {% if current_user.role != 'admin' %}
             <a href="{{ url_for('main.my_applications') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--color-text); font-size: 0.875rem; font-weight: 500; transition: all 0.15s;" onmouseover="this.style.background='#f8fafc'; this.style.color='#059669';" onmouseout="this.style.background='transparent'; this.style.color='var(--color-text)';">
               <span style="display: flex; align-items: center; gap: 8px;">
                 {{ icon('briefcase', size=15, color='var(--color-primary)') }} My Applications
               </span>
               <span style="font-size: 0.75rem; font-weight: 700; background: rgba(5, 150, 105, 0.12); color: var(--color-primary); padding: 2px 8px; border-radius: 4px;">{{ apps_count }}</span>
             </a>
+            {% endif %}
 
             <a href="{{ url_for('main.careers') }}" style="display: flex; align-items: center; gap: 8px; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--color-text); font-size: 0.875rem; font-weight: 500; transition: all 0.15s;" onmouseover="this.style.background='#f8fafc'; this.style.color='#059669';" onmouseout="this.style.background='transparent'; this.style.color='var(--color-text)';">
               {{ icon('search', size=15, color='#64748b') }} Explore All Jobs

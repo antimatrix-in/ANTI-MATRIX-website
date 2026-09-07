@@ -90,7 +90,8 @@
                 <span>My Profile</span>
               </a>
 
-              {# 2. My Applications #}
+              {# 2. My Applications (hidden for admin) #}
+              {% if current_user.role != 'admin' %}
               <a href="{{ url_for('main.my_applications') }}"
                  role="menuitem"
                  style="display: flex; align-items: center; gap: 10px; padding: 0.65rem 1.1rem; font-size: 0.875rem; font-weight: 500; color: #0f172a; text-decoration: none; transition: background 0.15s;"
@@ -99,6 +100,7 @@
                 {{ icon('briefcase', size=15, color='#64748b') }}
                 <span>My Applications</span>
               </a>
+              {% endif %}
 
               {# Admin Navigation Links #}
               {% if current_user.role == 'admin' %}
