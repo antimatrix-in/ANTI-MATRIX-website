@@ -1,4 +1,6 @@
 import os
+import socket
+import urllib.parse
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -158,10 +160,17 @@ def normalize_database_url(raw_url: str) -> str:
             project_ref = host[3:-len('.supabase.co')]
             resolves = False
             try:
+                orig_timeout = socket.getdefaulttimeout()
+                socket.setdefaulttimeout(3.0)
                 socket.getaddrinfo(host, port)
                 resolves = True
             except Exception:
                 resolves = False
+            finally:
+                try:
+                    socket.setdefaulttimeout(orig_timeout)
+                except Exception:
+                    pass
             
             if not resolves:
                 host = 'aws-0-ap-south-1.pooler.supabase.com'

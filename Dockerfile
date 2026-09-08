@@ -28,7 +28,7 @@ COPY . .
 
 RUN mkdir -p uploads/generated_documents uploads/documents uploads/resumes uploads/preview_cache
 
-EXPOSE 5000
+EXPOSE 5000 10000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --timeout 120 app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers ${WEB_CONCURRENCY:-1} --timeout 120 --access-logfile - --error-logfile - --log-level info --capture-output app:app"]
 

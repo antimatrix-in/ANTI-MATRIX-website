@@ -1,11 +1,20 @@
-from flask import Flask, render_template, jsonify
+import logging
 import os
+import sys
 from datetime import datetime, timezone
+from flask import Flask, render_template, jsonify
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from config import config, INTERNSHIP_FEES, INTERNSHIP_PRICING
 from models import db, User, JobPosting, JobApplication, Payment
 from routes import main_bp, auth_bp, contact_bp, admin_bp
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    stream=sys.stdout
+)
+logger = logging.getLogger('anti_matrix')
 
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -96,7 +105,7 @@ def create_app(config_name=None):
         
         # Log database backend safely without exposing credentials or hosts
         backend_name = db.engine.dialect.name.upper()
-        app.logger.info(f"Anti-Matrix Database backend initialized: {backend_name}")
+        logger.info(f"DATABASE CONFIGURATION DETECTED: {backend_name}")
 
         # Ensure database schema is updated for user_id on job_applications
         try:
@@ -271,8 +280,14 @@ def create_app(config_name=None):
             db.session.add(default_admin)
             db.session.commit()
 
+        logger.info("APPLICATION IMPORT SUCCESS | SERVER READY")
+
     return app
 
+
+port_env = os.environ.get('PORT', '10000')
+concurrency_env = os.environ.get('WEB_CONCURRENCY', '1')
+logger.info(f"STARTING ANTI-MATRIX CONTAINER | PORT={port_env} | WEB_CONCURRENCY={concurrency_env} | GUNICORN STARTING")
 
 app = create_app()
 
