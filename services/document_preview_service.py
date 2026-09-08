@@ -104,6 +104,10 @@ def find_libreoffice_binary() -> Optional[str]:
     return None
 
 
+# Canonical alias for executable discovery
+find_libreoffice_executable = find_libreoffice_binary
+
+
 def validate_pdf(pdf_path: str) -> Tuple[bool, Optional[str]]:
     """
     Validates that a file exists, has non-zero size, and begins with '%PDF-'.
@@ -199,7 +203,7 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
             return True, cached_pdf_path, None
 
     # Locate LibreOffice binary — log all searched paths on failure
-    soffice_bin = find_libreoffice_binary()
+    soffice_bin = find_libreoffice_executable()
     if not soffice_bin:
         searched = [
             os.environ.get('LIBREOFFICE_PATH', '(LIBREOFFICE_PATH not set)'),
@@ -215,7 +219,8 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
             f"Hint: Ensure LibreOffice headless is installed in the deployment environment "
             f"(Dockerfile: apt-get install libreoffice-writer-nogui libreoffice-nogui)"
         )
-        return False, None, "Offer Letter PDF could not be generated. LibreOffice is not available on the server."
+        return False, None, "Offer Letter PDF could not be generated. LibreOffice is not installed or could not be located in the current runtime."
+
 
     # Convert using LibreOffice headless in an isolated temporary environment
     temp_dir = tempfile.mkdtemp(prefix='antimatrix_lo_')
