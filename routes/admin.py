@@ -631,11 +631,17 @@ def mark_application_shortlisted(app_id):
 def mark_application_offer_complete(app_id):
     """
     Stage 4: Mark as Complete.
-    Validates employee and offer letter exist, updates status to OFFER_COMPLETED.
+    Validates employee and offer letter exist, generates PDF, sends via Brevo,
+    and ONLY sets status to OFFER_COMPLETED after successful email delivery.
+
+    IMPORTANT: The status is NOT set to OFFER_COMPLETED if:
+    - PDF conversion fails
+    - Brevo delivery fails
+    This prevents falsely reporting "Offer marked as Complete" when email was not sent.
     """
     application = db.session.get(JobApplication, app_id) or abort(404)
 
-    # Ensure Offer Letter is generated
+    # Ensure Offer Letter DOCX is generated
     from services.document_preview_service import _resolve_document_file_path
     offer_doc = application.offer_letter_doc
     docx_path = _resolve_document_file_path(offer_doc) if offer_doc else None
@@ -646,24 +652,44 @@ def mark_application_offer_complete(app_id):
             flash(f"Cannot complete offer: {str(e)}", 'danger')
             return redirect(url_for('admin.application_detail', app_id=application.id))
 
-    # Update status to OFFER_COMPLETED
-    application.status = 'OFFER_COMPLETED'
-    application.application_status = 'OFFER_COMPLETED'
-    application.offer_completed_at = datetime.now(timezone.utc)
-
-    # Send Shortlisted email + Offer Letter attachment via Brevo if not already sent
-    if not offer_doc or offer_doc.email_status != 'sent':
-        from services.offer_letter_service import send_offer_letter_email
-        success, msg = send_offer_letter_email(application)
-        if success:
-            db.session.commit()
-            flash(f"Offer marked as Complete! Offer Letter email with PDF attachment sent successfully to {application.email}.", 'success')
-        else:
-            db.session.commit()
-            flash(f"Offer marked as Complete. Notice on email delivery: {msg}", 'warning')
-    else:
+    # If email was already sent: simply mark as complete and commit
+    if offer_doc and offer_doc.email_status == 'sent':
+        application.status = 'OFFER_COMPLETED'
+        application.application_status = 'OFFER_COMPLETED'
+        application.offer_completed_at = datetime.now(timezone.utc)
         db.session.commit()
         flash(f"Application for {application.full_name} is marked as Offer Completed.", 'success')
+        return redirect(url_for('admin.application_detail', app_id=application.id))
+
+    # Attempt to send Offer Letter email with PDF attachment via Brevo
+    from services.offer_letter_service import send_offer_letter_email
+    success, msg = send_offer_letter_email(application)
+
+    if success:
+        # Email sent successfully — NOW mark as OFFER_COMPLETED
+        application.status = 'OFFER_COMPLETED'
+        application.application_status = 'OFFER_COMPLETED'
+        application.offer_completed_at = datetime.now(timezone.utc)
+        db.session.commit()
+        flash(
+            f"Offer marked as Complete! Offer Letter email with PDF attachment sent successfully to {application.email}.",
+            'success'
+        )
+    else:
+        # Email failed — do NOT change status to OFFER_COMPLETED
+        # Status remains SHORTLISTED; email_status on offer_doc is already set to 'failed'
+        # by send_offer_letter_email. Commit that failure status only.
+        try:
+            db.session.commit()
+        except Exception as db_e:
+            db.session.rollback()
+            current_app.logger.error(f"DB error saving email failure state for app {app_id}: {db_e}")
+        flash(
+            f"Offer email was NOT sent. {msg} "
+            f"The offer stage has not been marked as complete. "
+            f"Please use the Retry button after the issue is resolved.",
+            'danger'
+        )
 
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
@@ -768,8 +794,14 @@ def retry_shortlist_offer_email(app_id):
     success, msg = send_offer_letter_email(application)
 
     if not success:
-        if "PDF could not be generated" in str(msg) or "PDF conversion failed" in str(msg):
-            flash("Offer Letter PDF could not be generated. The email was not sent.", 'danger')
+        if any(phrase in str(msg) for phrase in [
+            "PDF could not be generated",
+            "PDF conversion failed",
+            "LibreOffice is not available",
+            "conversion timed out",
+            "invalid output"
+        ]):
+            flash(f"Offer Letter PDF could not be generated. The email was not sent. ({msg})", 'danger')
         else:
             flash(f"Failed to send Offer Letter email: {msg}", 'danger')
         return redirect(url_for('admin.application_detail', app_id=application.id))

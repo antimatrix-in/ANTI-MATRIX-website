@@ -104,9 +104,19 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
     Converts a candidate DOCX file to a PDF using LibreOffice headless.
     Maintains a cache of converted PDFs in uploads/preview_cache/ keyed by file modification time.
     Returns (success: bool, pdf_path: Optional[str], error_message: Optional[str]).
+
+    Diagnostic logging captures every failure point:
+    - LibreOffice binary path (found or NOT FOUND)
+    - DOCX file path and size
+    - Subprocess returncode, stdout, stderr
+    - Temp directory path and output PDF existence/size
+    - Conversion wall-clock duration
+    No credentials are ever logged.
     """
+    import time as _time
+
     if not file_path:
-        logger.error("convert_docx_to_pdf called with empty file_path.")
+        logger.error("PDF_CONVERSION_FAILED | Reason: convert_docx_to_pdf called with empty file_path.")
         return False, None, "Document file not found on server storage."
 
     # If direct path does not exist, resolve via _resolve_document_file_path
@@ -115,7 +125,10 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
         if resolved and os.path.exists(resolved):
             file_path = resolved
         else:
-            logger.error(f"convert_docx_to_pdf: file does not exist at '{file_path}'.")
+            logger.error(
+                f"PDF_CONVERSION_FAILED | Reason: DOCX not found | "
+                f"Attempted path: '{file_path}'"
+            )
             return False, None, "Document file not found on server storage."
 
     abs_file_path = os.path.abspath(file_path)
@@ -123,11 +136,17 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
     try:
         file_size = os.path.getsize(abs_file_path)
         if file_size == 0:
-            logger.error(f"convert_docx_to_pdf: file at '{abs_file_path}' is empty (0 bytes).")
+            logger.error(
+                f"PDF_CONVERSION_FAILED | Reason: DOCX is empty (0 bytes) | "
+                f"Path: '{abs_file_path}'"
+            )
             return False, None, "Document file is corrupted or empty."
         current_mtime = int(os.path.getmtime(abs_file_path))
     except Exception as e:
-        logger.error(f"Error checking file stats for {abs_file_path}: {e}")
+        logger.error(
+            f"PDF_CONVERSION_FAILED | Reason: Cannot stat DOCX file | "
+            f"Path: '{abs_file_path}' | Error: {e}"
+        )
         return False, None, "Unable to access document file on server storage."
 
     # Cache directory
@@ -145,18 +164,41 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
             with open(cached_pdf_path, 'rb') as f:
                 header = f.read(5)
             if header.startswith(b'%PDF-'):
+                logger.info(
+                    f"PDF_CONVERSION_CACHE_HIT | "
+                    f"File: {os.path.basename(abs_file_path)} | "
+                    f"Cached PDF: {cached_pdf_path} ({os.path.getsize(cached_pdf_path)} bytes)"
+                )
                 return True, cached_pdf_path, None
         except Exception as e:
-            logger.warning(f"Cached PDF validation error for {cached_pdf_path}: {e}. Re-converting.")
+            logger.warning(
+                f"Cached PDF validation error for {cached_pdf_path}: {e}. Re-converting."
+            )
 
-    # Locate LibreOffice binary
+    # Locate LibreOffice binary — log all searched paths on failure
     soffice_bin = find_libreoffice_binary()
     if not soffice_bin:
-        logger.error("LibreOffice executable not found on server. PDF preview cannot be generated.")
-        return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+        # Log the full list of paths that were searched so the issue is diagnosable from logs
+        searched = [
+            os.environ.get('LIBREOFFICE_PATH', '(LIBREOFFICE_PATH not set)'),
+            '/usr/bin/libreoffice', '/usr/bin/soffice',
+            '/usr/local/bin/libreoffice', '/usr/local/bin/soffice',
+            '/usr/lib/libreoffice/program/soffice',
+            'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+        ]
+        logger.error(
+            f"PDF_CONVERSION_FAILED | Reason: LibreOffice binary NOT FOUND | "
+            f"Searched paths include: {searched} | "
+            f"DOCX: '{abs_file_path}' ({file_size} bytes) | "
+            f"Hint: Ensure LibreOffice headless is installed in the deployment environment "
+            f"(Dockerfile: apt-get install libreoffice-writer-nogui)"
+        )
+        return False, None, "Offer Letter PDF could not be generated. LibreOffice is not available on the server."
 
     # Convert using LibreOffice headless in an isolated temporary environment
     temp_dir = tempfile.mkdtemp(prefix='antimatrix_lo_')
+    conversion_start = _time.monotonic()
+
     try:
         temp_outdir = os.path.join(temp_dir, 'out')
         profile_dir = os.path.join(temp_dir, 'profile')
@@ -188,12 +230,33 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
         if hasattr(subprocess, 'CREATE_NO_WINDOW'):
             extra_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
 
-        logger.info(f"Executing LibreOffice conversion for file: {os.path.basename(abs_file_path)}")
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, **extra_kwargs)
+        logger.info(
+            f"PDF_CONVERSION_START | "
+            f"File: {os.path.basename(abs_file_path)} ({file_size} bytes) | "
+            f"LibreOffice: {soffice_bin} | "
+            f"TempDir: {temp_dir} | OutDir: {temp_outdir}"
+        )
+
+        res = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, **extra_kwargs
+        )
+
+        conversion_duration = _time.monotonic() - conversion_start
+        stdout_text = res.stdout.decode('utf-8', errors='ignore').strip()
+        stderr_text = res.stderr.decode('utf-8', errors='ignore').strip()
+
         if res.returncode != 0:
-            stderr_msg = res.stderr.decode('utf-8', errors='ignore')
-            logger.error(f"LibreOffice conversion failed with exit code {res.returncode}. Stderr: {stderr_msg}")
-            return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+            logger.error(
+                f"PDF_CONVERSION_FAILED | Reason: LibreOffice exited with non-zero code | "
+                f"ReturnCode: {res.returncode} | "
+                f"Duration: {conversion_duration:.2f}s | "
+                f"DOCX: '{abs_file_path}' ({file_size} bytes) | "
+                f"LibreOffice: '{soffice_bin}' | "
+                f"TempDir: '{temp_dir}' | "
+                f"Stdout: {stdout_text[:500] if stdout_text else '(empty)'} | "
+                f"Stderr: {stderr_text[:1000] if stderr_text else '(empty)'}"
+            )
+            return False, None, "Offer Letter PDF could not be generated. Please try again or use Download DOCX."
 
         # Search for the output PDF in temp_outdir
         generated_pdf = os.path.join(temp_outdir, f"{base_name}.pdf")
@@ -202,27 +265,65 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
             if pdf_files and os.path.getsize(pdf_files[0]) > 0:
                 generated_pdf = pdf_files[0]
             else:
-                logger.error(f"LibreOffice reported success but no PDF file found in output directory {temp_outdir}")
-                return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+                output_dir_contents = os.listdir(temp_outdir) if os.path.exists(temp_outdir) else []
+                logger.error(
+                    f"PDF_CONVERSION_FAILED | Reason: LibreOffice exited 0 but no PDF produced | "
+                    f"ReturnCode: {res.returncode} | "
+                    f"Duration: {conversion_duration:.2f}s | "
+                    f"DOCX: '{abs_file_path}' ({file_size} bytes) | "
+                    f"ExpectedPDF: '{generated_pdf}' | "
+                    f"OutDirContents: {output_dir_contents} | "
+                    f"Stdout: {stdout_text[:500] if stdout_text else '(empty)'} | "
+                    f"Stderr: {stderr_text[:500] if stderr_text else '(empty)'}"
+                )
+                return False, None, "Offer Letter PDF could not be generated. Please try again or use Download DOCX."
 
-        # Verify generated PDF magic bytes
+        # Verify generated PDF magic bytes (%PDF-)
         with open(generated_pdf, 'rb') as f:
             pdf_head = f.read(5)
         if not pdf_head.startswith(b'%PDF-'):
-            logger.error(f"Generated file '{generated_pdf}' does not contain valid PDF signature.")
-            return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+            pdf_size = os.path.getsize(generated_pdf)
+            logger.error(
+                f"PDF_CONVERSION_FAILED | Reason: Output file does not start with %PDF- | "
+                f"File: '{generated_pdf}' ({pdf_size} bytes) | "
+                f"FirstBytes: {pdf_head!r} | "
+                f"DOCX: '{abs_file_path}' ({file_size} bytes)"
+            )
+            return False, None, "Offer Letter PDF could not be generated (invalid output). Please use Download DOCX."
 
-        # Copy to cache path
+        pdf_size = os.path.getsize(generated_pdf)
+
+        # Copy validated PDF to cache path
         shutil.copyfile(generated_pdf, cached_pdf_path)
-        logger.info(f"Successfully generated and cached PDF preview: {cached_pdf_path} ({os.path.getsize(cached_pdf_path)} bytes)")
+        final_duration = _time.monotonic() - conversion_start
+        logger.info(
+            f"PDF_CONVERSION_SUCCESS | "
+            f"File: {os.path.basename(abs_file_path)} ({file_size} bytes) | "
+            f"PDF: {cached_pdf_path} ({os.path.getsize(cached_pdf_path)} bytes) | "
+            f"Duration: {final_duration:.2f}s"
+        )
         return True, cached_pdf_path, None
 
     except subprocess.TimeoutExpired:
-        logger.error("LibreOffice conversion timed out after 60 seconds.")
-        return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+        duration = _time.monotonic() - conversion_start
+        logger.error(
+            f"PDF_CONVERSION_FAILED | Reason: LibreOffice timed out after 60s | "
+            f"DOCX: '{abs_file_path}' ({file_size} bytes) | "
+            f"LibreOffice: '{soffice_bin}' | "
+            f"Duration: {duration:.2f}s"
+        )
+        return False, None, "Offer Letter PDF could not be generated (conversion timed out). Please try again."
     except Exception as exc:
-        logger.error(f"Unexpected error during LibreOffice DOCX to PDF conversion: {exc}", exc_info=True)
-        return False, None, "Preview is temporarily unavailable. Please use Download DOCX."
+        duration = _time.monotonic() - conversion_start
+        logger.error(
+            f"PDF_CONVERSION_FAILED | Reason: Unexpected exception | "
+            f"Error: {exc} | "
+            f"DOCX: '{abs_file_path}' ({file_size} bytes) | "
+            f"LibreOffice: '{soffice_bin}' | "
+            f"Duration: {duration:.2f}s",
+            exc_info=True
+        )
+        return False, None, "Offer Letter PDF could not be generated. Please try again or use Download DOCX."
     finally:
         # Clean up temporary directory
         try:
