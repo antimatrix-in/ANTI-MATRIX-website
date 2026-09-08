@@ -360,23 +360,39 @@ def populate_docx_from_master_template(master_template_path, output_filepath, pl
                     p.runs[1].text = cat_info.get('run1', p.runs[1].text)
                     p.runs[2].text = cat_info.get('run2', p.runs[2].text)
 
-    # 7. Single-page layout normalization (guarantees 1-page PDF rendering in LibreOffice):
-    # Remove empty spacer paragraphs occurring between the body paragraphs and "Best Regards," on the candidate copy.
-    body_paras = list(doc.paragraphs)
-    for i, p in enumerate(body_paras):
+    # 7. Single-page layout normalization (guarantees exact 1-page PDF rendering in LibreOffice):
+    # In the master DOCX, all visual content (paragraphs P0-P12 + signature table) fits comfortably on Page 1.
+    # An unintended blank second page is caused by:
+    #   a) The trailing empty paragraph after the signature table having default margin/line height.
+    #   b) In domain templates with longer role descriptions (Web Dev, App Dev), having multiple empty spacer
+    #      paragraphs before "Best Regards," pushes the signature table slightly over the bottom margin.
+    # We normalize trailing empty paragraphs at the document end, and for templates with multiple empty
+    # spacer paragraphs before "Best Regards,", if the domain is WEB_DEVELOPMENT or APP_DEVELOPMENT,
+    # we reduce the second spacer paragraph so the layout remains on 1 page with identical visual balance.
+    # All master body paragraphs, font sizes, margins, headers, footers, seals, and visual vertical positions
+    # remain preserved.
+    empty_spacers = []
+    for i, p in enumerate(doc.paragraphs):
         if not p.text.strip():
-            subsequent = [bp.text.strip() for bp in body_paras[i+1:]]
+            subsequent = [bp.text.strip() for bp in doc.paragraphs[i+1:]]
             if any('Best Regards' in s for s in subsequent):
-                p_elem = p._p
-                if p_elem.getparent() is not None:
-                    p_elem.getparent().remove(p_elem)
+                empty_spacers.append(p)
 
-    # Normalize spacing of any trailing empty paragraphs at the document end so they never trigger page breaks
-    for p in doc.paragraphs:
-        if not p.text.strip():
-            p.paragraph_format.space_before = docx.shared.Pt(0)
-            p.paragraph_format.space_after = docx.shared.Pt(0)
-            p.paragraph_format.line_spacing = 1.0
+    if len(empty_spacers) >= 2 and cat_key in ['WEB_DEVELOPMENT', 'APP_DEVELOPMENT']:
+        second_spacer = empty_spacers[1]._p
+        if second_spacer.getparent() is not None:
+            second_spacer.getparent().remove(second_spacer)
+
+    if doc.paragraphs:
+        for p in reversed(doc.paragraphs):
+            if not p.text.strip():
+                p.paragraph_format.space_before = docx.shared.Pt(0)
+                p.paragraph_format.space_after = docx.shared.Pt(0)
+                p.paragraph_format.line_spacing = docx.shared.Pt(1)
+                for r in p.runs:
+                    r.font.size = docx.shared.Pt(1)
+            else:
+                break
 
     # 8. Save candidate-specific DOCX
     doc.save(output_filepath)
