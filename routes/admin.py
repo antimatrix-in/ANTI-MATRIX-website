@@ -913,7 +913,7 @@ def preview_application_offer_letter_pdf(app_id):
     Admin-only endpoint: converts the candidate's generated Offer Letter DOCX to PDF
     using LibreOffice headless and streams the PDF for inline browser preview.
     """
-    from services.document_preview_service import convert_docx_to_pdf
+    from services.document_preview_service import convert_offer_letter_to_pdf
 
     application = db.session.get(JobApplication, app_id) or abort(404)
     offer_doc = application.offer_letter_doc
@@ -929,20 +929,7 @@ def preview_application_offer_letter_pdf(app_id):
         else:
             abort(404)
 
-    fpath = offer_doc.file_path
-    if not fpath or not os.path.exists(fpath):
-        basename = os.path.basename(fpath or offer_doc.file_name or '')
-        local_path = os.path.join(current_app.root_path, 'uploads', 'generated_documents', basename)
-        if os.path.exists(local_path):
-            fpath = local_path
-        else:
-            try:
-                offer_doc, fpath = generate_offer_letter_docx(application)
-            except Exception as e:
-                current_app.logger.error(f"Failed to regenerate missing DOCX on preview: {e}")
-                abort(404)
-
-    success, pdf_path, err_msg = convert_docx_to_pdf(fpath)
+    success, pdf_path, err_msg = convert_offer_letter_to_pdf(application)
     if not success or not pdf_path or not os.path.exists(pdf_path):
         current_app.logger.warning(
             f"Offer letter PDF conversion unavailable for app {app_id} ({err_msg})."
@@ -961,7 +948,9 @@ def preview_application_offer_letter_pdf(app_id):
             error_message="The Offer Letter preview could not be generated right now. Please use Download DOCX to view the file."
         ), 503
 
-    pdf_filename = f"{os.path.splitext(offer_doc.file_name)[0]}.pdf"
+    offer_doc = application.offer_letter_doc
+    base_stem = os.path.splitext(offer_doc.file_name)[0] if (offer_doc and offer_doc.file_name) else f"{application.formatted_code}_Offer_Letter"
+    pdf_filename = f"{base_stem}.pdf"
     return send_from_directory(
         os.path.dirname(pdf_path),
         os.path.basename(pdf_path),

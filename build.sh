@@ -31,7 +31,9 @@ else
         echo "==> LibreOffice headless installed successfully!"
         libreoffice --version || true
     else
-        echo "==> Notice: apt-get not available in current environment. Using existing binaries if available."
+        echo "==> WARNING: apt-get not available in current environment."
+        echo "==> Render Native Python runtime cannot install system packages like LibreOffice."
+        echo "==> Set Web Service runtime to 'Docker' in Render Dashboard Settings to use Dockerfile."
     fi
 fi
 

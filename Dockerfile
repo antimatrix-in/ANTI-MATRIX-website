@@ -8,6 +8,7 @@ WORKDIR /app
 # Install LibreOffice headless and fonts for authentic Word document preview
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer-nogui \
+    libreoffice-nogui \
     default-jre-headless \
     fonts-dejavu \
     fonts-liberation \
@@ -15,6 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify LibreOffice installation at build time - fails build immediately if soffice is missing or non-functional
+RUN which soffice && soffice --version
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -26,4 +30,5 @@ RUN mkdir -p uploads/generated_documents uploads/documents uploads/resumes uploa
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --timeout 120 app:app"]
+

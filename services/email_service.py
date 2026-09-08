@@ -713,7 +713,7 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
     Enforces strict ONE-TIME send protection (unless force_resend=True for explicit admin retry).
     The PDF is generated directly from the candidate's existing, verified DOCX file.
     """
-    from services.document_preview_service import convert_docx_to_pdf, _resolve_document_file_path
+    from services.document_preview_service import convert_docx_to_pdf, validate_pdf, _resolve_document_file_path
 
     # Normalize input
     if isinstance(application_or_employee, Employee):
@@ -739,7 +739,14 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
 
     docx_path = _resolve_document_file_path(emp_doc)
     if not docx_path or not os.path.exists(docx_path):
-        return False, "Offer Letter DOCX file not found on server storage. Please generate it first."
+        from services.offer_letter_service import generate_offer_letter_docx
+        try:
+            emp_doc, docx_path = generate_offer_letter_docx(app)
+        except Exception as gen_err:
+            err_msg = f"Offer Letter DOCX could not be found or generated: {gen_err}"
+            if current_app:
+                current_app.logger.error(err_msg)
+            return False, err_msg
 
     # ONE-TIME SEND PROTECTION (bypassable with force_resend for admin retries)
     if emp_doc.email_status == 'sent' and not force_resend:
@@ -765,18 +772,9 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
         return False, err_msg
 
     # Verify generated PDF integrity before sending (must be non-empty and start with %PDF-)
-    valid_pdf = False
-    try:
-        if os.path.getsize(pdf_path) > 0:
-            with open(pdf_path, 'rb') as _f:
-                valid_pdf = _f.read(5).startswith(b'%PDF-')
-    except Exception as verify_err:
-        if current_app:
-            current_app.logger.error(f"PDF integrity check failed: {verify_err}")
-        valid_pdf = False
-
+    valid_pdf, val_err = validate_pdf(pdf_path)
     if not valid_pdf:
-        err_msg = "Offer Letter PDF could not be validated (file empty or missing %PDF- header). Email was not sent."
+        err_msg = f"Offer Letter PDF could not be validated ({val_err or 'file empty or missing %PDF- header'}). Email was not sent."
         if current_app:
             current_app.logger.error(err_msg)
         emp_doc.email_status = 'failed'
@@ -788,6 +786,7 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
             if current_app:
                 current_app.logger.error(f"Error saving failed status to DB: {db_e}")
         return False, err_msg
+
 
     # Dynamic filename: AM-APP-XXXXXX_Offer_Letter.pdf
     code = app.formatted_code if getattr(app, 'formatted_code', None) else f"AM-APP-{app.id:06d}"
