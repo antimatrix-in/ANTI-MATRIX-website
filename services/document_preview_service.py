@@ -108,9 +108,31 @@ def find_libreoffice_binary() -> Optional[str]:
 find_libreoffice_executable = find_libreoffice_binary
 
 
-def validate_pdf(pdf_path: str) -> Tuple[bool, Optional[str]]:
+def get_pdf_page_count(pdf_path: str) -> int:
     """
-    Validates that a file exists, has non-zero size, and begins with '%PDF-'.
+    Extracts the page count from a PDF file using the PDF document object structure.
+    Checks the /Type /Pages /Count dictionary first, falling back to /Type /Page occurrences.
+    Returns 0 if the file cannot be read or parsed.
+    """
+    if not pdf_path or not os.path.exists(pdf_path):
+        return 0
+    try:
+        with open(pdf_path, 'rb') as f:
+            content = f.read()
+        counts = re.findall(rb'/Type\s*/Pages.*?/Count\s+(\d+)', content, re.DOTALL)
+        if counts:
+            return int(counts[0])
+        page_objs = re.findall(rb'/Type\s*/Page\b', content)
+        return len(page_objs)
+    except Exception as e:
+        logger.warning(f"Error calculating PDF page count for {pdf_path}: {e}")
+        return 0
+
+
+def validate_pdf(pdf_path: str, max_pages: Optional[int] = None) -> Tuple[bool, Optional[str]]:
+    """
+    Validates that a file exists, has non-zero size, begins with '%PDF-',
+    and optionally validates that page_count <= max_pages (e.g. max_pages=1 for Offer Letters).
     Returns (is_valid: bool, error_reason: Optional[str]).
     """
     if not pdf_path or not os.path.exists(pdf_path):
@@ -123,6 +145,12 @@ def validate_pdf(pdf_path: str) -> Tuple[bool, Optional[str]]:
             header = f.read(5)
         if not header.startswith(b'%PDF-'):
             return False, f"Output file does not have a valid PDF header (%PDF-). Header read: {header!r}"
+        
+        if max_pages is not None:
+            page_count = get_pdf_page_count(pdf_path)
+            if page_count > max_pages:
+                return False, f"Generated PDF has {page_count} pages; expected at most {max_pages} page(s)."
+
         return True, None
     except Exception as e:
         return False, f"PDF read error: {e}"
@@ -191,9 +219,12 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
     cached_pdf_name = f"{base_name}_{current_mtime}.pdf"
     cached_pdf_path = os.path.join(cache_dir, cached_pdf_name)
 
+    is_offer_letter = 'offer_letter' in base_name.lower()
+    max_pages = 1 if is_offer_letter else None
+
     # Return cached PDF if present, non-empty, and valid
     if os.path.exists(cached_pdf_path):
-        is_valid, _ = validate_pdf(cached_pdf_path)
+        is_valid, _ = validate_pdf(cached_pdf_path, max_pages=max_pages)
         if is_valid:
             logger.info(
                 f"PDF_CONVERSION_CACHE_HIT | "
@@ -201,6 +232,11 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
                 f"Cached PDF: {cached_pdf_path} ({os.path.getsize(cached_pdf_path)} bytes)"
             )
             return True, cached_pdf_path, None
+        else:
+            try:
+                os.remove(cached_pdf_path)
+            except Exception:
+                pass
 
     # Locate LibreOffice binary — log all searched paths on failure
     soffice_bin = find_libreoffice_executable()
@@ -312,7 +348,7 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
                 return False, None, "Offer Letter PDF could not be generated. Please try again or use Download DOCX."
 
         # Verify generated PDF using validate_pdf()
-        valid, val_err = validate_pdf(generated_pdf)
+        valid, val_err = validate_pdf(generated_pdf, max_pages=max_pages)
         if not valid:
             pdf_size = os.path.getsize(generated_pdf) if os.path.exists(generated_pdf) else 0
             logger.error(
@@ -321,18 +357,18 @@ def convert_docx_to_pdf(file_path: str) -> Tuple[bool, Optional[str], Optional[s
                 f"File: '{generated_pdf}' ({pdf_size} bytes) | "
                 f"DOCX: '{abs_file_path}' ({file_size} bytes)"
             )
-            return False, None, "Offer Letter PDF could not be generated (invalid output). Please use Download DOCX."
+            return False, None, f"Offer Letter PDF validation failed ({val_err}). Please try again."
 
         # Copy validated PDF to cache path
         shutil.copyfile(generated_pdf, cached_pdf_path)
 
         # Validate cached copy as well
-        cache_valid, cache_err = validate_pdf(cached_pdf_path)
+        cache_valid, cache_err = validate_pdf(cached_pdf_path, max_pages=max_pages)
         if not cache_valid:
             logger.error(
                 f"PDF_CONVERSION_FAILED | Reason: Cached PDF validation failed: {cache_err}"
             )
-            return False, None, "Offer Letter PDF could not be cached. Please try again."
+            return False, None, f"Offer Letter PDF could not be cached ({cache_err}). Please try again."
 
         final_duration = _time.monotonic() - conversion_start
         logger.info(
@@ -376,25 +412,38 @@ def convert_offer_letter_to_pdf(application_or_docx) -> Tuple[bool, Optional[str
     Canonical single conversion helper for Offer Letters.
     Accepts either a JobApplication instance or a DOCX file path string.
     Ensures DOCX exists (regenerates from master template if missing on container disk)
-    and converts to validated PDF.
+    and converts to validated 1-page PDF.
     Used identically by Offer Letter Preview and Offer Letter Email.
     """
     if isinstance(application_or_docx, str):
-        return convert_docx_to_pdf(application_or_docx)
+        docx_path = application_or_docx
+    else:
+        app = application_or_docx
+        emp_doc = getattr(app, 'offer_letter_doc', None)
+        docx_path = _resolve_document_file_path(emp_doc) if emp_doc else None
 
-    app = application_or_docx
-    emp_doc = getattr(app, 'offer_letter_doc', None)
-    docx_path = _resolve_document_file_path(emp_doc) if emp_doc else None
+        if not docx_path or not os.path.exists(docx_path):
+            from services.offer_letter_service import generate_offer_letter_docx
+            try:
+                emp_doc, docx_path = generate_offer_letter_docx(app)
+            except Exception as gen_err:
+                logger.error(f"Failed to generate offer letter DOCX for app {getattr(app, 'id', None)}: {gen_err}")
+                return False, None, f"Offer letter DOCX could not be generated: {gen_err}"
 
-    if not docx_path or not os.path.exists(docx_path):
-        from services.offer_letter_service import generate_offer_letter_docx
-        try:
-            emp_doc, docx_path = generate_offer_letter_docx(app)
-        except Exception as gen_err:
-            logger.error(f"Failed to generate offer letter DOCX for app {getattr(app, 'id', None)}: {gen_err}")
-            return False, None, f"Offer letter DOCX could not be generated: {gen_err}"
+    conv_success, pdf_path, conv_err = convert_docx_to_pdf(docx_path)
+    if not conv_success or not pdf_path:
+        return False, None, conv_err
 
-    return convert_docx_to_pdf(docx_path)
+    # Enforce strict 1-page Offer Letter requirement
+    page_count = get_pdf_page_count(pdf_path)
+    if page_count != 1:
+        logger.error(
+            f"OFFER_LETTER_PAGINATION_ERROR | "
+            f"File: {os.path.basename(pdf_path)} | Pages: {page_count} (Expected: 1)"
+        )
+        return False, None, f"Offer Letter PDF has {page_count} pages; exactly 1 page is required."
+
+    return True, pdf_path, None
 
 
 

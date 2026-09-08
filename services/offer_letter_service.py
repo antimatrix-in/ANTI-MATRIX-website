@@ -360,7 +360,25 @@ def populate_docx_from_master_template(master_template_path, output_filepath, pl
                     p.runs[1].text = cat_info.get('run1', p.runs[1].text)
                     p.runs[2].text = cat_info.get('run2', p.runs[2].text)
 
-    # 7. Save candidate-specific DOCX
+    # 7. Single-page layout normalization (guarantees 1-page PDF rendering in LibreOffice):
+    # Remove empty spacer paragraphs occurring between the body paragraphs and "Best Regards," on the candidate copy.
+    body_paras = list(doc.paragraphs)
+    for i, p in enumerate(body_paras):
+        if not p.text.strip():
+            subsequent = [bp.text.strip() for bp in body_paras[i+1:]]
+            if any('Best Regards' in s for s in subsequent):
+                p_elem = p._p
+                if p_elem.getparent() is not None:
+                    p_elem.getparent().remove(p_elem)
+
+    # Normalize spacing of any trailing empty paragraphs at the document end so they never trigger page breaks
+    for p in doc.paragraphs:
+        if not p.text.strip():
+            p.paragraph_format.space_before = docx.shared.Pt(0)
+            p.paragraph_format.space_after = docx.shared.Pt(0)
+            p.paragraph_format.line_spacing = 1.0
+
+    # 8. Save candidate-specific DOCX
     doc.save(output_filepath)
 
 

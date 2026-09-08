@@ -771,8 +771,8 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
                 current_app.logger.error(f"Error saving failed status to DB: {db_e}")
         return False, err_msg
 
-    # Verify generated PDF integrity before sending (must be non-empty and start with %PDF-)
-    valid_pdf, val_err = validate_pdf(pdf_path)
+    # Verify generated PDF integrity before sending (must be non-empty, start with %PDF-, and be exactly 1 page)
+    valid_pdf, val_err = validate_pdf(pdf_path, max_pages=1)
     if not valid_pdf:
         err_msg = f"Offer Letter PDF could not be validated ({val_err or 'file empty or missing %PDF- header'}). Email was not sent."
         if current_app:
