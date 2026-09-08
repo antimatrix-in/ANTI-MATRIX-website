@@ -577,11 +577,9 @@ def mark_application_shortlisted(app_id):
 
     emp_code = application.employee.employee_id if application.employee else ''
     if email_success:
-        # Determine whether a PDF or DOCX was attached based on the log message
-        attach_fmt = 'DOCX' if str(email_msg or '').endswith('.docx') or not email_msg else 'PDF'
         flash(
             f"Candidate {application.full_name} successfully marked as Shortlisted! "
-            f"Employee ID ({emp_code}) generated and official Offer Letter email dispatched "
+            f"Employee ID ({emp_code}) generated and official Offer Letter email with PDF attachment dispatched "
             f"to {application.email} via Brevo.",
             'success'
         )
@@ -602,8 +600,10 @@ def mark_application_offer_complete(app_id):
     application = db.session.get(JobApplication, app_id) or abort(404)
 
     # Ensure Offer Letter is generated
+    from services.document_preview_service import _resolve_document_file_path
     offer_doc = application.offer_letter_doc
-    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
+    docx_path = _resolve_document_file_path(offer_doc) if offer_doc else None
+    if not offer_doc or not docx_path or not os.path.exists(docx_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:
@@ -621,7 +621,7 @@ def mark_application_offer_complete(app_id):
         success, msg = send_offer_letter_email(application)
         if success:
             db.session.commit()
-            flash(f"Offer marked as Complete! Offer Letter email with DOCX attachment sent successfully to {application.email}.", 'success')
+            flash(f"Offer marked as Complete! Offer Letter email with PDF attachment sent successfully to {application.email}.", 'success')
         else:
             db.session.commit()
             flash(f"Offer marked as Complete. Notice on email delivery: {msg}", 'warning')
@@ -714,7 +714,8 @@ def retry_shortlist_offer_email(app_id):
 
     # Ensure Offer Letter is generated
     offer_doc = application.offer_letter_doc
-    if not offer_doc or not offer_doc.file_path or not os.path.exists(offer_doc.file_path):
+    docx_path = _resolve_document_file_path(offer_doc) if offer_doc else None
+    if not offer_doc or not docx_path or not os.path.exists(docx_path):
         try:
             offer_doc, _ = generate_offer_letter_docx(application)
         except Exception as e:

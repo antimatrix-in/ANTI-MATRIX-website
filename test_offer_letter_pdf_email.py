@@ -22,8 +22,8 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
     4. Verify EmailLog records .pdf attachment
     5. Verify original DOCX file remains byte-for-byte unmodified
     6. Verify one-time send protection works
-    7. Verify email is not sent if PDF conversion fails
-    8. Test with existing candidate AM-APP-000240
+    7. Verify email is not sent if PDF conversion fails (ZERO DOCX fallback)
+    8. Verify email is not sent if PDF integrity check fails (empty or corrupt)
     """
 
     @classmethod
@@ -173,33 +173,48 @@ class OfferLetterPdfEmailTestCase(unittest.TestCase):
 
     @patch('services.document_preview_service.convert_docx_to_pdf')
     @patch('services.email_service.send_brevo_email')
-    def test_05_conversion_failure_falls_back_to_docx_attachment(self, mock_brevo, mock_convert):
-        """Verify that if PDF conversion fails, the email is still sent with the DOCX as fallback attachment.
-        This is critical for production environments (Render/Linux) where LibreOffice may not be installed.
-        The old behavior (blocking the email) is replaced with a DOCX-fallback so candidates always receive
-        their Offer Letter regardless of server PDF capability."""
-        mock_convert.return_value = (False, None, "LibreOffice conversion timeout")
-        mock_brevo.return_value = (True, "Email sent via DOCX fallback", "msg_fallback_001")
+    def test_05_conversion_failure_blocks_email_dispatch_zero_docx_fallback(self, mock_brevo, mock_convert):
+        """Verify that if PDF conversion fails, the email is BLOCKED and NOT sent (ZERO DOCX fallback).
+        Candidate status is marked failed, and no DOCX is ever attached to the email."""
+        mock_convert.return_value = (False, None, "LibreOffice conversion failed: process timed out")
 
         app_obj = self.app_record
         doc = app_obj.offer_letter_doc
         doc.email_status = 'not_sent'
 
         success, msg = send_offer_letter_shortlisted_email(app_obj)
-        # Email should be SENT with DOCX fallback, not blocked
-        self.assertTrue(success, "Email must be sent even when PDF conversion fails (DOCX fallback)")
-        # Brevo must have been called with the DOCX path
-        mock_brevo.assert_called_once()
-        call_kwargs = mock_brevo.call_args
-        # attachment_name should be the DOCX filename, not a .pdf filename
-        attach_name = call_kwargs.kwargs.get('attachment_name') or (
-            call_kwargs.args[4] if len(call_kwargs.args) > 4 else None
-        )
-        if attach_name:
-            self.assertTrue(
-                attach_name.endswith('.docx'),
-                f"Expected DOCX fallback attachment, got: {attach_name}"
-            )
+        # Email MUST NOT be sent
+        self.assertFalse(success, "Email must not be sent when PDF conversion fails")
+        self.assertIn("could not be generated", msg)
+        # Brevo API MUST NOT be called
+        mock_brevo.assert_not_called()
+        # Document email status must be set to 'failed'
+        self.assertEqual(doc.email_status, 'failed')
+
+    @patch('services.document_preview_service.convert_docx_to_pdf')
+    @patch('services.email_service.send_brevo_email')
+    def test_06_corrupt_pdf_integrity_check_blocks_email_dispatch(self, mock_brevo, mock_convert):
+        """Verify that if generated PDF is empty or missing %PDF- header, email is NOT sent."""
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
+            f.write(b'NOT A REAL PDF CONTENT')
+            corrupt_pdf_path = f.name
+
+        try:
+            mock_convert.return_value = (True, corrupt_pdf_path, None)
+
+            app_obj = self.app_record
+            doc = app_obj.offer_letter_doc
+            doc.email_status = 'not_sent'
+
+            success, msg = send_offer_letter_shortlisted_email(app_obj)
+            self.assertFalse(success, "Email must not be sent when PDF fails integrity validation")
+            self.assertIn("could not be validated", msg)
+            mock_brevo.assert_not_called()
+            self.assertEqual(doc.email_status, 'failed')
+        finally:
+            if os.path.exists(corrupt_pdf_path):
+                os.remove(corrupt_pdf_path)
 
 
 if __name__ == '__main__':

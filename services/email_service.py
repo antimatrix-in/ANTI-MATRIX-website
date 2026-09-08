@@ -446,7 +446,10 @@ def send_mime_email(recipient_email, subject, body_text, body_html=None, attachm
             if attachment_path and os.path.exists(attachment_path):
                 att_name = attachment_name or os.path.basename(attachment_path)
                 with open(attachment_path, 'rb') as f:
-                    part = MIMEBase('application', 'octet-stream')
+                    if att_name.lower().endswith('.pdf'):
+                        part = MIMEBase('application', 'pdf')
+                    else:
+                        part = MIMEBase('application', 'octet-stream')
                     part.set_payload(f.read())
                     encoders.encode_base64(part)
                     part.add_header('Content-Disposition', f'attachment; filename="{att_name}"')
@@ -743,46 +746,54 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
         sent_time = emp_doc.sent_at.strftime('%b %d, %Y') if emp_doc.sent_at else 'earlier'
         return False, f"Offer Letter already sent on {sent_time}. Duplicate sending is prevented."
 
-    # Generate / retrieve faithful PDF from the exact candidate DOCX.
-    # If LibreOffice is unavailable on this server, fall back to attaching the DOCX directly
-    # so the email is always delivered — the candidate still receives their Offer Letter.
+    # Generate faithful PDF from candidate DOCX.
+    # STRICT PDF REQUIREMENT: The candidate MUST receive their Offer Letter as a PDF attachment.
+    # ZERO DOCX FALLBACK is permitted. If PDF conversion or validation fails, email is NOT sent.
     conv_success, pdf_path, conv_err = convert_docx_to_pdf(docx_path)
-    if conv_success and pdf_path and os.path.exists(pdf_path):
-        # Verify generated PDF integrity before sending
-        try:
-            valid_pdf = os.path.getsize(pdf_path) > 0
-            if valid_pdf:
-                with open(pdf_path, 'rb') as _f:
-                    valid_pdf = _f.read(5).startswith(b'%PDF-')
-        except Exception as verify_err:
-            if current_app:
-                current_app.logger.warning(
-                    f"PDF integrity check failed ({verify_err}); falling back to DOCX attachment."
-                )
-            valid_pdf = False
-
-        if valid_pdf:
-            attachment_path = pdf_path
-            attachment_name = f"{os.path.splitext(emp_doc.file_name)[0]}.pdf"
-        else:
-            # PDF file is present but corrupt — fall back to DOCX
-            if current_app:
-                current_app.logger.warning(
-                    "Generated PDF failed integrity check. Falling back to DOCX attachment for email."
-                )
-            attachment_path = docx_path
-            attachment_name = emp_doc.file_name
-    else:
-        # LibreOffice not available or conversion failed — fall back to DOCX attachment
+    if not conv_success or not pdf_path or not os.path.exists(pdf_path):
+        err_msg = f"Offer Letter PDF could not be generated: {conv_err or 'Conversion failed'}. Email was not sent."
         if current_app:
-            current_app.logger.warning(
-                f"Offer Letter PDF conversion unavailable ({conv_err}). "
-                f"Sending DOCX as email attachment instead."
-            )
-        attachment_path = docx_path
-        attachment_name = emp_doc.file_name
+            current_app.logger.error(err_msg)
+        emp_doc.email_status = 'failed'
+        emp_doc.email_error = err_msg
+        try:
+            db.session.commit()
+        except Exception as db_e:
+            db.session.rollback()
+            if current_app:
+                current_app.logger.error(f"Error saving failed status to DB: {db_e}")
+        return False, err_msg
 
-    pdf_filename = attachment_name  # kept for backward compat with log/db fields below
+    # Verify generated PDF integrity before sending (must be non-empty and start with %PDF-)
+    valid_pdf = False
+    try:
+        if os.path.getsize(pdf_path) > 0:
+            with open(pdf_path, 'rb') as _f:
+                valid_pdf = _f.read(5).startswith(b'%PDF-')
+    except Exception as verify_err:
+        if current_app:
+            current_app.logger.error(f"PDF integrity check failed: {verify_err}")
+        valid_pdf = False
+
+    if not valid_pdf:
+        err_msg = "Offer Letter PDF could not be validated (file empty or missing %PDF- header). Email was not sent."
+        if current_app:
+            current_app.logger.error(err_msg)
+        emp_doc.email_status = 'failed'
+        emp_doc.email_error = err_msg
+        try:
+            db.session.commit()
+        except Exception as db_e:
+            db.session.rollback()
+            if current_app:
+                current_app.logger.error(f"Error saving failed status to DB: {db_e}")
+        return False, err_msg
+
+    # Dynamic filename: AM-APP-XXXXXX_Offer_Letter.pdf
+    code = app.formatted_code if getattr(app, 'formatted_code', None) else f"AM-APP-{app.id:06d}"
+    attachment_name = f"{code}_Offer_Letter.pdf"
+    attachment_path = pdf_path
+    pdf_filename = attachment_name
 
     try:
         rendered = render_shortlisted_offer_email(app, custom_params={'start_date': start_date})
@@ -841,6 +852,12 @@ def send_offer_letter_shortlisted_email(application_or_employee, start_date=None
     except Exception as e:
         if current_app:
             current_app.logger.error(f"Unexpected error in send_offer_letter_shortlisted_email: {str(e)}", exc_info=True)
+        try:
+            emp_doc.email_status = 'failed'
+            emp_doc.email_error = str(e)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         return False, f"Failed to send Offer Letter email: {str(e)}"
 
 
