@@ -243,6 +243,11 @@ def create_app(config_name=None):
                     with db.engine.connect() as conn:
                         conn.execute(text("ALTER TABLE employees ADD COLUMN temp_password_encrypted VARCHAR(500)"))
                         conn.commit()
+                if 'temporary_password_active' not in emp_cols:
+                    with db.engine.connect() as conn:
+                        conn.execute(text("ALTER TABLE employees ADD COLUMN temporary_password_active BOOLEAN DEFAULT TRUE NOT NULL"))
+                        conn.execute(text("UPDATE employees SET temporary_password_active = FALSE WHERE temp_password_encrypted IS NULL"))
+                        conn.commit()
 
             # Ensure users table has OAuth & profile columns
             if 'users' in inspector.get_table_names():

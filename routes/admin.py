@@ -443,10 +443,19 @@ def application_detail(app_id):
     new_employee_creds = None
     template_missing_error = None
 
-    # Retrieve one-time plaintext temporary password from session if generated in this session
+    # Retrieve temporary credentials: check session first, or decrypt from employee if temporary_password_active
+    secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
     session_creds = session.get('new_employee_credentials')
     if session_creds and session_creds.get('app_id') == application.id:
         new_employee_creds = session_creds
+    elif application.employee and application.employee.is_temporary_password_active:
+        decrypted_pwd = application.employee.get_temp_password(secret_key)
+        if decrypted_pwd:
+            new_employee_creds = {
+                'app_id': application.id,
+                'employee_id': application.employee.employee_id,
+                'temp_password': decrypted_pwd
+            }
 
     # If stage is UNDER_REVIEW: prepare Application Successful email preview with real candidate data
     if current_stage == 'UNDER_REVIEW':
@@ -1241,12 +1250,45 @@ def create_employee():
 def view_employee(employee_id):
     """View employee details (Application ID, Candidate, Job, Duration, Status, Created Date). Never reveals password_hash."""
     employee = Employee.query.filter_by(employee_id=employee_id).first_or_404()
+    secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
+    temp_password = employee.get_temp_password(secret_key) if employee.is_temporary_password_active else ""
     return render_template(
         'admin/employee_detail.html',
         employee=employee,
         app=employee.application,
-        job=employee.application.job
+        job=employee.application.job if employee.application else None,
+        temp_password=temp_password
     )
+
+
+@admin_bp.route('/employees/<string:employee_id>/reset-password', methods=['POST'])
+@admin_required
+def admin_reset_employee_password(employee_id):
+    """
+    Admin action to reset an employee's password.
+    Securely updates the password hash, permanently purges the temporary password, and marks temporary_password_active = False.
+    """
+    employee = Employee.query.filter_by(employee_id=employee_id).first_or_404()
+    new_password = request.form.get('new_password', '').strip()
+    if not new_password:
+        new_password = Employee.generate_secure_password(12)
+    elif len(new_password) < 6:
+        flash('New password must be at least 6 characters long.', 'danger')
+        return redirect(url_for('admin.view_employee', employee_id=employee.employee_id))
+
+    employee.reset_password(new_password)
+
+    # Sync with linked User account if present
+    if employee.candidate_email:
+        user = User.query.filter(User.email.ilike(employee.candidate_email)).first()
+        if user:
+            user.set_password(new_password)
+            user.must_change_password = False
+            user.password_changed_at = datetime.now(timezone.utc)
+
+    db.session.commit()
+    flash(f"Password for employee {employee.employee_id} has been reset successfully. Temporary password is now deactivated.", 'success')
+    return redirect(url_for('admin.view_employee', employee_id=employee.employee_id))
 
 
 # =====================================================================

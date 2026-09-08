@@ -32,7 +32,8 @@ class Employee(db.Model):
         index=True
     )
     password_hash = db.Column(db.String(256), nullable=False)
-    temp_password_encrypted = db.Column(db.String(500), nullable=True)  # Securely retained ONLY until joining email is sent
+    temp_password_encrypted = db.Column(db.String(500), nullable=True)  # Securely retained for Admin Portal display until password reset
+    temporary_password_active = db.Column(db.Boolean, default=True, nullable=False)
     account_status = db.Column(db.String(30), default='active', nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(
@@ -48,6 +49,11 @@ class Employee(db.Model):
         backref=db.backref('employee', uselist=False, cascade='all, delete-orphan')
     )
 
+    @property
+    def is_temporary_password_active(self) -> bool:
+        """Indicates whether the employee's temporary password is still active and retrievable."""
+        return bool(self.temporary_password_active and self.temp_password_encrypted)
+
     def set_password(self, password: str):
         """Hashes plaintext password with Werkzeug secure password hashing."""
         self.password_hash = generate_password_hash(password)
@@ -56,20 +62,36 @@ class Employee(db.Model):
         """Verifies candidate password against stored secure hash."""
         return check_password_hash(self.password_hash, password)
 
+    def reset_password(self, new_password: str):
+        """
+        Securely updates password hash upon successful password reset from the Internship Portal or Admin.
+        Permanently invalidates and purges the temporary password and marks temporary_password_active = False.
+        """
+        self.set_password(new_password)
+        self.temporary_password_active = False
+        self.temp_password_encrypted = None
+        self.updated_at = datetime.now(timezone.utc)
+
     def set_temp_password(self, plaintext: str, secret_key: str):
-        """Encrypts temporary password for onboarding email dispatch."""
+        """Encrypts temporary password for onboarding dispatch and Admin Portal display."""
         if not plaintext or not secret_key:
             self.temp_password_encrypted = None
+            self.temporary_password_active = False
             return
         try:
             encrypted_bytes = _xor_cipher(plaintext.encode('utf-8'), secret_key.encode('utf-8'))
             self.temp_password_encrypted = base64.b64encode(encrypted_bytes).decode('utf-8')
+            self.temporary_password_active = True
         except Exception:
             self.temp_password_encrypted = None
+            self.temporary_password_active = False
 
     def get_temp_password(self, secret_key: str) -> str:
-        """Decrypts temporary password for onboarding email. Returns empty string if unavailable."""
-        if not self.temp_password_encrypted or not secret_key:
+        """
+        Decrypts temporary password for authorized Admin Portal view and onboarding email.
+        Returns empty string if the temporary password has been reset or is unavailable.
+        """
+        if not self.temporary_password_active or not self.temp_password_encrypted or not secret_key:
             return ""
         try:
             raw_bytes = base64.b64decode(self.temp_password_encrypted.encode('utf-8'))
@@ -79,8 +101,9 @@ class Employee(db.Model):
             return ""
 
     def clear_temp_password(self):
-        """Purges encrypted temporary password after successful email dispatch."""
+        """Purges encrypted temporary password and marks temporary_password_active = False."""
         self.temp_password_encrypted = None
+        self.temporary_password_active = False
 
     @property
     def job(self):
@@ -171,6 +194,7 @@ class Employee(db.Model):
             'job_title': self.job.title if self.job else None,
             'duration': self.application.duration_display if self.application else None,
             'account_status': self.account_status,
+            'temporary_password_active': self.is_temporary_password_active,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

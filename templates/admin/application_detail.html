@@ -353,9 +353,13 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); flex-wrap: wrap; gap: var(--space-sm);">
                 <div style="display: flex; align-items: center; gap: 10px;">
                   {{ icon('shield', size=24, color='var(--color-primary-light)') }}
-                  <span style="font-size: 1.15rem; font-weight: 800; color: var(--color-text);">EMPLOYEE CREDENTIALS GENERATED</span>
+                  <span style="font-size: 1.15rem; font-weight: 800; color: var(--color-text);">EMPLOYEE CREDENTIALS</span>
                 </div>
-                <span class="badge-status active" style="font-size: 0.8rem; font-weight: 700;">Account Active</span>
+                {% if new_employee_creds and new_employee_creds.temp_password %}
+                  <span class="badge-status active" style="font-size: 0.8rem; font-weight: 700;">Temporary Password Active</span>
+                {% else %}
+                  <span class="badge-status inactive" style="font-size: 0.8rem; font-weight: 700;">Temporary Password Reset</span>
+                {% endif %}
               </div>
 
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-md);">
@@ -367,7 +371,7 @@
                     <span id="display-emp-id" style="font-family: var(--font-mono, monospace); font-size: 1.35rem; font-weight: 900; color: var(--color-primary-light);">
                       {{ app.employee.employee_id }}
                     </span>
-                    <button type="button" onclick="navigator.clipboard.writeText('{{ app.employee.employee_id }}'); this.innerText='Copied!';" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                    <button type="button" onclick="navigator.clipboard.writeText('{{ app.employee.employee_id }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000);" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
                       Copy
                     </button>
                   </div>
@@ -375,19 +379,26 @@
 
                 <!-- Temporary Password Box -->
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-md);">
-                  <div style="font-size: 0.775rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Temporary Password</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="font-size: 0.775rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700;">Temporary Password</div>
+                    {% if new_employee_creds and new_employee_creds.temp_password %}
+                      <span class="badge-status active" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">Active</span>
+                    {% else %}
+                      <span class="badge-status inactive" style="font-size: 0.7rem; padding: 0.1rem 0.4rem;">Reset</span>
+                    {% endif %}
+                  </div>
                   {% if new_employee_creds and new_employee_creds.temp_password %}
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <span id="temp-pwd-text" style="font-family: var(--font-mono, monospace); font-size: 1.15rem; font-weight: 800; color: #60a5fa;">
                         {{ new_employee_creds.temp_password }}
                       </span>
-                      <button type="button" onclick="navigator.clipboard.writeText('{{ new_employee_creds.temp_password }}'); this.innerText='Copied!';" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                      <button type="button" onclick="navigator.clipboard.writeText('{{ new_employee_creds.temp_password }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000);" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
                         Copy
                       </button>
                     </div>
                   {% else %}
-                    <div style="font-size: 0.875rem; color: var(--color-text-dim); font-style: italic;">
-                      Password securely hashed in database.
+                    <div style="font-size: 0.85rem; color: var(--color-text-dim);">
+                      Temporary Password Reset &bull; Securely hashed in database.
                     </div>
                   {% endif %}
                 </div>
@@ -395,8 +406,12 @@
               </div>
 
               {% if new_employee_creds and new_employee_creds.temp_password %}
-                <div style="font-size: 0.825rem; color: #eab308; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.25); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem;">
-                  ⚠️ <strong>Notice:</strong> Please copy the temporary password now if needed. It will also be securely included in the automated Joining Email dispatched at Stage 5.
+                <div style="font-size: 0.825rem; color: #34d399; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem;">
+                  ℹ️ <strong>Status:</strong> Temporary Password Active. This credential remains available here until the employee resets it on the Internship Portal.
+                </div>
+              {% else %}
+                <div style="font-size: 0.825rem; color: var(--color-text-dim); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem;">
+                  🔒 <strong>Status:</strong> Temporary Password Reset. The employee's password has been updated and the old temporary password has been permanently deactivated.
                 </div>
               {% endif %}
             </div>

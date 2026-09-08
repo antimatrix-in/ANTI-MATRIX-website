@@ -55,3 +55,6 @@ uploads/*
 !uploads/.gitkeep
 uploads/resumes/*
 !uploads/resumes/.gitkeep
+
+# Scratch
+scratch/

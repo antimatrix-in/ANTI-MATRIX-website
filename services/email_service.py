@@ -1012,8 +1012,8 @@ def send_joining_credentials_email(application_or_employee, joining_date=None, p
             app.joining_email_status = 'SENT'
             app.joining_email_sent_at = now_utc
             app.joining_date = effective_joining_date
-            if employee:
-                employee.clear_temp_password()
+            # Note: Temporary password is intentionally retained encrypted for Admin Portal display
+            # until the employee resets it via the Internship Portal.
             log_status = 'SENT'
             error_msg = None
         else:

@@ -32,6 +32,89 @@
     <!-- Employee Information Card -->
     <div class="card" style="padding: var(--space-2xl); border-color: rgba(16, 185, 129, 0.25); box-shadow: 0 15px 40px rgba(0,0,0,0.4);">
       
+      <!-- Employee Credentials Section -->
+      <div style="margin-bottom: var(--space-xl); padding-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border);">
+        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-primary-light); font-weight: 700; margin-bottom: var(--space-md); display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            {{ icon('key', size=14) }} Employee Credentials
+          </div>
+          {% if employee.is_temporary_password_active and temp_password %}
+            <span class="badge-status active" style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+              Temporary Password Active
+            </span>
+          {% else %}
+            <span class="badge-status inactive" style="font-size: 0.75rem; background: rgba(100, 116, 139, 0.15); color: #94a3b8; border-color: rgba(100, 116, 139, 0.3);">
+              Temporary Password Reset
+            </span>
+          {% endif %}
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-lg); align-items: start;">
+            
+            <!-- Employee ID Box -->
+            <div>
+              <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Employee ID</span>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span id="dispEmpId" style="font-size: 1.35rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace);">
+                  {{ employee.employee_id }}
+                </span>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ employee.employee_id }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000);" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+                  {{ icon('copy', size=12) }} Copy
+                </button>
+              </div>
+            </div>
+
+            <!-- Temporary Password Box -->
+            <div>
+              <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Temporary Password</span>
+              {% if employee.is_temporary_password_active and temp_password %}
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <span id="tempPwdMasked" style="font-size: 1.15rem; font-weight: 700; color: var(--color-white); font-family: var(--font-mono, monospace); letter-spacing: 0.1em;">
+                    ••••••••••••
+                  </span>
+                  <span id="tempPwdPlain" style="font-size: 1.15rem; font-weight: 700; color: #60a5fa; font-family: var(--font-mono, monospace); display: none;">
+                    {{ temp_password }}
+                  </span>
+                  <button type="button" onclick="toggleTempPwd();" id="btnToggleTempPwd" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; gap: 4px; color: var(--color-text-dim);">
+                    {{ icon('eye', size=12) }} <span id="lblToggleTempPwd">Show</span>
+                  </button>
+                  <button type="button" onclick="navigator.clipboard.writeText('{{ temp_password }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000);" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.55rem; gap: 4px;">
+                    {{ icon('copy', size=12) }} Copy
+                  </button>
+                </div>
+              {% else %}
+                <div style="font-size: 0.85rem; color: var(--color-text-dim); padding-top: 0.25rem;">
+                  <span style="color: #94a3b8; font-weight: 600;">Temporary password reset or inactive.</span><br />
+                  <span style="font-size: 0.75rem; color: var(--color-text-dim);">Password securely hashed. New password is never displayed.</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Status Box -->
+            <div>
+              <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">Status</span>
+              {% if employee.is_temporary_password_active and temp_password %}
+                <div style="margin-top: 4px;">
+                  <span class="badge-status active">Temporary Password Active</span>
+                  <div style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 4px;">
+                    Available until reset via Internship Portal.
+                  </div>
+                </div>
+              {% else %}
+                <div style="margin-top: 4px;">
+                  <span class="badge-status inactive">Temporary Password Reset</span>
+                  <div style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 4px;">
+                    Old temporary password is deactivated and unusable.
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
       <!-- Account Overview Section -->
       <div style="margin-bottom: var(--space-xl); padding-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border);">
         <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-primary-light); font-weight: 700; margin-bottom: var(--space-md); display: flex; align-items: center; gap: 6px;">
@@ -198,4 +281,22 @@
 
   </div>
 </section>
+
+<script>
+function toggleTempPwd() {
+  var masked = document.getElementById('tempPwdMasked');
+  var plain = document.getElementById('tempPwdPlain');
+  var lbl = document.getElementById('lblToggleTempPwd');
+  if (!masked || !plain) return;
+  if (plain.style.display === 'none') {
+    plain.style.display = 'inline';
+    masked.style.display = 'none';
+    if (lbl) lbl.innerText = 'Hide';
+  } else {
+    plain.style.display = 'none';
+    masked.style.display = 'inline';
+    if (lbl) lbl.innerText = 'Show';
+  }
+}
+</script>
 {% endblock %}
