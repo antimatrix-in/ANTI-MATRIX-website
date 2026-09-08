@@ -1,7 +1,7 @@
 import os
 import uuid
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
@@ -253,6 +253,20 @@ def edit_job(job_id):
         job.application_deadline = application_deadline
         job.is_active = is_active
 
+        # Mark as Updated state handling
+        mark_updated = True if request.form.get('is_updated') in ['true', '1', 'on'] else False
+        if mark_updated:
+            now = datetime.now(timezone.utc)
+            cr = job.created_at
+            if cr and cr.tzinfo is None:
+                cr = cr.replace(tzinfo=timezone.utc)
+            if cr and (now - cr).total_seconds() < 60:
+                job.updated_at = job.created_at + timedelta(minutes=5)
+            else:
+                job.updated_at = now
+        else:
+            job.updated_at = job.created_at
+
         db.session.commit()
         flash(f"Job posting '{job.title}' updated successfully.", 'success')
         return redirect(url_for('admin.jobs'))
@@ -268,6 +282,28 @@ def toggle_job(job_id):
     db.session.commit()
     status_str = 'Active' if job.is_active else 'Inactive'
     flash(f"Job '{job.title}' is now {status_str}.", 'success')
+    return redirect(request.referrer or url_for('admin.jobs'))
+
+
+@admin_bp.route('/jobs/toggle-updated/<int:job_id>', methods=['POST'])
+@admin_required
+def toggle_job_updated(job_id):
+    job = db.session.get(JobPosting, job_id) or abort(404)
+    if job.is_updated:
+        job.updated_at = job.created_at
+        status_str = 'unmarked as Updated'
+    else:
+        now = datetime.now(timezone.utc)
+        cr = job.created_at
+        if cr and cr.tzinfo is None:
+            cr = cr.replace(tzinfo=timezone.utc)
+        if cr and (now - cr).total_seconds() < 60:
+            job.updated_at = job.created_at + timedelta(minutes=5)
+        else:
+            job.updated_at = now
+        status_str = 'marked as Updated'
+    db.session.commit()
+    flash(f"Job '{job.title}' {status_str}.", 'success')
     return redirect(request.referrer or url_for('admin.jobs'))
 
 

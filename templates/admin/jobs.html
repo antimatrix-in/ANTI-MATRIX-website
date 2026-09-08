@@ -115,7 +115,12 @@
             {% for job in jobs %}
               <tr>
                 <td>
-                  <span class="admin-table-title">{{ job.title }}</span>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span class="admin-table-title">{{ job.title }}</span>
+                    {% if job.is_updated %}
+                      <span style="font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">Updated</span>
+                    {% endif %}
+                  </div>
                   <span class="admin-table-subtitle">{{ icon('map-pin', size=10) }} {{ job.location }}</span>
                 </td>
                 <td>
@@ -164,6 +169,14 @@
                         {% else %}
                           {{ icon('eye', size=14) }}
                         {% endif %}
+                      </button>
+                    </form>
+
+                    <!-- Toggle Updated Badge -->
+                    <form method="POST" action="{{ url_for('admin.toggle_job_updated', job_id=job.id) }}" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <button type="submit" class="btn-icon" title="{{ 'Remove Updated Badge' if job.is_updated else 'Mark as Updated' }}" style="{{ 'color: #d97706;' if job.is_updated else '' }}">
+                        {{ icon('refresh-cw', size=14) }}
                       </button>
                     </form>
 

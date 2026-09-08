@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from . import db
 from config import INTERNSHIP_FEES, INTERNSHIP_PRICING
 
@@ -23,9 +23,28 @@ class JobPosting(db.Model):
     application_deadline = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     applications = db.relationship('JobApplication', backref='job', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def is_updated(self):
+        """
+        Indicates whether the job posting has been marked as updated by an administrator.
+        Returns True when updated_at is ahead of created_at (> 10 seconds difference).
+        """
+        if not self.updated_at or not self.created_at:
+            return False
+        try:
+            up = self.updated_at
+            cr = self.created_at
+            if up.tzinfo is not None and cr.tzinfo is None:
+                cr = cr.replace(tzinfo=up.tzinfo)
+            elif cr.tzinfo is not None and up.tzinfo is None:
+                up = up.replace(tzinfo=cr.tzinfo)
+            return (up - cr).total_seconds() > 10
+        except Exception:
+            return False
 
     @property
     def is_internship(self):

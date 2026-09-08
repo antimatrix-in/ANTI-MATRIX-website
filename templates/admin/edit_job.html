@@ -371,27 +371,51 @@
         <!-- Section 5: Visibility & Publishing -->
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-top: 0.5rem;">
           
-          <!-- Publication Status Toggle -->
-          <div style="display: flex; align-items: center;">
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
-              <input
-                type="checkbox"
-                name="is_active"
-                id="is_active"
-                value="true"
-                {{ 'checked' if job.is_active else '' }}
-                style="width: 17px; height: 17px; accent-color: #059669; cursor: pointer;"
-                onchange="onActiveToggle(this.checked)"
-              />
-              <div>
-                <span style="font-family: var(--font-admin-heading); font-weight: 600; font-size: 0.9rem; color: #0f172a;" id="status-title">
-                  {{ 'Published (Active)' if job.is_active else 'Hidden Draft' }}
-                </span>
-                <span style="font-family: var(--font-admin-sans); font-size: 0.75rem; color: #64748b; display: block;" id="status-sub">
-                  {{ 'Visible to candidates on the careers portal.' if job.is_active else 'Only visible to administrators.' }}
-                </span>
-              </div>
-            </label>
+          <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+            <!-- Publication Status Toggle -->
+            <div style="display: flex; align-items: center;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  id="is_active"
+                  value="true"
+                  {{ 'checked' if job.is_active else '' }}
+                  style="width: 17px; height: 17px; accent-color: #059669; cursor: pointer;"
+                  onchange="onActiveToggle(this.checked)"
+                />
+                <div>
+                  <span style="font-family: var(--font-admin-heading); font-weight: 600; font-size: 0.9rem; color: #0f172a;" id="status-title">
+                    {{ 'Published (Active)' if job.is_active else 'Hidden Draft' }}
+                  </span>
+                  <span style="font-family: var(--font-admin-sans); font-size: 0.75rem; color: #64748b; display: block;" id="status-sub">
+                    {{ 'Visible to candidates on the careers portal.' if job.is_active else 'Only visible to administrators.' }}
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            <!-- Mark as Updated Toggle -->
+            <div style="display: flex; align-items: center;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
+                <input
+                  type="checkbox"
+                  name="is_updated"
+                  id="is_updated"
+                  value="true"
+                  {{ 'checked' if job.is_updated else '' }}
+                  style="width: 17px; height: 17px; accent-color: #d97706; cursor: pointer;"
+                />
+                <div>
+                  <span style="font-family: var(--font-admin-heading); font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+                    Mark as Updated
+                  </span>
+                  <span style="font-family: var(--font-admin-sans); font-size: 0.75rem; color: #64748b; display: block;">
+                    Display "Updated" badge on the public Careers card.
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- Actions -->
