@@ -174,7 +174,11 @@ def create_job():
                 flash(err, 'danger')
             return render_template('admin/create_job.html', form_data=request.form)
 
+        job_id_val = (request.form.get('job_id') or '').strip()
+        final_job_id = JobPosting.generate_unique_job_id(preferred_id=job_id_val if job_id_val else None)
+
         job = JobPosting(
+            job_id=final_job_id,
             title=title,
             department=department,
             location=location,
@@ -238,6 +242,16 @@ def edit_job(job_id):
             for err in errors:
                 flash(err, 'danger')
             return render_template('admin/edit_job.html', job=job)
+
+        job_id_val = (request.form.get('job_id') or '').strip().upper()
+        if not job.job_id:
+            job.job_id = JobPosting.generate_unique_job_id(preferred_id=job_id_val if job_id_val else None)
+        elif job_id_val and job_id_val != job.job_id.upper():
+            import re
+            if re.match(r'^JB\d{4}$', job_id_val):
+                conflict = JobPosting.query.filter(JobPosting.job_id == job_id_val, JobPosting.id != job.id).first()
+                if not conflict:
+                    job.job_id = job_id_val
 
         job.title = title
         job.department = department

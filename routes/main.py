@@ -238,12 +238,35 @@ def apply_job(job_id):
         if resume_err:
             errors.append(f"Resume: {resume_err}")
 
-        # Conditional Proofs based on job duration
+        # Duration selection from candidate application form
+        from config import normalize_internship_duration, get_internship_fee_breakdown
+        is_internship = job.is_internship
+
+        raw_duration = (request.form.get('duration') or '').strip()
+        selected_duration = normalize_internship_duration(raw_duration)
+
+        if is_internship:
+            if not selected_duration:
+                errors.append("Please select a valid Internship Duration (1 Month or 3 Months).")
+            duration_key = selected_duration or '1_month'
+            pricing = get_internship_fee_breakdown(duration_key)
+            fee_inr = int(pricing['base_amount'])
+            base_amount = pricing['base_amount']
+            gst_rate = pricing['gst_rate']
+            gst_amount = pricing['gst_amount']
+        else:
+            duration_key = None
+            fee_inr = 0
+            base_amount = 0.0
+            gst_rate = 18.0
+            gst_amount = 0.0
+
+        # Conditional Proofs based on selected duration
         aadhaar_fname, aadhaar_fpath = None, None
         pan_fname, pan_fpath = None, None
         college_id_fname, college_id_fpath = None, None
 
-        if job.duration == '3_months':
+        if selected_duration == '3_months' or (not selected_duration and job.duration == '3_months'):
             # 3 Months: Aadhaar is REQUIRED
             aadhaar_file = request.files.get('aadhaar')
             aadhaar_fname, aadhaar_fpath, aadhaar_err = save_secure_file(
@@ -290,9 +313,6 @@ def apply_job(job_id):
             ((JobApplication.user_id == current_user.id) | (JobApplication.email == email))
         ).filter(JobApplication.payment_status != 'paid').first()
 
-        is_internship = job.is_internship
-        fee_inr = job.fee_inr if is_internship else 0
-
         if not application:
             application = JobApplication(
                 job_id=job.id,
@@ -329,8 +349,11 @@ def apply_job(job_id):
                 college_id_path=college_id_fpath,
                 resume_filename=resume_fname,
                 resume_path=resume_fpath,
-                duration=job.duration if is_internship else None,
+                duration=duration_key,
                 application_fee=fee_inr,
+                base_amount=base_amount,
+                gst_rate=gst_rate,
+                gst_amount=gst_amount,
                 payment_status='pending' if is_internship else 'exempt',
                 application_status='pending_payment' if is_internship else 'submitted',
                 status='New'
@@ -379,8 +402,11 @@ def apply_job(job_id):
             if resume_fname:
                 application.resume_filename = resume_fname
                 application.resume_path = resume_fpath
-            application.duration = job.duration if is_internship else None
+            application.duration = duration_key
             application.application_fee = fee_inr
+            application.base_amount = base_amount
+            application.gst_rate = gst_rate
+            application.gst_amount = gst_amount
             application.payment_status = 'pending' if is_internship else 'exempt'
             application.application_status = 'pending_payment' if is_internship else 'APPLIED'
             application.status = 'APPLIED' if not is_internship else 'New'
@@ -433,12 +459,12 @@ def job_apply_review(app_id):
     if application.payment_status == 'paid':
         return redirect(url_for('main.job_apply_success', app_id=application.id))
 
-    # Calculate exact server fee & 18% GST breakdown
-    base_fee = job.fee_inr if job else INTERNSHIP_FEES.get(application.duration, 199)
-    from services.payment_service import calculate_payment_total
-    pricing = calculate_payment_total(base_fee)
+    # Calculate exact server fee & 18% GST breakdown strictly from application duration
+    from config import get_internship_fee_breakdown
+    duration = application.duration or (job.duration if job else '1_month')
+    pricing = get_internship_fee_breakdown(duration)
     fee_inr = pricing['total_amount']
-    duration_label = job.duration_display if job else application.duration_display
+    duration_label = pricing['duration_label']
     is_test_mode = current_app.config.get('PAYMENT_TEST_MODE', False)
 
     return render_template(
@@ -485,11 +511,10 @@ def job_apply_test_payment(app_id):
             db.session.commit()
         return redirect(url_for('main.job_apply_success', app_id=application.id))
 
-    # 1. Determine server-side Application Base Fee & 18% GST calculation
-    duration = job.duration or application.duration or '1_month'
-    base_fee = INTERNSHIP_FEES.get(duration, 199)
-    from services.payment_service import calculate_payment_total
-    pricing = calculate_payment_total(base_fee)
+    # 1. Determine server-side Application Base Fee & 18% GST calculation strictly from application duration
+    from config import get_internship_fee_breakdown
+    duration = application.duration or (job.duration if job else '1_month')
+    pricing = get_internship_fee_breakdown(duration)
     total_amount = pricing['total_amount']
     base_amount = pricing['base_amount']
     gst_rate = pricing['gst_rate']
@@ -647,9 +672,9 @@ def job_apply_checkout(app_id):
         flash("Unable to initialize payment: Payment session token was not returned by gateway.", 'danger')
         return redirect(url_for('main.job_apply_review', app_id=application.id))
 
-    from services.payment_service import calculate_payment_total
-    base_fee = job.fee_inr if job else INTERNSHIP_FEES.get(application.duration, 199)
-    pricing = calculate_payment_total(base_fee)
+    from config import get_internship_fee_breakdown
+    duration = application.duration or (job.duration if job else '1_month')
+    pricing = get_internship_fee_breakdown(duration)
     amount = float(order_data.get('order_amount', pricing['total_amount']))
     base_amount = pricing['base_amount']
     gst_rate = pricing['gst_rate']

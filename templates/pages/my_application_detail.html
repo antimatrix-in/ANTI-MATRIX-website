@@ -33,7 +33,7 @@
             {{ job.title if job else 'Internship Application' }}
           </h1>
           <p style="color: #64748b; font-size: 0.9rem; margin: 0.35rem 0 0 0;">
-            {{ job.department if job else 'Engineering' }} &bull; Applied on {{ app.created_at.strftime('%d %B %Y') }}
+            {% if job and job.job_id %}<strong style="color: #2563eb; font-family: monospace;">Job ID: {{ job.job_id }}</strong> &bull; {% endif %}{{ job.department if job else 'Engineering' }} &bull; Applied on {{ app.created_at.strftime('%d %B %Y') }}
           </p>
         </div>
 

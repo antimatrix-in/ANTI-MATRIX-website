@@ -10,7 +10,9 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # Centralized Server-Side Application Base Fee Mapping (Enforced strictly on server)
 INTERNSHIP_FEES = {
     '1_month': 199,
-    '3_months': 399
+    '3_months': 399,
+    '1 Month': 199,
+    '3 Months': 399
 }
 
 INTERNSHIP_PRICING = {
@@ -29,6 +31,34 @@ INTERNSHIP_PRICING = {
         'formatted_total': '₹234.82'
     },
     '3_months': {
+        'duration_key': '3_months',
+        'label': '3 Months',
+        'base_amount': 399.00,
+        'gst_rate': 18.0,
+        'gst_amount': 71.82,
+        'total_amount': 470.82,
+        'amount_inr': 470.82,
+        'amount_paise': 47082,
+        'formatted': '₹399 + 18% GST (₹470.82)',
+        'formatted_base': '₹399.00',
+        'formatted_gst': '₹71.82',
+        'formatted_total': '₹470.82'
+    },
+    '1 Month': {
+        'duration_key': '1_month',
+        'label': '1 Month',
+        'base_amount': 199.00,
+        'gst_rate': 18.0,
+        'gst_amount': 35.82,
+        'total_amount': 234.82,
+        'amount_inr': 234.82,
+        'amount_paise': 23482,
+        'formatted': '₹199 + 18% GST (₹234.82)',
+        'formatted_base': '₹199.00',
+        'formatted_gst': '₹35.82',
+        'formatted_total': '₹234.82'
+    },
+    '3 Months': {
         'duration_key': '3_months',
         'label': '3 Months',
         'base_amount': 399.00,
@@ -113,16 +143,48 @@ COMMON_DEGREES = [
 GRADUATION_YEARS = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 
 
+def normalize_internship_duration(val: str) -> str:
+    """
+    Validates and normalizes duration input string.
+    Only allows:
+      - 1 Month ('1_month', '1 month', '1') -> '1_month'
+      - 3 Months ('3_months', '3 months', '3') -> '3_months'
+    Rejects unsupported values (e.g. '6 Months', '12 Months', '₹1', etc.) by returning None.
+    """
+    if not val:
+        return None
+    cleaned = str(val).strip().lower().replace('-', '_').replace(' ', '_')
+    if cleaned in ['1_month', '1', 'month_1', '1month']:
+        return '1_month'
+    elif cleaned in ['3_months', '3', '3_month', 'month_3', '3months']:
+        return '3_months'
+    return None
+
+
 def get_internship_fee(duration: str) -> int:
     """Retrieve exact server-calculated base fee in INR for given duration."""
-    return INTERNSHIP_FEES.get(duration, 0)
+    norm = normalize_internship_duration(duration)
+    if norm:
+        return INTERNSHIP_FEES.get(norm, 199)
+    if duration in INTERNSHIP_FEES:
+        return INTERNSHIP_FEES[duration]
+    return 199
 
 
 def get_internship_fee_breakdown(duration: str) -> dict:
-    """Retrieve exact server-calculated base, 18% GST, and total fee breakdown."""
+    """
+    Retrieve exact server-calculated base, 18% GST, and total fee breakdown.
+    Strictly enforces 18% GST calculation using decimal-safe arithmetic.
+    1 Month: Base ₹199.00, GST ₹35.82, Total ₹234.82
+    3 Months: Base ₹399.00, GST ₹71.82, Total ₹470.82
+    """
     from services.payment_service import calculate_payment_total
-    base = get_internship_fee(duration)
-    return calculate_payment_total(base)
+    norm = normalize_internship_duration(duration) or '1_month'
+    base = INTERNSHIP_FEES.get(norm, 199)
+    res = calculate_payment_total(base)
+    res['duration_key'] = norm
+    res['duration_label'] = '1 Month' if norm == '1_month' else '3 Months'
+    return res
 
 
 import urllib.parse

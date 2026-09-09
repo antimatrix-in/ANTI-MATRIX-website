@@ -112,21 +112,38 @@
             <span class="admin-section-desc">Basic identification and categorization</span>
           </div>
 
-          <!-- Job Title -->
-          <div class="form-group">
-            <label for="title" class="form-label">
-              <span>Job Title <span class="req">*</span></span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              class="form-input"
-              placeholder="e.g. Full-Stack Software Engineer"
-              value="{{ form_data.get('title', '') }}"
-              required
-              oninput="updatePreview()"
-            />
+          <!-- Job Title & Job ID -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="title" class="form-label">
+                <span>Job Title <span class="req">*</span></span>
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                class="form-input"
+                placeholder="e.g. Full-Stack Software Engineer"
+                value="{{ form_data.get('title', '') }}"
+                required
+                oninput="updatePreview()"
+              />
+            </div>
+            <div class="form-group">
+              <label for="job_id" class="form-label">
+                <span>Job ID (JB####) <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Auto if blank)</span></span>
+              </label>
+              <input
+                type="text"
+                id="job_id"
+                name="job_id"
+                class="form-input"
+                placeholder="e.g. JB1003 (or auto)"
+                pattern="^JB\d{4}$"
+                style="font-family: monospace; font-weight: 700; text-transform: uppercase;"
+                value="{{ form_data.get('job_id', '') }}"
+              />
+            </div>
           </div>
 
           <!-- Department, Location & Employment Type (3 Columns) -->

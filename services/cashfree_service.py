@@ -108,21 +108,18 @@ class CashfreeService:
         cfg = cls.get_config()
         env = cfg['environment']
         
-        # Authoritative server-side fee & 18% GST calculation
-        from services.payment_service import calculate_payment_total
-        if job and hasattr(job, 'fee_inr') and job.fee_inr > 0:
-            base_fee = job.fee_inr
-        elif application and getattr(application, 'base_amount', None) and application.base_amount > 0:
-            base_fee = application.base_amount
-        else:
-            duration = (job.duration if job else None) or application.duration or '1_month'
-            base_fee = INTERNSHIP_FEES.get(duration, 199)
+        # Authoritative server-side fee & 18% GST calculation strictly from application duration
+        from config import get_internship_fee_breakdown
+        app_duration = getattr(application, 'duration', None)
+        job_duration = getattr(job, 'duration', None) if job else None
+        target_duration = app_duration or job_duration or '1_month'
 
-        pricing = calculate_payment_total(base_fee)
+        pricing = get_internship_fee_breakdown(target_duration)
         total_amount = pricing['total_amount']
         base_amount = pricing['base_amount']
         gst_rate = pricing['gst_rate']
         gst_amount = pricing['gst_amount']
+        duration_label = pricing['duration_label']
         
         order_id = cls.generate_order_id(application.id)
         phone = cls.clean_phone(application.phone)
@@ -148,7 +145,7 @@ class CashfreeService:
             "order_meta": {
                 "return_url": formatted_return_url
             },
-            "order_note": f"Anti-Matrix Application Fee - {job.title} ({job.duration_display})"
+            "order_note": f"Anti-Matrix Application Fee - {job.title} ({duration_label})"
         }
 
         if notify_url:

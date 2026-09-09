@@ -29,7 +29,13 @@
           {% endif %}
           <span class="badge-status {{ app.status_badge_class }}" style="font-weight: 700;">{{ app.status_display }}</span>
         </div>
-        <p style="margin-top: 0.35rem; color: var(--color-text-dim);">Applied for: <strong style="color: var(--color-text);">{{ job.title }}</strong> &bull; {{ job.department }} &bull; {{ job.location }}</p>
+        <p style="margin-top: 0.35rem; color: var(--color-text-dim);">
+          Applied for: <strong style="color: var(--color-text);">{{ job.title }}</strong>
+          {% if job.job_id %}
+            (<span style="font-family: var(--font-mono, monospace); font-weight: 700; color: #60a5fa;">Job ID: {{ job.job_id }}</span>)
+          {% endif %}
+          &bull; {{ job.department }} &bull; {{ job.location }}
+        </p>
       </div>
       <div>
         <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume', download=1) }}" class="btn btn-primary btn-sm" style="gap: 6px;">
@@ -747,24 +753,40 @@
           <div class="dossier-title">
             {{ icon('briefcase', size=18, color='var(--color-primary-light)') }} Internship Program Details
           </div>
-          <div class="dossier-row">
+          <div class="dossier-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
             <div class="dossier-item">
-              <span class="dossier-label">Position Title</span>
-              <span class="dossier-value">{{ job.title }}</span>
-            </div>
-            <div class="dossier-item">
-              <span class="dossier-label">Internship Duration</span>
-              <span class="dossier-value" style="color: #60a5fa; font-weight: 700;">
-                {{ app.duration_display or job.duration_display or 'Standard / Full-time' }}
+              <span class="dossier-label">Job ID</span>
+              <span class="dossier-value" style="font-family: var(--font-mono, monospace); color: #60a5fa; font-weight: 800;">
+                {{ job.job_id or 'N/A' }}
               </span>
             </div>
             <div class="dossier-item">
-              <span class="dossier-label">Application Fee</span>
-              <span class="dossier-value" style="color: var(--color-primary-light); font-weight: 800;">
-                {% if app.base_amount and app.gst_amount %}
-                  ₹{{ "%.2f"|format(app.base_amount) }} + 18% GST (Total ₹{{ "%.2f"|format(app.latest_payment.amount if app.latest_payment else (app.base_amount + app.gst_amount)) }})
+              <span class="dossier-label">Job Title</span>
+              <span class="dossier-value" style="font-weight: 700;">{{ job.title }}</span>
+            </div>
+            <div class="dossier-item">
+              <span class="dossier-label">Selected Duration</span>
+              <span class="dossier-value" style="color: #60a5fa; font-weight: 700;">
+                {{ app.duration_display or job.duration_display or '1 Month' }}
+              </span>
+            </div>
+            <div class="dossier-item">
+              <span class="dossier-label">Base Fee</span>
+              <span class="dossier-value" style="color: var(--color-primary-light); font-weight: 800; font-family: var(--font-mono, monospace);">
+                ₹{{ "%.2f"|format(app.base_amount or (199.0 if app.duration == '1_month' else (399.0 if app.duration == '3_months' else (job.fee_inr or 0)))) }}
+              </span>
+            </div>
+            <div class="dossier-item">
+              <span class="dossier-label">Payment Status</span>
+              <span class="dossier-value">
+                {% if app.payment_status == 'paid' %}
+                  <span class="badge-status active">Paid</span>
+                {% elif app.payment_status == 'pending' %}
+                  <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3);">Pending</span>
+                {% elif app.payment_status == 'failed' %}
+                  <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Failed</span>
                 {% else %}
-                  ₹{{ app.application_fee if app.application_fee else job.fee_inr }}
+                  <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border-color: var(--color-border);">Exempt</span>
                 {% endif %}
               </span>
             </div>

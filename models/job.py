@@ -7,6 +7,7 @@ class JobPosting(db.Model):
     __tablename__ = 'job_postings'
 
     id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.String(20), unique=True, nullable=True, index=True)
     title = db.Column(db.String(150), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     location = db.Column(db.String(100), nullable=False)
@@ -26,6 +27,31 @@ class JobPosting(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     applications = db.relationship('JobApplication', backref='job', lazy=True, cascade='all, delete-orphan')
+
+    @classmethod
+    def generate_unique_job_id(cls, preferred_id=None):
+        """
+        Generate a unique Job ID in the format JB#### (e.g., JB1001, JB1002, JB1234).
+        If preferred_id is provided, matches format, and is not already assigned, it is returned.
+        Otherwise finds the first available unique JB#### starting from JB1001.
+        """
+        import re
+        if preferred_id:
+            cand = str(preferred_id).strip().upper()
+            if re.match(r'^JB\d{4}$', cand):
+                exists = cls.query.filter_by(job_id=cand).first()
+                if not exists:
+                    return cand
+
+        all_records = cls.query.with_entities(cls.job_id).all()
+        used = {r[0].upper() for r in all_records if r[0]}
+
+        num = 1001
+        while True:
+            candidate = f"JB{num:04d}"
+            if candidate not in used:
+                return candidate
+            num += 1
 
     @property
     def is_updated(self):
@@ -213,16 +239,17 @@ class JobApplication(db.Model):
         pricing = INTERNSHIP_PRICING.get(self.duration)
         if pricing:
             return pricing['label']
-        if self.duration == '1_month':
+        d_lower = str(self.duration).strip().lower()
+        if d_lower in ['1_month', '1 month', '1']:
             return '1 Month'
-        elif self.duration == '3_months':
+        elif d_lower in ['3_months', '3 months', '3']:
             return '3 Months'
-        return self.duration
+        return str(self.duration)
 
     @property
     def fee_breakdown(self):
         from services.payment_service import calculate_payment_total
-        base = self.base_amount or (self.job.fee_inr if self.job else None) or INTERNSHIP_FEES.get(self.duration, 0)
+        base = self.base_amount or INTERNSHIP_FEES.get(self.duration) or (self.job.fee_inr if self.job else None) or 199
         return calculate_payment_total(base)
 
     @property

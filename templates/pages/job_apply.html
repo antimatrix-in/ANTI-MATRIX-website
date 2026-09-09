@@ -90,11 +90,12 @@
       <div class="aht">
         <div style="flex:1;min-width:0">
           <div class="amts">
+            {% if job.job_id %}<span class="amt amt-b" style="font-family: monospace; font-weight: 700; color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe;">Job ID: {{ job.job_id }}</span>{% endif %}
             <span class="amt amt-g">{{ icon('briefcase',size=11) }} {{ job.department }}</span>
             <span class="amt">{{ icon('map-pin',size=11) }} {{ job.location }}</span>
             <span class="amt">{{ icon('clock',size=11) }} {{ job.employment_type }}</span>
             {% if job.duration_display %}<span class="amt amt-b">{{ icon('calendar',size=11) }} {{ job.duration_display }}</span>{% endif %}
-            {% if job.fee_display %}<span class="amt amt-g">{{ icon('credit-card',size=11) }} Fee: {{ job.fee_display }}</span>{% endif %}
+            {% if job.fee_display %}<span class="amt amt-g" id="hero-fee-badge">{{ icon('credit-card',size=11) }} Fee: {{ job.fee_display }}</span>{% endif %}
           </div>
           <h1 class="at">Apply for {{ job.title }}</h1>
           <p class="ad">{{ job.short_description }}</p>
@@ -159,14 +160,39 @@
             </div>
           </div>
 
-          {% if job.duration == '3_months' %}
-          <div class="fcard docs-fc">
+          <!-- Card 3: Internship Duration Selection -->
+          {% if job.is_internship %}
+          <div class="fcard">
+            <div class="fcard-h">
+              <div class="fcard-i g">{{ icon('clock',size=17) }}</div>
+              <div>
+                <p class="fcard-t">3. Internship Duration <span class="freq">*</span></p>
+                <p class="fcard-s">Select your program commitment duration (determines application base fee)</p>
+              </div>
+            </div>
+            <div class="fgrp">
+              <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; padding: 0.5rem 0;">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
+                  <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if (form_data.get('duration') == '1_month' or (not form_data.get('duration') and (job.duration == '1_month' or not job.duration))) %}checked{% endif %} required onchange="handleDurationSelection('1_month')" />
+                  <span>1 Month <span style="font-size: 0.8rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹199 Base Fee</span></span>
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
+                  <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if (form_data.get('duration') == '3_months' or (not form_data.get('duration') and job.duration == '3_months')) %}checked{% endif %} required onchange="handleDurationSelection('3_months')" />
+                  <span>3 Months <span style="font-size: 0.8rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹399 Base Fee</span></span>
+                </label>
+              </div>
+              <span class="ferr" id="err-duration"></span>
+            </div>
+          </div>
+
+          <!-- Card 4: Identity Verification Documents (Conditional for 3 Months) -->
+          <div class="fcard docs-fc" id="identity-docs-card" style="{% if not (form_data.get('duration') == '3_months' or (not form_data.get('duration') and job.duration == '3_months')) %}display: none;{% endif %}">
             <div class="fcard-h" style="border-bottom-color:#dbeafe">
               <div class="fcard-i db">{{ icon('shield',size=17) }}</div>
-              <div style="flex:1"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><p class="fcard-t">3. Identity Verification Documents</p><span class="docs-badge">3-Month Requirement</span></div><p class="fcard-s">Mandatory compliance documents for the 3-Month Internship track</p></div>
+              <div style="flex:1"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><p class="fcard-t">4. Identity Verification Documents</p><span class="docs-badge">3-Month Requirement</span></div><p class="fcard-s">Mandatory compliance documents for the 3-Month Internship track</p></div>
             </div>
             <div class="row3">
-              <div class="fgrp"><label class="flbl">Aadhaar Card <span class="freq">*</span></label><div class="fdrop" onclick="document.getElementById('aadhaar-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload Aadhaar</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="aadhaar-name-display"></div></div><input type="file" id="aadhaar-input" name="aadhaar" accept=".pdf,.jpg,.jpeg,.png" style="display:none" required onchange="handleFileSelected(this,'aadhaar-name-display','err-aadhaar',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-aadhaar"></span></div>
+              <div class="fgrp"><label class="flbl">Aadhaar Card <span class="freq">*</span></label><div class="fdrop" onclick="document.getElementById('aadhaar-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload Aadhaar</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="aadhaar-name-display"></div></div><input type="file" id="aadhaar-input" name="aadhaar" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelected(this,'aadhaar-name-display','err-aadhaar',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-aadhaar"></span></div>
               <div class="fgrp"><label class="flbl">PAN Card <span class="fopt">(Optional)</span></label><div class="fdrop" onclick="document.getElementById('pan-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload PAN</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="pan-name-display"></div></div><input type="file" id="pan-input" name="pan" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelected(this,'pan-name-display','err-pan',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-pan"></span></div>
               <div class="fgrp"><label class="flbl">College ID <span class="fopt">(Optional)</span></label><div class="fdrop" onclick="document.getElementById('college-id-input').click()"><div class="fdrop-ic">{{ icon('upload-cloud',size=18) }}</div><div class="fdrop-t">Upload College ID</div><p class="fdrop-h">PDF, JPG, PNG - Max 16 MB</p><div class="fdrop-ok" id="college-id-name-display"></div></div><input type="file" id="college-id-input" name="college_id" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileSelected(this,'college-id-name-display','err-college_id',['pdf','jpg','jpeg','png'])" /><span class="ferr" id="err-college_id"></span></div>
             </div>
@@ -205,11 +231,20 @@
         <div class="asb">
           <div class="scard">
             <div class="slabel">Applying For</div>
-            <div class="sjt">{{ job.title }}</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 2px;">
+              <div class="sjt">{{ job.title }}</div>
+              {% if job.job_id %}
+                <span style="font-family: monospace; font-size: 0.75rem; font-weight: 800; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 6px; flex-shrink: 0;">{{ job.job_id }}</span>
+              {% endif %}
+            </div>
             <div class="sjd">{{ job.department }} &bull; {{ job.location }}</div>
-            {% if job.is_internship and job.fee_inr > 0 %}
-              <div class="feeblk"><div class="feeblk-l">Internship Fee</div><div class="feeblk-a">{{ job.fee_display }}</div><div class="feeblk-n">{{ job.duration_display }} &bull; One-time processing fee</div></div>
-              <button type="submit" class="subbtn" id="submit-application-btn">Pay {{ icon('arrow-right',size=15) }}</button>
+            {% if job.is_internship %}
+              <div class="feeblk">
+                <div class="feeblk-l">Internship Fee</div>
+                <div class="feeblk-a" id="sidebar-fee-amount">₹199</div>
+                <div class="feeblk-n" id="sidebar-fee-duration">1 Month &bull; One-time processing fee</div>
+              </div>
+              <button type="submit" class="subbtn" id="submit-application-btn">Proceed to Pay {{ icon('arrow-right',size=15) }}</button>
             {% else %}
               <div class="feeblk feeblk-fr"><div class="feeblk-l">Application Cost</div><div class="feeblk-a">Free</div><div class="feeblk-n">No fee required for this position</div></div>
               <button type="submit" class="subbtn" id="submit-application-btn">Submit Application {{ icon('send',size=15) }}</button>
@@ -246,6 +281,34 @@ function handleFileSelected(inp, did, eid, exts) {
   if (f.size > 16*1024*1024) { if (e) { e.textContent = 'File exceeds 16 MB limit.'; e.style.display = 'block'; } inp.value = ''; if (d) d.style.display = 'none'; return; }
   if (d) { d.textContent = 'Ready: ' + f.name + ' (' + (f.size/1024/1024).toFixed(2) + ' MB)'; d.style.display = 'block'; }
 }
+function handleDurationSelection(dur) {
+  var feeEl = document.getElementById('sidebar-fee-amount');
+  var durEl = document.getElementById('sidebar-fee-duration');
+  var docsCard = document.getElementById('identity-docs-card');
+  var aadhaarInp = document.getElementById('aadhaar-input');
+  var heroBadge = document.getElementById('hero-fee-badge');
+  
+  if (dur === '3_months') {
+    if (feeEl) feeEl.textContent = '₹399';
+    if (durEl) durEl.textContent = '3 Months • One-time processing fee';
+    if (docsCard) docsCard.style.display = 'block';
+    if (aadhaarInp) aadhaarInp.setAttribute('required', 'required');
+    if (heroBadge) heroBadge.innerHTML = '{{ icon('credit-card',size=11) }} Fee: ₹399';
+  } else {
+    if (feeEl) feeEl.textContent = '₹199';
+    if (durEl) durEl.textContent = '1 Month • One-time processing fee';
+    if (docsCard) docsCard.style.display = 'none';
+    if (aadhaarInp) aadhaarInp.removeAttribute('required');
+    if (heroBadge) heroBadge.innerHTML = '{{ icon('credit-card',size=11) }} Fee: ₹199';
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  if (initState) populateCities(initState, initCity);
+  var checkedDur = document.querySelector('input[name="duration"]:checked');
+  if (checkedDur) {
+    handleDurationSelection(checkedDur.value);
+  }
+});
 document.getElementById('job-application-form').addEventListener('submit', function(e) {
   var has = false;
   document.querySelectorAll('.ferr').forEach(function(el) { el.style.display = 'none'; });
@@ -253,14 +316,26 @@ document.getElementById('job-application-form').addEventListener('submit', funct
     var el = document.getElementById(f.id); var er = document.getElementById('err-'+f.id);
     if (el && !el.value.trim()) { if (er) { er.textContent = f.n + ' is required.'; er.style.display = 'block'; } has = true; }
   });
+  var durInps = document.querySelectorAll('input[name="duration"]');
+  if (durInps.length > 0) {
+    var checkedDur = document.querySelector('input[name="duration"]:checked');
+    if (!checkedDur) {
+      var er = document.getElementById('err-duration');
+      if (er) { er.textContent = 'Please select an internship duration.'; er.style.display = 'block'; }
+      has = true;
+    }
+  }
   var ph = document.getElementById('phone');
   if (ph && ph.value.trim() && ph.value.replace(/\D/g,'').length !== 10) { var er = document.getElementById('err-phone'); if (er) { er.textContent = 'Enter a valid 10-digit phone number.'; er.style.display = 'block'; } has = true; }
   var pi = document.getElementById('pincode');
   if (pi && pi.value.trim() && !/^[1-9][0-9]{5}$/.test(pi.value.trim())) { var er = document.getElementById('err-pincode'); if (er) { er.textContent = 'Enter a valid 6-digit Indian pincode.'; er.style.display = 'block'; } has = true; }
   var ri = document.getElementById('resume-input');
   if (ri && (!ri.files || ri.files.length === 0)) { var er = document.getElementById('err-resume'); if (er) { er.textContent = 'Resume upload is required.'; er.style.display = 'block'; } has = true; }
-  var ai = document.getElementById('aadhaar-input');
-  if (ai && (!ai.files || ai.files.length === 0)) { var er = document.getElementById('err-aadhaar'); if (er) { er.textContent = 'Aadhaar is required for the 3-month internship.'; er.style.display = 'block'; } has = true; }
+  var checkedDurVal = document.querySelector('input[name="duration"]:checked');
+  if (checkedDurVal && checkedDurVal.value === '3_months') {
+    var ai = document.getElementById('aadhaar-input');
+    if (ai && (!ai.files || ai.files.length === 0)) { var er = document.getElementById('err-aadhaar'); if (er) { er.textContent = 'Aadhaar is required for the 3-month internship.'; er.style.display = 'block'; } has = true; }
+  }
   if (has) { e.preventDefault(); var fe = document.querySelector('.ferr[style*="block"]'); if (fe) fe.scrollIntoView({behavior:'smooth',block:'center'}); }
 });
 </script>

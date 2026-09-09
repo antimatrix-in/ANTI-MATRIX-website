@@ -67,6 +67,11 @@
             </h2>
 
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: var(--space-md);">
+              {% if featured_job.job_id %}
+                <span style="font-size: 0.8rem; font-weight: 700; font-family: monospace; padding: 0.2rem 0.65rem; border-radius: 4px; background: rgba(37, 99, 235, 0.08); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25);">
+                  Job ID: {{ featured_job.job_id }}
+                </span>
+              {% endif %}
               <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 4px; background: #f1f5f9; color: var(--color-text); border: 1px solid var(--color-border);">
                 {{ featured_job.department }}
               </span>
@@ -153,6 +158,12 @@
             </div>
 
             <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md);">
+              {% if featured_job.job_id %}
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job ID</div>
+                  <div style="font-family: monospace; font-weight: 700; color: #2563eb; font-size: 1rem;">{{ featured_job.job_id }}</div>
+                </div>
+              {% endif %}
               <div>
                 <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Department</div>
                 <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.department }}</div>
@@ -227,6 +238,11 @@
                 </div>
 
                 <div class="job-meta" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                  {% if job.job_id %}
+                    <span style="font-size: 0.75rem; font-weight: 700; font-family: monospace; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                      Job ID: {{ job.job_id }}
+                    </span>
+                  {% endif %}
                   <span style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(16,185,129,0.1); color: var(--color-primary-light); border: 1px solid rgba(16,185,129,0.25);">{{ job.department }}</span>
                   <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('map-pin', size=11) }} {{ job.location }}</span>
                   <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('clock', size=11) }} {{ job.employment_type }}</span>
@@ -290,6 +306,12 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: var(--space-md); background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg);">
+                  {% if job.job_id %}
+                    <div>
+                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job ID</div>
+                      <div style="font-family: monospace; font-weight: 700; color: #60a5fa; font-size: 0.95rem;">{{ job.job_id }}</div>
+                    </div>
+                  {% endif %}
                   <div>
                     <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Department</div>
                     <div style="color: var(--color-white); font-weight: 600;">{{ job.department }}</div>
