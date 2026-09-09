@@ -308,6 +308,80 @@ class GSTPaymentSystemTestCase(unittest.TestCase):
         self.assertEqual(breakdown['total_amount'], 399.0)
         self.assertEqual(breakdown['gst_amount'], 0.0)
 
+    # -------------------------------------------------------------
+    # TEST 11: Application Page Displays Base Fee ONLY (No GST / No Totals)
+    # -------------------------------------------------------------
+    def test_11_application_page_displays_base_fee_only_no_gst(self):
+        self.login_candidate()
+
+        # 1 Month Job Model Properties
+        self.assertEqual(self.job_1m.fee_display, '₹199')
+        self.assertEqual(self.job_1m.total_fee_display, '₹199 + 18% GST (Total ₹234.82)')
+
+        # 3 Months Job Model Properties
+        self.assertEqual(self.job_3m.fee_display, '₹399')
+        self.assertEqual(self.job_3m.total_fee_display, '₹399 + 18% GST (Total ₹470.82)')
+
+        # Render 1-Month Application Page
+        resp_1m = self.client.get(f'/careers/apply/{self.job_1m.id}')
+        self.assertEqual(resp_1m.status_code, 200)
+        html_1m = resp_1m.data.decode('utf-8')
+
+        # Must display base fee ₹199
+        self.assertIn('₹199', html_1m)
+        self.assertIn('Fee: ₹199', html_1m)
+
+        # Must NOT display GST or GST-inclusive total
+        self.assertNotIn('18% GST', html_1m)
+        self.assertNotIn('35.82', html_1m)
+        self.assertNotIn('234.82', html_1m)
+
+        # Render 3-Months Application Page
+        resp_3m = self.client.get(f'/careers/apply/{self.job_3m.id}')
+        self.assertEqual(resp_3m.status_code, 200)
+        html_3m = resp_3m.data.decode('utf-8')
+
+        # Must display base fee ₹399
+        self.assertIn('₹399', html_3m)
+        self.assertIn('Fee: ₹399', html_3m)
+
+        # Must NOT display GST or GST-inclusive total
+        self.assertNotIn('18% GST', html_3m)
+        self.assertNotIn('71.82', html_3m)
+        self.assertNotIn('470.82', html_3m)
+
+    # -------------------------------------------------------------
+    # TEST 12: Checkout / Review Page Displays Clear GST Breakdown
+    # -------------------------------------------------------------
+    def test_12_checkout_page_displays_clear_gst_breakdown(self):
+        self.login_candidate()
+
+        # 1 Month Application Review / Checkout Screen
+        app_1m = self._create_app(self.job_1m.id, '1_month', 199)
+        resp_rev_1m = self.client.get(f'/careers/apply/review/{app_1m.id}')
+        self.assertEqual(resp_rev_1m.status_code, 200)
+        html_rev_1m = resp_rev_1m.data.decode('utf-8')
+
+        self.assertIn('Base Fee', html_rev_1m)
+        self.assertIn('199.00', html_rev_1m)
+        self.assertIn('GST (18%)', html_rev_1m)
+        self.assertIn('35.82', html_rev_1m)
+        self.assertIn('Total Payable', html_rev_1m)
+        self.assertIn('234.82', html_rev_1m)
+
+        # 3 Months Application Review / Checkout Screen
+        app_3m = self._create_app(self.job_3m.id, '3_months', 399)
+        resp_rev_3m = self.client.get(f'/careers/apply/review/{app_3m.id}')
+        self.assertEqual(resp_rev_3m.status_code, 200)
+        html_rev_3m = resp_rev_3m.data.decode('utf-8')
+
+        self.assertIn('Base Fee', html_rev_3m)
+        self.assertIn('399.00', html_rev_3m)
+        self.assertIn('GST (18%)', html_rev_3m)
+        self.assertIn('71.82', html_rev_3m)
+        self.assertIn('Total Payable', html_rev_3m)
+        self.assertIn('470.82', html_rev_3m)
+
 
 if __name__ == '__main__':
     unittest.main()

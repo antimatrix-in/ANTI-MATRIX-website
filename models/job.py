@@ -83,6 +83,13 @@ class JobPosting(db.Model):
         fee = self.fee_inr
         if fee <= 0:
             return None
+        return f"₹{fee}"
+
+    @property
+    def total_fee_display(self):
+        fee = self.fee_inr
+        if fee <= 0:
+            return None
         b = self.fee_breakdown
         return f"₹{fee} + 18% GST (Total ₹{b['total_amount']:.2f})"
 
