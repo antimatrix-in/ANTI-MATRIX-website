@@ -84,7 +84,7 @@
             <span id="preview-type-badge" style="font-size: 0.75rem; color: #64748b;">{{ job.employment_type }}</span>
           </div>
           <span id="preview-duration-badge" style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #e2e8f0; color: #334155; font-weight: 600; {{ 'display: none;' if not job.duration else '' }}">
-            {% if job.duration == '1_month' %}1 Month Internship (₹199){% elif job.duration == '3_months' %}3 Months Internship (₹399){% endif %}
+            {% if job.duration == '1_month' %}1 Month Internship (₹199 + 18% GST){% elif job.duration == '3_months' %}3 Months Internship (₹399 + 18% GST){% endif %}
           </span>
         </div>
 
@@ -227,8 +227,8 @@
               </label>
               <select id="duration" name="duration" class="form-input" style="appearance: auto;" onchange="updateDurationTier(); updatePreview();">
                 <option value="" {{ 'selected' if not job.duration else '' }}>Standard Full-Time (Free)</option>
-                <option value="1_month" {{ 'selected' if job.duration == '1_month' else '' }}>1 Month Internship (₹199 Fee)</option>
-                <option value="3_months" {{ 'selected' if job.duration == '3_months' else '' }}>3 Months Internship (₹399 Fee + Aadhaar Verification)</option>
+                <option value="1_month" {{ 'selected' if job.duration == '1_month' else '' }}>1 Month Internship (₹199 Base + 18% GST = ₹234.82)</option>
+                <option value="3_months" {{ 'selected' if job.duration == '3_months' else '' }}>3 Months Internship (₹399 Base + 18% GST = ₹470.82 + Aadhaar Verification)</option>
               </select>
               <span id="tier-hint" class="form-hint">Standard opening. No application fee required.</span>
             </div>
@@ -458,12 +458,12 @@ function updateDurationTier() {
   var badge = document.getElementById('preview-duration-badge');
 
   if (val === '1_month') {
-    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">1 Month Internship:</span> ₹199 processing fee applies at checkout.';
-    badge.textContent = '1 Month Internship (₹199)';
+    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">1 Month Internship:</span> ₹199 base fee + 18% GST (₹234.82 total) applies at checkout.';
+    badge.textContent = '1 Month Internship (₹199 + 18% GST)';
     badge.style.display = 'inline-block';
   } else if (val === '3_months') {
-    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">3 Months Internship:</span> ₹399 processing fee + Aadhaar ID verification required.';
-    badge.textContent = '3 Months Internship (₹399)';
+    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">3 Months Internship:</span> ₹399 base fee + 18% GST (₹470.82 total) + Aadhaar ID verification required.';
+    badge.textContent = '3 Months Internship (₹399 + 18% GST)';
     badge.style.display = 'inline-block';
   } else {
     hint.textContent = 'Standard opening. No application or verification fee required.';

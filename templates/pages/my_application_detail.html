@@ -234,16 +234,45 @@
             Payment Record
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <span style="font-size: 0.85rem; color: #64748b;">Application Fee</span>
-            <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">
-              {% if app.application_fee and app.application_fee > 0 %}
-                ₹{{ app.application_fee }}
-              {% else %}
-                Free
-              {% endif %}
-            </span>
-          </div>
+          {% set pay = app.latest_payment %}
+          {% if pay and pay.base_amount is not none %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; color: #64748b;">Base Fee</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.base_amount) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; color: #64748b;">GST (18%)</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.gst_amount or 0) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.85rem; color: #0f172a; font-weight: 700;">Total Paid</span>
+              <span style="font-size: 1.15rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.amount) }}</span>
+            </div>
+          {% elif app.base_amount is not none %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; color: #64748b;">Base Fee</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.base_amount) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.85rem; color: #64748b;">GST (18%)</span>
+              <span style="font-size: 0.95rem; font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.gst_amount or 0) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.85rem; color: #0f172a; font-weight: 700;">Total Paid</span>
+              <span style="font-size: 1.15rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.application_fee) }}</span>
+            </div>
+          {% else %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.85rem; color: #64748b;">Application Fee</span>
+              <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">
+                {% if app.application_fee and app.application_fee > 0 %}
+                  ₹{{ app.application_fee }}
+                {% else %}
+                  Free
+                {% endif %}
+              </span>
+            </div>
+          {% endif %}
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
             <span style="font-size: 0.85rem; color: #64748b;">Payment Status</span>

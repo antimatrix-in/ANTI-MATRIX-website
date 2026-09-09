@@ -29,15 +29,27 @@
         Redirecting to complete the application payment for <strong style="color: var(--color-white);">{{ job.title }}</strong>.
       </p>
 
-      <!-- Payment Summary Pill -->
-      <div style="background: rgba(0,0,0,0.35); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-xl); display: flex; justify-content: space-between; align-items: center;">
-        <div style="text-align: left;">
-          <div style="font-size: 0.72rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Order Reference</div>
-          <div style="font-size: 0.85rem; color: var(--color-white); font-family: var(--font-mono, monospace);">{{ payment.cashfree_order_id }}</div>
+      <!-- Payment Breakdown Box -->
+      {% set b_amt = payment.base_amount if payment.base_amount is not none else (payment.amount / 1.18) %}
+      {% set g_amt = payment.gst_amount if payment.gst_amount is not none else (payment.amount - b_amt) %}
+      <div style="background: rgba(0,0,0,0.35); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-xl); text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.65rem; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <span style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Order Reference</span>
+          <span style="font-size: 0.8rem; color: var(--color-white); font-family: var(--font-mono, monospace);">{{ payment.cashfree_order_id }}</span>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 0.72rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Application Fee</div>
-          <div style="font-size: 1.35rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace);">₹{{ payment.amount|int }}</div>
+        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; color: var(--color-text-dim);">
+            <span>Application Fee (Base)</span>
+            <span style="color: var(--color-white); font-weight: 600; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(b_amt) }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; color: var(--color-text-dim);">
+            <span>GST (18%)</span>
+            <span style="color: var(--color-primary-light); font-weight: 600; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(g_amt) }}</span>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.65rem; border-top: 1px solid rgba(255,255,255,0.08);">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-white); text-transform: uppercase;">Total Payable</span>
+          <span style="font-size: 1.4rem; font-weight: 800; color: var(--color-primary-light); font-family: var(--font-mono, monospace); line-height: 1;">₹{{ "%.2f"|format(payment.amount) }}</span>
         </div>
       </div>
 

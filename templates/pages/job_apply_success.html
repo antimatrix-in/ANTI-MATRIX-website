@@ -65,7 +65,21 @@
             </div>
           {% endif %}
 
-          {% if app.application_fee and app.application_fee > 0 %}
+          {% if app.payment and app.payment.amount %}
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Total Paid</div>
+              <div style="font-size: 0.95rem; color: #059669; font-weight: 800; font-family: var(--font-mono, monospace);">
+                ₹{{ "%.2f"|format(app.payment.amount) }}
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Payment Status</div>
+              <div>
+                <span class="badge-status active" style="font-size: 0.75rem; padding: 2px 7px;">Paid</span>
+              </div>
+            </div>
+          {% elif app.application_fee and app.application_fee > 0 %}
             <div>
               <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Application Fee</div>
               <div style="font-size: 0.95rem; color: #059669; font-weight: 800; font-family: var(--font-mono, monospace);">

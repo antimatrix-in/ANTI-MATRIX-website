@@ -433,8 +433,11 @@ def job_apply_review(app_id):
     if application.payment_status == 'paid':
         return redirect(url_for('main.job_apply_success', app_id=application.id))
 
-    # Calculate exact server fee
-    fee_inr = job.fee_inr if job else INTERNSHIP_FEES.get(application.duration, 199)
+    # Calculate exact server fee & 18% GST breakdown
+    base_fee = job.fee_inr if job else INTERNSHIP_FEES.get(application.duration, 199)
+    from services.payment_service import calculate_payment_total
+    pricing = calculate_payment_total(base_fee)
+    fee_inr = pricing['total_amount']
     duration_label = job.duration_display if job else application.duration_display
     is_test_mode = current_app.config.get('PAYMENT_TEST_MODE', False)
 
@@ -442,6 +445,7 @@ def job_apply_review(app_id):
         'pages/job_apply_review.html',
         app=application,
         job=job,
+        pricing=pricing,
         fee_inr=fee_inr,
         duration_label=duration_label,
         is_test_mode=is_test_mode
@@ -481,9 +485,15 @@ def job_apply_test_payment(app_id):
             db.session.commit()
         return redirect(url_for('main.job_apply_success', app_id=application.id))
 
-    # 1. Determine server-side Application Fee
+    # 1. Determine server-side Application Base Fee & 18% GST calculation
     duration = job.duration or application.duration or '1_month'
-    fee_inr = INTERNSHIP_FEES.get(duration, 199)
+    base_fee = INTERNSHIP_FEES.get(duration, 199)
+    from services.payment_service import calculate_payment_total
+    pricing = calculate_payment_total(base_fee)
+    total_amount = pricing['total_amount']
+    base_amount = pricing['base_amount']
+    gst_rate = pricing['gst_rate']
+    gst_amount = pricing['gst_amount']
 
     # 2. Record simulated payment with unique reference
     test_order_id = f"TEST-APP-{application.id:06d}-PAY-{int(time.time())}-{uuid.uuid4().hex[:5].upper()}"
@@ -495,7 +505,10 @@ def job_apply_test_payment(app_id):
             application_id=application.id,
             cashfree_order_id=test_order_id,
             cashfree_payment_session_id=f"test_session_{uuid.uuid4().hex[:8]}",
-            amount=float(fee_inr),
+            amount=total_amount,
+            base_amount=base_amount,
+            gst_rate=gst_rate,
+            gst_amount=gst_amount,
             currency='INR',
             payment_status='paid',
             gateway='TEST',
@@ -503,7 +516,10 @@ def job_apply_test_payment(app_id):
             gateway_response=json.dumps({
                 "provider": "test",
                 "status": "SUCCESS",
-                "amount": fee_inr,
+                "amount": total_amount,
+                "base_amount": base_amount,
+                "gst_rate": gst_rate,
+                "gst_amount": gst_amount,
                 "order_id": test_order_id,
                 "cf_payment_id": test_payment_id,
                 "mode": "SIMULATED_TEST_PAYMENT"
@@ -512,21 +528,30 @@ def job_apply_test_payment(app_id):
         db.session.add(payment)
     else:
         payment.cashfree_order_id = test_order_id
-        payment.amount = float(fee_inr)
+        payment.amount = total_amount
+        payment.base_amount = base_amount
+        payment.gst_rate = gst_rate
+        payment.gst_amount = gst_amount
         payment.payment_status = 'paid'
         payment.gateway = 'TEST'
         payment.cf_payment_id = test_payment_id
         payment.gateway_response = json.dumps({
             "provider": "test",
             "status": "SUCCESS",
-            "amount": fee_inr,
+            "amount": total_amount,
+            "base_amount": base_amount,
+            "gst_rate": gst_rate,
+            "gst_amount": gst_amount,
             "order_id": test_order_id,
             "cf_payment_id": test_payment_id,
             "mode": "SIMULATED_TEST_PAYMENT"
         })
 
     # 3. Finalize Application Data
-    application.application_fee = fee_inr
+    application.application_fee = int(base_amount)
+    application.base_amount = base_amount
+    application.gst_rate = gst_rate
+    application.gst_amount = gst_amount
     application.payment_status = 'paid'
     application.application_status = 'APPLIED'
     application.status = 'APPLIED'
@@ -622,7 +647,19 @@ def job_apply_checkout(app_id):
         flash("Unable to initialize payment: Payment session token was not returned by gateway.", 'danger')
         return redirect(url_for('main.job_apply_review', app_id=application.id))
 
-    amount = float(order_data.get('order_amount', job.fee_inr))
+    from services.payment_service import calculate_payment_total
+    base_fee = job.fee_inr if job else INTERNSHIP_FEES.get(application.duration, 199)
+    pricing = calculate_payment_total(base_fee)
+    amount = float(order_data.get('order_amount', pricing['total_amount']))
+    base_amount = pricing['base_amount']
+    gst_rate = pricing['gst_rate']
+    gst_amount = pricing['gst_amount']
+
+    # Update application breakdown
+    application.base_amount = base_amount
+    application.gst_rate = gst_rate
+    application.gst_amount = gst_amount
+    application.application_fee = int(amount)
 
     # Reuse existing pending Payment record if present, or create a new one
     payment = Payment.query.filter_by(application_id=application.id, payment_status='pending').order_by(Payment.created_at.desc()).first()
@@ -632,6 +669,9 @@ def job_apply_checkout(app_id):
             cashfree_order_id=order_id,
             cashfree_payment_session_id=payment_session_id,
             amount=amount,
+            base_amount=base_amount,
+            gst_rate=gst_rate,
+            gst_amount=gst_amount,
             currency='INR',
             payment_status='pending',
             gateway='cashfree',
@@ -642,6 +682,9 @@ def job_apply_checkout(app_id):
         payment.cashfree_order_id = order_id
         payment.cashfree_payment_session_id = payment_session_id
         payment.amount = amount
+        payment.base_amount = base_amount
+        payment.gst_rate = gst_rate
+        payment.gst_amount = gst_amount
         payment.currency = 'INR'
         payment.payment_status = 'pending'
         payment.gateway = 'cashfree'
@@ -734,7 +777,7 @@ def cashfree_return():
             err = "Simulated payment failure."
     else:
         # Perform Server-Side Verification via Official Cashfree Sandbox API
-        is_paid, p_status, pay_details, err = CashfreeService.verify_order_payment(order_id)
+        is_paid, p_status, pay_details, err = CashfreeService.verify_order_payment(order_id, expected_amount=payment.amount)
 
     if is_paid and p_status == 'SUCCESS':
         payment.payment_status = 'paid'
@@ -747,7 +790,12 @@ def cashfree_return():
         application.status = 'APPLIED'
         if not application.application_code:
             application.application_code = f"AM-APP-{application.id:06d}"
-        if payment.amount:
+        if payment.base_amount:
+            application.base_amount = payment.base_amount
+            application.gst_rate = payment.gst_rate
+            application.gst_amount = payment.gst_amount
+            application.application_fee = int(payment.base_amount)
+        elif payment.amount:
             application.application_fee = int(payment.amount)
         db.session.commit()
 
@@ -827,6 +875,17 @@ def cashfree_webhook():
             return jsonify({'status': 'already_processed', 'message': 'Already processed'}), 200
 
         if payment_status in ['SUCCESS', 'PAID']:
+            # Validate paid amount against expected order amount
+            paid_amount_raw = payment_info.get('payment_amount') or order_info.get('order_amount')
+            if paid_amount_raw is not None and payment.amount:
+                try:
+                    paid_amount = float(paid_amount_raw)
+                    if abs(paid_amount - float(payment.amount)) > 0.05:
+                        current_app.logger.warning(f"Webhook payment amount mismatch for order {order_id}: expected {payment.amount}, received {paid_amount}")
+                        return jsonify({'status': 'amount_mismatch', 'message': 'Payment amount mismatch'}), 400
+                except Exception:
+                    pass
+
             payment.payment_status = 'paid'
             payment.cf_payment_id = payment_info.get('cf_payment_id') or str(payment_info.get('payment_id', ''))
             payment.gateway_response = json.dumps(data)
@@ -836,7 +895,12 @@ def cashfree_webhook():
             application.status = 'APPLIED'
             if not application.application_code:
                 application.application_code = f"AM-APP-{application.id:06d}"
-            if payment.amount:
+            if payment.base_amount:
+                application.base_amount = payment.base_amount
+                application.gst_rate = payment.gst_rate
+                application.gst_amount = payment.gst_amount
+                application.application_fee = int(payment.base_amount)
+            elif payment.amount:
                 application.application_fee = int(payment.amount)
             db.session.commit()
 

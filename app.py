@@ -159,6 +159,20 @@ def create_app(config_name=None):
                     with db.engine.connect() as conn:
                         conn.execute(text(f"ALTER TABLE job_applications ADD COLUMN hired_at {type_str}"))
                         conn.commit()
+
+                float_type = "REAL" if dialect_is_sqlite else "DOUBLE PRECISION"
+                if 'base_amount' not in cols:
+                    with db.engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE job_applications ADD COLUMN base_amount {float_type}"))
+                        conn.commit()
+                if 'gst_rate' not in cols:
+                    with db.engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE job_applications ADD COLUMN gst_rate {float_type} DEFAULT 18.0"))
+                        conn.commit()
+                if 'gst_amount' not in cols:
+                    with db.engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE job_applications ADD COLUMN gst_amount {float_type}"))
+                        conn.commit()
                 
                 # Auto-link existing applications where user email matches
                 with db.engine.connect() as conn:
@@ -268,6 +282,19 @@ def create_app(config_name=None):
                     if 'last_login' not in user_cols:
                         type_str = "DATETIME" if dialect_is_sqlite else "TIMESTAMP"
                         conn.execute(text(f"ALTER TABLE users ADD COLUMN last_login {type_str}"))
+                    conn.commit()
+
+            # Ensure payments table has base_amount, gst_rate, gst_amount
+            if 'payments' in inspector.get_table_names():
+                pay_cols = [c['name'] for c in inspector.get_columns('payments')]
+                float_type = "REAL" if dialect_is_sqlite else "DOUBLE PRECISION"
+                with db.engine.connect() as conn:
+                    if 'base_amount' not in pay_cols:
+                        conn.execute(text(f"ALTER TABLE payments ADD COLUMN base_amount {float_type}"))
+                    if 'gst_rate' not in pay_cols:
+                        conn.execute(text(f"ALTER TABLE payments ADD COLUMN gst_rate {float_type} DEFAULT 18.0"))
+                    if 'gst_amount' not in pay_cols:
+                        conn.execute(text(f"ALTER TABLE payments ADD COLUMN gst_amount {float_type}"))
                     conn.commit()
         except Exception as e:
             app.logger.warning(f"Database auto-migration note: {str(e)}")

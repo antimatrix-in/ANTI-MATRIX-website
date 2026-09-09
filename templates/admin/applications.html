@@ -152,7 +152,11 @@
                   {% endif %}
                 </td>
                 <td>
-                  {% if app.application_fee and app.application_fee > 0 %}
+                  {% if app.latest_payment and app.latest_payment.amount %}
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-white); font-family: var(--font-mono, monospace);">
+                      ₹{{ "%.2f"|format(app.latest_payment.amount) }}
+                    </span>
+                  {% elif app.application_fee and app.application_fee > 0 %}
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-white); font-family: var(--font-mono, monospace);">
                       ₹{{ app.application_fee }}
                     </span>

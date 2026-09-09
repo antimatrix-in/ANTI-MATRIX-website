@@ -7,7 +7,7 @@ load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Centralized Server-Side Application Fee Mapping (Enforced strictly on server)
+# Centralized Server-Side Application Base Fee Mapping (Enforced strictly on server)
 INTERNSHIP_FEES = {
     '1_month': 199,
     '3_months': 399
@@ -17,16 +17,30 @@ INTERNSHIP_PRICING = {
     '1_month': {
         'duration_key': '1_month',
         'label': '1 Month',
-        'amount_inr': 199,
-        'amount_paise': 19900,
-        'formatted': '₹199'
+        'base_amount': 199.00,
+        'gst_rate': 18.0,
+        'gst_amount': 35.82,
+        'total_amount': 234.82,
+        'amount_inr': 234.82,
+        'amount_paise': 23482,
+        'formatted': '₹199 + 18% GST (₹234.82)',
+        'formatted_base': '₹199.00',
+        'formatted_gst': '₹35.82',
+        'formatted_total': '₹234.82'
     },
     '3_months': {
         'duration_key': '3_months',
         'label': '3 Months',
-        'amount_inr': 399,
-        'amount_paise': 39900,
-        'formatted': '₹399'
+        'base_amount': 399.00,
+        'gst_rate': 18.0,
+        'gst_amount': 71.82,
+        'total_amount': 470.82,
+        'amount_inr': 470.82,
+        'amount_paise': 47082,
+        'formatted': '₹399 + 18% GST (₹470.82)',
+        'formatted_base': '₹399.00',
+        'formatted_gst': '₹71.82',
+        'formatted_total': '₹470.82'
     }
 }
 
@@ -100,8 +114,15 @@ GRADUATION_YEARS = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 
 
 def get_internship_fee(duration: str) -> int:
-    """Retrieve exact server-calculated fee in INR for given duration."""
+    """Retrieve exact server-calculated base fee in INR for given duration."""
     return INTERNSHIP_FEES.get(duration, 0)
+
+
+def get_internship_fee_breakdown(duration: str) -> dict:
+    """Retrieve exact server-calculated base, 18% GST, and total fee breakdown."""
+    from services.payment_service import calculate_payment_total
+    base = get_internship_fee(duration)
+    return calculate_payment_total(base)
 
 
 import urllib.parse

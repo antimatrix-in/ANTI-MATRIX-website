@@ -43,7 +43,7 @@
           </div>
           <div>
             <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Application Fee</div>
-            <div style="font-size: 1.1rem; color: #f87171; font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ payment.amount|int }}</div>
+            <div style="font-size: 1.1rem; color: #f87171; font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(payment.amount) }}</div>
           </div>
         </div>
       </div>

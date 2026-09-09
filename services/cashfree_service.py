@@ -103,14 +103,26 @@ class CashfreeService:
     def create_order(cls, application, job, return_url: str, notify_url: str = None):
         """
         Create a Cashfree Order server-side.
-        Amount is strictly calculated from job duration on server.
+        Amount is strictly calculated on server including 18% GST.
         """
         cfg = cls.get_config()
         env = cfg['environment']
         
-        # Server-enforced fee validation
-        duration = job.duration or application.duration or '1_month'
-        amount = float(INTERNSHIP_FEES.get(duration, 199))
+        # Authoritative server-side fee & 18% GST calculation
+        from services.payment_service import calculate_payment_total
+        if job and hasattr(job, 'fee_inr') and job.fee_inr > 0:
+            base_fee = job.fee_inr
+        elif application and getattr(application, 'base_amount', None) and application.base_amount > 0:
+            base_fee = application.base_amount
+        else:
+            duration = (job.duration if job else None) or application.duration or '1_month'
+            base_fee = INTERNSHIP_FEES.get(duration, 199)
+
+        pricing = calculate_payment_total(base_fee)
+        total_amount = pricing['total_amount']
+        base_amount = pricing['base_amount']
+        gst_rate = pricing['gst_rate']
+        gst_amount = pricing['gst_amount']
         
         order_id = cls.generate_order_id(application.id)
         phone = cls.clean_phone(application.phone)
@@ -125,7 +137,7 @@ class CashfreeService:
 
         payload = {
             "order_id": order_id,
-            "order_amount": amount,
+            "order_amount": total_amount,
             "order_currency": "INR",
             "customer_details": {
                 "customer_id": customer_id,
@@ -144,7 +156,7 @@ class CashfreeService:
 
         # Safe structured logging (no credentials or secrets logged)
         logger.info(f"Cashfree environment: {env}")
-        logger.info(f"Cashfree order creation started (Order ID: {order_id}, Amount: INR {amount})")
+        logger.info(f"Cashfree order creation started (Order ID: {order_id}, Base: INR {base_amount}, GST 18%: INR {gst_amount}, Total: INR {total_amount})")
         logger.info(f"Cashfree order return URL configured: {formatted_return_url}")
 
         # Isolated automated unit testing mode
@@ -155,7 +167,10 @@ class CashfreeService:
                 "order_id": order_id,
                 "payment_session_id": mock_session_id,
                 "order_status": "ACTIVE",
-                "order_amount": amount,
+                "order_amount": total_amount,
+                "base_amount": base_amount,
+                "gst_rate": gst_rate,
+                "gst_amount": gst_amount,
                 "order_currency": "INR",
                 "is_sandbox_simulation": True
             }, None
@@ -197,10 +212,18 @@ class CashfreeService:
         env = cfg['environment']
 
         if env == 'test':
+            sim_amount = 234.82
+            try:
+                from models import Payment
+                p = Payment.query.filter_by(cashfree_order_id=order_id).first()
+                if p and p.amount:
+                    sim_amount = float(p.amount)
+            except Exception:
+                pass
             return True, {
                 "order_id": order_id,
                 "order_status": "PAID",
-                "order_amount": 199.00
+                "order_amount": sim_amount
             }, None
 
         if not cfg['client_id'] or not cfg['client_secret'] or cfg['client_id'].startswith('your_') or cfg['client_secret'].startswith('your_'):
@@ -229,10 +252,18 @@ class CashfreeService:
         env = cfg['environment']
 
         if env == 'test':
+            sim_amount = 234.82
+            try:
+                from models import Payment
+                p = Payment.query.filter_by(cashfree_order_id=order_id).first()
+                if p and p.amount:
+                    sim_amount = float(p.amount)
+            except Exception:
+                pass
             return True, [{
                 "payment_status": "SUCCESS",
                 "cf_payment_id": f"cf_sim_{order_id}",
-                "payment_amount": 199.00,
+                "payment_amount": sim_amount,
                 "payment_currency": "INR",
                 "payment_time": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
             }], None
@@ -257,12 +288,13 @@ class CashfreeService:
             return False, None, f"Network error querying Cashfree payments: {str(e)}"
 
     @classmethod
-    def verify_order_payment(cls, order_id: str):
+    def verify_order_payment(cls, order_id: str, expected_amount: float = None):
         """
         Verify payment status server-side from Cashfree.
+        If expected_amount is provided, also validates that the paid amount matches expected_amount.
         Returns (is_paid, payment_status_string, payment_info_dict, error_message).
         """
-        logger.info(f"Cashfree payment verification started (Order ID: {order_id})")
+        logger.info(f"Cashfree payment verification started (Order ID: {order_id}, Expected Amount: {expected_amount})")
         success, payments_data, err = cls.get_order_payments(order_id)
         
         if success and isinstance(payments_data, list) and len(payments_data) > 0:
@@ -270,7 +302,11 @@ class CashfreeService:
             for pay in payments_data:
                 p_status = pay.get('payment_status', '').upper()
                 if p_status == 'SUCCESS':
-                    logger.info(f"Cashfree payment status: SUCCESS for Order ID: {order_id}")
+                    paid_amt = float(pay.get('payment_amount', 0))
+                    if expected_amount is not None and abs(paid_amt - float(expected_amount)) > 0.05:
+                        logger.warning(f"Cashfree payment amount mismatch for {order_id}: expected {expected_amount}, received {paid_amt}")
+                        return False, 'AMOUNT_MISMATCH', pay, f"Payment amount mismatch: expected ₹{expected_amount:.2f}, but received ₹{paid_amt:.2f}"
+                    logger.info(f"Cashfree payment status: SUCCESS for Order ID: {order_id} (Amount: ₹{paid_amt:.2f})")
                     return True, 'SUCCESS', pay, None
                 elif p_status in ['FAILED', 'USER_DROPPED', 'CANCELLED']:
                     logger.info(f"Cashfree payment status: {p_status} for Order ID: {order_id}")
@@ -290,7 +326,11 @@ class CashfreeService:
         if ord_success and isinstance(order_data, dict):
             ord_status = order_data.get('order_status', '').upper()
             if ord_status == 'PAID':
-                logger.info(f"Cashfree payment status: SUCCESS (Order Paid) for Order ID: {order_id}")
+                paid_amt = float(order_data.get('order_amount', 0))
+                if expected_amount is not None and abs(paid_amt - float(expected_amount)) > 0.05:
+                    logger.warning(f"Cashfree order amount mismatch for {order_id}: expected {expected_amount}, received {paid_amt}")
+                    return False, 'AMOUNT_MISMATCH', order_data, f"Order amount mismatch: expected ₹{expected_amount:.2f}, but received ₹{paid_amt:.2f}"
+                logger.info(f"Cashfree payment status: SUCCESS (Order Paid) for Order ID: {order_id} (Amount: ₹{paid_amt:.2f})")
                 return True, 'SUCCESS', order_data, None
             elif ord_status == 'ACTIVE':
                 logger.info(f"Cashfree payment status: PENDING (Order Active) for Order ID: {order_id}")

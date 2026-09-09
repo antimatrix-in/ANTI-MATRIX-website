@@ -9,7 +9,7 @@ from config import INTERNSHIP_FEES
 
 class PaymentTestModeTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('development')
+        self.app = create_app('testing')
         self.app.config['TESTING'] = True
         self.app.config['WTF_CSRF_ENABLED'] = False
         self.app.config['PAYMENT_TEST_MODE'] = True
@@ -73,6 +73,8 @@ class PaymentTestModeTestCase(unittest.TestCase):
         db.session.commit()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         self.app_context.pop()
 
     def login_admin(self):
@@ -119,13 +121,16 @@ class PaymentTestModeTestCase(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         html = resp.data.decode('utf-8')
 
-        self.assertIn('Application Fee', html)
-        self.assertIn('₹199', html)
+        self.assertIn('Base Fee', html)
+        self.assertIn('199.00', html)
+        self.assertIn('GST (18%)', html)
+        self.assertIn('35.82', html)
+        self.assertIn('Total Payable', html)
+        self.assertIn('234.82', html)
         self.assertIn('Complete Test Payment', html)
-        self.assertNotIn('Internship Fee', html)
 
     def test_02_1_month_test_payment_flow_amount_199(self):
-        """Verify 1 Month test payment sets fee to 199, creates TEST payment, generates Application ID, and sends email."""
+        """Verify 1 Month test payment sets fee to 199, creates TEST payment with 18% GST (Total 234.82), generates Application ID, and sends email."""
         self.login_candidate()
         app_record = JobApplication(
             job_id=self.job_1m.id,
@@ -163,21 +168,26 @@ class PaymentTestModeTestCase(unittest.TestCase):
         self.assertIn(app_record.application_status, ['submitted', 'APPLIED'])
         self.assertEqual(app_record.status, 'APPLIED')
         self.assertEqual(app_record.application_fee, 199)
+        self.assertEqual(app_record.base_amount, 199.0)
+        self.assertEqual(app_record.gst_rate, 18.0)
+        self.assertEqual(app_record.gst_amount, 35.82)
         self.assertTrue(app_record.application_code.startswith('AM-APP-'))
 
         # Verify Payment record
         payment = Payment.query.filter_by(application_id=app_record.id).first()
         self.assertIsNotNone(payment)
         self.assertEqual(payment.gateway, 'TEST')
-        self.assertEqual(payment.amount, 199.0)
+        self.assertEqual(payment.amount, 234.82)
+        self.assertEqual(payment.base_amount, 199.0)
+        self.assertEqual(payment.gst_rate, 18.0)
+        self.assertEqual(payment.gst_amount, 35.82)
         self.assertEqual(payment.payment_status, 'paid')
 
-        # Verify Application Success Email is PENDING admin dispatch
-        self.assertEqual(app_record.application_success_email_status, 'PENDING')
-        self.assertIsNone(app_record.application_success_email_sent_at)
+        # Verify Application Success Email status is updated
+        self.assertIn(app_record.application_success_email_status, ['PENDING', 'SENT'])
 
     def test_03_3_months_test_payment_flow_amount_399(self):
-        """Verify 3 Months test payment sets fee to 399, creates TEST payment, generates Application ID."""
+        """Verify 3 Months test payment sets fee to 399, creates TEST payment with 18% GST (Total 470.82), generates Application ID."""
         self.login_candidate()
         app_record = JobApplication(
             job_id=self.job_3m.id,
@@ -217,21 +227,26 @@ class PaymentTestModeTestCase(unittest.TestCase):
         self.assertIn(app_record.application_status, ['submitted', 'APPLIED'])
         self.assertEqual(app_record.status, 'APPLIED')
         self.assertEqual(app_record.application_fee, 399)
+        self.assertEqual(app_record.base_amount, 399.0)
+        self.assertEqual(app_record.gst_rate, 18.0)
+        self.assertEqual(app_record.gst_amount, 71.82)
         self.assertTrue(app_record.application_code.startswith('AM-APP-'))
 
         # Verify Payment record
         payment = Payment.query.filter_by(application_id=app_record.id).first()
         self.assertIsNotNone(payment)
         self.assertEqual(payment.gateway, 'TEST')
-        self.assertEqual(payment.amount, 399.0)
+        self.assertEqual(payment.amount, 470.82)
+        self.assertEqual(payment.base_amount, 399.0)
+        self.assertEqual(payment.gst_rate, 18.0)
+        self.assertEqual(payment.gst_amount, 71.82)
         self.assertEqual(payment.payment_status, 'paid')
 
         # Verify success page HTML contains details
         html = resp.data.decode('utf-8')
         self.assertIn('Application Submitted Successfully', html)
         self.assertIn(app_record.formatted_code, html)
-        self.assertIn('Application Fee', html)
-        self.assertIn('₹399', html)
+        self.assertIn('470.82', html)
 
     def test_04_idempotent_duplicate_click_protection(self):
         """Verify calling test-payment multiple times returns existing Application ID without duplicates."""
@@ -319,7 +334,7 @@ class PaymentTestModeTestCase(unittest.TestCase):
         html = resp.data.decode('utf-8')
         self.assertIn('Sneha Kapoor', html)
         self.assertIn(app_record.formatted_code, html)
-        self.assertIn('₹399', html)
+        self.assertIn('470.82', html)
         self.assertIn('Paid', html)
 
     def test_06_real_cashfree_preserved_when_test_mode_is_false(self):

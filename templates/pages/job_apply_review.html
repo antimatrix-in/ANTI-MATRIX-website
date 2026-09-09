@@ -259,20 +259,20 @@
           <!-- Price Breakdown Rows -->
           <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; font-size: 0.875rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
-              <span>Application Fee</span>
-              <span style="font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ fee_inr }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
               <span>Program Duration</span>
               <span style="font-weight: 600; color: #0f172a;">{{ duration_label }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
-              <span>Technical Verification</span>
-              <span style="font-weight: 600; color: #059669;">Included</span>
+              <span>Base Fee</span>
+              <span style="font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">{{ pricing.formatted_base if pricing else '₹' ~ fee_inr }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
-              <span>Processing Taxes</span>
-              <span style="font-weight: 600; color: #059669;">₹0.00</span>
+              <span>GST (18%)</span>
+              <span style="font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">{{ pricing.formatted_gst if pricing else '₹0.00' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #475569;">
+              <span>Technical Verification</span>
+              <span style="font-weight: 600; color: #059669;">Included</span>
             </div>
           </div>
 
@@ -280,10 +280,10 @@
           <div style="padding: 1rem 1.15rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Payable</div>
-              <div style="font-size: 0.75rem; color: #94a3b8;">One-time processing</div>
+              <div style="font-size: 0.75rem; color: #94a3b8;">Base + 18% GST</div>
             </div>
             <div style="font-size: 1.75rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace); line-height: 1;">
-              ₹{{ fee_inr }}
+              {{ pricing.formatted_total if pricing else ('₹%.2f'|format(fee_inr)) }}
             </div>
           </div>
 
@@ -292,7 +292,7 @@
             <form method="POST" action="{{ url_for('main.job_apply_test_payment', app_id=app.id) }}" style="margin: 0;">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-primary btn-lg" id="complete-test-payment-btn" style="width: 100%; justify-content: center; font-size: 1rem; font-weight: 700; padding: 0.85rem 1rem; gap: 8px;">
-                {{ icon('check-circle', size=18) }} Complete Test Payment (₹{{ fee_inr }})
+                {{ icon('check-circle', size=18) }} Complete Test Payment ({{ pricing.formatted_total if pricing else '₹' ~ fee_inr }})
               </button>
             </form>
             <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0.85rem; font-size: 0.75rem; color: #2563eb; font-weight: 500;">
@@ -302,7 +302,7 @@
             <form method="POST" action="{{ url_for('main.job_apply_checkout', app_id=app.id) }}" style="margin: 0;">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-primary btn-lg" id="pay-application-fee-btn" style="width: 100%; justify-content: center; font-size: 1rem; font-weight: 700; padding: 0.85rem 1rem; gap: 8px;">
-                {{ icon('credit-card', size=18) }} Pay
+                {{ icon('credit-card', size=18) }} Pay {{ pricing.formatted_total if pricing else ('₹%.2f'|format(fee_inr)) }}
               </button>
             </form>
             <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 0.85rem; font-size: 0.75rem; color: #64748b;">

@@ -761,7 +761,11 @@
             <div class="dossier-item">
               <span class="dossier-label">Application Fee</span>
               <span class="dossier-value" style="color: var(--color-primary-light); font-weight: 800;">
-                ₹{{ app.application_fee if app.application_fee else job.fee_inr }}
+                {% if app.base_amount and app.gst_amount %}
+                  ₹{{ "%.2f"|format(app.base_amount) }} + 18% GST (Total ₹{{ "%.2f"|format(app.latest_payment.amount if app.latest_payment else (app.base_amount + app.gst_amount)) }})
+                {% else %}
+                  ₹{{ app.application_fee if app.application_fee else job.fee_inr }}
+                {% endif %}
               </span>
             </div>
           </div>
@@ -939,10 +943,39 @@
                 {{ app.payment_status }}
               </span>
             </div>
-            <div>
-              <span style="color: var(--color-text-dim);">Application Fee:</span>
-              <span style="color: #ffffff; font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ app.application_fee or job.fee_inr }}</span>
-            </div>
+            {% set pay = app.latest_payment %}
+            {% if pay and pay.base_amount is not none %}
+              <div>
+                <span style="color: var(--color-text-dim);">Base Amount:</span>
+                <span style="color: #ffffff; font-weight: 700; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.base_amount) }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim);">GST (18%):</span>
+                <span style="color: #34d399; font-weight: 700; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.gst_amount or 0) }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim);">Total Paid:</span>
+                <span style="color: var(--color-primary-light); font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.amount) }}</span>
+              </div>
+            {% elif app.base_amount is not none %}
+              <div>
+                <span style="color: var(--color-text-dim);">Base Amount:</span>
+                <span style="color: #ffffff; font-weight: 700; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.base_amount) }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim);">GST (18%):</span>
+                <span style="color: #34d399; font-weight: 700; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.gst_amount or 0) }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim);">Total Paid:</span>
+                <span style="color: var(--color-primary-light); font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.application_fee) }}</span>
+              </div>
+            {% else %}
+              <div>
+                <span style="color: var(--color-text-dim);">Application Fee:</span>
+                <span style="color: #ffffff; font-weight: 800; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.amount) if pay and pay.amount else (app.application_fee or job.fee_inr) }}</span>
+              </div>
+            {% endif %}
             {% if app.latest_payment %}
               <div>
                 <span style="color: var(--color-text-dim);">Cashfree Order ID:</span>

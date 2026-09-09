@@ -70,9 +70,21 @@ class JobPosting(db.Model):
         return INTERNSHIP_FEES.get(self.duration, 0)
 
     @property
+    def fee_breakdown(self):
+        from services.payment_service import calculate_payment_total
+        return calculate_payment_total(self.fee_inr)
+
+    @property
+    def total_fee(self):
+        return self.fee_breakdown['total_amount']
+
+    @property
     def fee_display(self):
         fee = self.fee_inr
-        return f"₹{fee}" if fee > 0 else None
+        if fee <= 0:
+            return None
+        b = self.fee_breakdown
+        return f"₹{fee} + 18% GST (Total ₹{b['total_amount']:.2f})"
 
     def get_skills_list(self):
         if not self.skills:
@@ -154,6 +166,9 @@ class JobApplication(db.Model):
     # Internship & Payment Info
     duration = db.Column(db.String(50), nullable=True)  # '1_month', '3_months', or None
     application_fee = db.Column(db.Integer, nullable=True, default=0)  # Amount in INR
+    base_amount = db.Column(db.Float, nullable=True)  # Base Fee before GST (e.g. 199.00 or 399.00)
+    gst_rate = db.Column(db.Float, nullable=True, default=18.0)  # 18.0
+    gst_amount = db.Column(db.Float, nullable=True)  # GST 18% Amount (e.g. 35.82 or 71.82)
     
     # Distinct Payment & Application States
     payment_status = db.Column(db.String(30), default='pending', nullable=False)  # pending, processing, paid, failed, cancelled, exempt
@@ -198,10 +213,20 @@ class JobApplication(db.Model):
         return self.duration
 
     @property
+    def fee_breakdown(self):
+        from services.payment_service import calculate_payment_total
+        base = self.base_amount or (self.job.fee_inr if self.job else None) or INTERNSHIP_FEES.get(self.duration, 0)
+        return calculate_payment_total(base)
+
+    @property
     def latest_payment(self):
         if self.payments:
             return self.payments[0]
         return None
+
+    @property
+    def payment(self):
+        return self.latest_payment
 
     @property
     def offer_letter_doc(self):
@@ -293,7 +318,10 @@ class Payment(db.Model):
     application_id = db.Column(db.Integer, db.ForeignKey('job_applications.id'), nullable=False)
     cashfree_order_id = db.Column(db.String(100), unique=True, nullable=False, index=True)
     cashfree_payment_session_id = db.Column(db.String(255), nullable=True)
-    amount = db.Column(db.Float, nullable=False)  # Amount in INR (e.g. 199.00 or 399.00)
+    amount = db.Column(db.Float, nullable=False)  # Total Payable Amount in INR (including 18% GST)
+    base_amount = db.Column(db.Float, nullable=True)  # Base Fee before GST (e.g. 199.00 or 399.00)
+    gst_rate = db.Column(db.Float, nullable=True, default=18.0)  # 18.0
+    gst_amount = db.Column(db.Float, nullable=True)  # GST 18% Amount (e.g. 35.82 or 71.82)
     currency = db.Column(db.String(10), default='INR', nullable=False)
     payment_status = db.Column(db.String(30), default='pending', nullable=False)  # pending, processing, paid, failed, cancelled
     gateway = db.Column(db.String(50), default='cashfree', nullable=False)
@@ -301,6 +329,21 @@ class Payment(db.Model):
     gateway_response = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    @property
+    def fee_breakdown(self):
+        from services.payment_service import calculate_payment_total
+        if self.base_amount is not None:
+            return calculate_payment_total(self.base_amount)
+        return {
+            'base_amount': float(self.amount or 0),
+            'gst_rate': 0.0,
+            'gst_amount': 0.0,
+            'total_amount': float(self.amount or 0),
+            'formatted_base': f"₹{float(self.amount or 0):.2f}",
+            'formatted_gst': "₹0.00",
+            'formatted_total': f"₹{float(self.amount or 0):.2f}"
+        }
 
     def __repr__(self):
         return f"<Payment id={self.id} order='{self.cashfree_order_id}' amount={self.amount} status='{self.payment_status}'>"

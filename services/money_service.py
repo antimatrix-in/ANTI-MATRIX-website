@@ -139,7 +139,12 @@ def record_cashfree_income(application, payment, payment_details=None, env=None)
     job_title = application.job.title if application.job else "Internship Application"
     app_code = application.formatted_code
 
-    description = f"Anti Matrix Internship Application Fee - {job_title} ({app_code})"
+    if getattr(payment, 'base_amount', None) and getattr(payment, 'gst_amount', None):
+        description = f"Anti Matrix Internship Application Fee - {job_title} ({app_code}) [Base: ₹{payment.base_amount:.2f} + GST 18%: ₹{payment.gst_amount:.2f}]"
+    elif getattr(application, 'base_amount', None) and getattr(application, 'gst_amount', None):
+        description = f"Anti Matrix Internship Application Fee - {job_title} ({app_code}) [Base: ₹{application.base_amount:.2f} + GST 18%: ₹{application.gst_amount:.2f}]"
+    else:
+        description = f"Anti Matrix Internship Application Fee - {job_title} ({app_code})"
     purpose = f"Application Fee: {job_title}"
     ref = cf_payment_id or order_id
 
