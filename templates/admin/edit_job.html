@@ -181,7 +181,7 @@
                 oninput="updatePreview()"
               />
               <datalist id="location-datalist">
-                <option value="Remote (Worldwide)">
+                <option value="Remote">
                 <option value="Chennai, Tamil Nadu, India">
                 <option value="Bangalore, Karnataka, India">
                 <option value="Hybrid (Chennai HQ)">
@@ -506,7 +506,7 @@ function onActiveToggle(isChecked) {
 function updatePreview() {
   var title = document.getElementById('title').value.trim() || 'Job Title';
   var dept = document.getElementById('department').value.trim() || 'Engineering';
-  var loc = document.getElementById('location').value.trim() || 'Remote (Worldwide)';
+  var loc = document.getElementById('location').value.trim() || 'Remote';
   var empType = document.getElementById('employment_type').value || 'Full-time';
   var summary = document.getElementById('short_description').value.trim() || 'Short role description summary...';
   var salary = document.getElementById('salary').value.trim() || 'Competitive';

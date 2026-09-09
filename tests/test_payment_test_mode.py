@@ -127,7 +127,9 @@ class PaymentTestModeTestCase(unittest.TestCase):
         self.assertIn('35.82', html)
         self.assertIn('Total Payable', html)
         self.assertIn('234.82', html)
-        self.assertIn('Complete Test Payment', html)
+        self.assertIn('complete-test-payment-btn', html)
+        self.assertIn('Sandbox Test Mode', html)
+        self.assertNotIn('Internship Fee', html)
 
     def test_02_1_month_test_payment_flow_amount_199(self):
         """Verify 1 Month test payment sets fee to 199, creates TEST payment with 18% GST (Total 234.82), generates Application ID, and sends email."""
@@ -372,10 +374,11 @@ class PaymentTestModeTestCase(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         html = resp.data.decode('utf-8')
 
-        # Should show regular Pay button and Cashfree encryption label
+        # Should show regular Pay button and not Cashfree encryption label
         self.assertIn('Pay', html)
-        self.assertIn('Cashfree Payments', html)
-        self.assertNotIn('Complete Test Payment', html)
+        self.assertIn('pay-application-fee-btn', html)
+        self.assertNotIn('256-bit SSL encrypted via Cashfree Payments', html)
+        self.assertNotIn('complete-test-payment-btn', html)
 
 
 if __name__ == '__main__':

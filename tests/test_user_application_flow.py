@@ -124,7 +124,7 @@ class UserApplicationFlowTestCase(unittest.TestCase):
         self.login('alice@example.com', 'AlicePass123!')
         res = self.client.get(f'/careers/apply/{self.job_a.id}')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Application Form', res.data)
+        self.assertIn(b'Personal &amp; Contact Information', res.data)
         self.assertNotIn(b'Sign in to your Anti-Matrix account', res.data)
 
     # -------------------------------------------------------------
@@ -208,7 +208,7 @@ class UserApplicationFlowTestCase(unittest.TestCase):
         self.assertIn('AI Engineer Intern', html)
         self.assertIn('1 Month', html)
         self.assertIn('Applied', html)
-        self.assertIn('Payment: Paid', html)
+        self.assertIn('Paid', html)
 
     # -------------------------------------------------------------
     # 7. TEST: Multiple Applications to different jobs

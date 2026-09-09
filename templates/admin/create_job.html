@@ -83,7 +83,7 @@
         </h3>
 
         <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-          {{ icon('map-pin', size=13) }} <span id="preview-loc">Remote (Worldwide)</span>
+          {{ icon('map-pin', size=13) }} <span id="preview-loc">Remote</span>
         </div>
 
         <p id="preview-summary" style="font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 12px;">
@@ -167,14 +167,14 @@
                 id="location"
                 name="location"
                 class="form-input"
-                placeholder="e.g. Remote (Worldwide)"
+                placeholder="e.g. Remote"
                 value="{{ form_data.get('location', '') }}"
                 required
                 list="location-datalist"
                 oninput="updatePreview()"
               />
               <datalist id="location-datalist">
-                <option value="Remote (Worldwide)">
+                <option value="Remote">
                 <option value="Chennai, Tamil Nadu, India">
                 <option value="Bangalore, Karnataka, India">
                 <option value="Hybrid (Chennai HQ)">
@@ -486,7 +486,7 @@ function onActiveToggle(isChecked) {
 function updatePreview() {
   var title = document.getElementById('title').value.trim() || 'Software Engineer';
   var dept = document.getElementById('department').value.trim() || 'Engineering';
-  var loc = document.getElementById('location').value.trim() || 'Remote (Worldwide)';
+  var loc = document.getElementById('location').value.trim() || 'Remote';
   var empType = document.getElementById('employment_type').value || 'Full-time';
   var summary = document.getElementById('short_description').value.trim() || 'Join our engineering team to architect high-performance digital systems...';
   var salary = document.getElementById('salary').value.trim() || 'Competitive';
