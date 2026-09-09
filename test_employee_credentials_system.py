@@ -7,7 +7,7 @@ from models import db, User, JobPosting, JobApplication, Payment, Employee
 
 class EmployeeCredentialsTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('development')
+        self.app = create_app('testing')
         self.app.config['TESTING'] = True
         self.app.config['WTF_CSRF_ENABLED'] = False
         self.client = self.app.test_client()

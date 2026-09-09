@@ -891,11 +891,21 @@ def render_joining_credentials_email(application, custom_params=None):
     emp_id = employee.employee_id if employee else formatted_code
     
     secret_key = current_app.config.get('SECRET_KEY', 'default-key') if current_app else 'default-key'
-    temp_password = (
-        custom_params.get('temp_password') or 
-        (employee.get_temp_password(secret_key) if employee else '') or 
-        "Provided during onboarding"
-    )
+    cred = employee.onboarding_credential if employee else None
+    if cred and cred.status == 'RESET':
+        temp_password = "[Password has already been reset by employee]"
+    elif cred and cred.status == 'ACTIVE':
+        temp_password = (
+            custom_params.get('temp_password') or 
+            cred.decrypt_password(secret_key) or 
+            "Provided during onboarding"
+        )
+    else:
+        temp_password = (
+            custom_params.get('temp_password') or 
+            (employee.get_temp_password(secret_key) if employee else '') or 
+            "Provided during onboarding"
+        )
     
     portal_link = (
         custom_params.get('portal_url') or 
@@ -979,8 +989,23 @@ def send_joining_credentials_email(application_or_employee, joining_date=None, p
         sent_time = app.joining_email_sent_at.strftime('%b %d, %Y') if app.joining_email_sent_at else 'earlier'
         return False, f"Joining & Credentials email already sent on {sent_time}."
 
+    # Verify onboarding credential status: MUST NOT send old password if RESET
+    cred = employee.onboarding_credential if employee else None
+    if cred and cred.status == 'RESET':
+        return False, "This employee has already activated/reset their portal password. The temporary credentials are no longer available."
+
     secret_key = current_app.config.get('SECRET_KEY', 'default-key') if current_app else 'default-key'
-    resolved_pwd = temp_password or (employee.get_temp_password(secret_key) if employee else '')
+    resolved_pwd = temp_password
+    if not resolved_pwd:
+        if cred and cred.status == 'ACTIVE':
+            resolved_pwd = cred.decrypt_password(secret_key)
+        elif employee:
+            resolved_pwd = employee.get_temp_password(secret_key)
+        else:
+            resolved_pwd = ''
+
+    if cred and not resolved_pwd and cred.status == 'ACTIVE':
+        return False, "Active temporary credentials could not be decrypted."
 
     effective_joining_date = joining_date or app.joining_date
     if not effective_joining_date:

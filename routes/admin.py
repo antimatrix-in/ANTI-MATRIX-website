@@ -443,11 +443,11 @@ def application_detail(app_id):
     new_employee_creds = None
     template_missing_error = None
 
-    # Retrieve temporary credentials: check session first, or decrypt from employee if temporary_password_active
+    # Retrieve temporary credentials: check onboarding credential state
     secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
-    session_creds = session.get('new_employee_credentials')
-    if session_creds and session_creds.get('app_id') == application.id:
-        new_employee_creds = session_creds
+    cred = application.employee.onboarding_credential if application.employee else None
+    if cred and cred.status == 'RESET':
+        new_employee_creds = None
     elif application.employee and application.employee.is_temporary_password_active:
         decrypted_pwd = application.employee.get_temp_password(secret_key)
         if decrypted_pwd:
@@ -456,6 +456,10 @@ def application_detail(app_id):
                 'employee_id': application.employee.employee_id,
                 'temp_password': decrypted_pwd
             }
+    else:
+        session_creds = session.get('new_employee_credentials')
+        if session_creds and session_creds.get('app_id') == application.id and (not cred or cred.status == 'ACTIVE'):
+            new_employee_creds = session_creds
 
     # If stage is UNDER_REVIEW: prepare Application Successful email preview with real candidate data
     if current_stage == 'UNDER_REVIEW':
@@ -1257,7 +1261,8 @@ def view_employee(employee_id):
         employee=employee,
         app=employee.application,
         job=employee.application.job if employee.application else None,
-        temp_password=temp_password
+        temp_password=temp_password,
+        onboarding_credential=employee.onboarding_credential
     )
 
 

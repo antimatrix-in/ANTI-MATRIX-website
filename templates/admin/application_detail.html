@@ -507,6 +507,12 @@
                 <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3); font-size: 0.75rem;">Will Send on "Mark as Hired"</span>
               </div>
 
+              {% if app.employee and app.employee.onboarding_credential and app.employee.onboarding_credential.status == 'RESET' %}
+                <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-md); font-size: 0.825rem; color: #facc15;">
+                  🔒 <strong>Notice:</strong> This employee has already activated/reset their portal password. The temporary credentials are deactivated.
+                </div>
+              {% endif %}
+
               {% if joining_email_preview %}
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-md); font-size: 0.8rem;">
                   <div style="margin-bottom: 2px;"><strong style="color: var(--color-text-dim);">To:</strong> <span style="color: var(--color-primary-light); font-weight: 600;">{{ joining_email_preview.to }}</span></div>
@@ -621,12 +627,18 @@
                 {{ icon('mail', size=13) }} Resend Offer Letter Email
               </button>
             </form>
-            <form method="POST" action="{{ url_for('admin.send_joining_email_action', app_id=app.id) }}" onsubmit="return confirm('Resend joining & credentials email to {{ app.email }} via Brevo?');">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn btn-ghost btn-sm" style="gap: 6px; font-size: 0.8rem; color: var(--color-text-dim);">
-                {{ icon('send', size=13) }} Resend Joining Email
+            {% if app.employee and app.employee.onboarding_credential and app.employee.onboarding_credential.status == 'RESET' %}
+              <button type="button" class="btn btn-ghost btn-sm" disabled title="The candidate has already reset their password. Obsolete temporary credentials cannot be sent." style="gap: 6px; font-size: 0.8rem; color: var(--color-text-dim); opacity: 0.6; cursor: not-allowed;">
+                {{ icon('lock', size=13) }} Temporary Password Reset
               </button>
-            </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('admin.send_joining_email_action', app_id=app.id) }}" onsubmit="return confirm('Resend joining & credentials email to {{ app.email }} via Brevo?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-ghost btn-sm" style="gap: 6px; font-size: 0.8rem; color: var(--color-text-dim);">
+                  {{ icon('send', size=13) }} Resend Joining Email
+                </button>
+              </form>
+            {% endif %}
           </div>
 
         </div>

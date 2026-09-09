@@ -49,9 +49,19 @@ class Employee(db.Model):
         backref=db.backref('employee', uselist=False, cascade='all, delete-orphan')
     )
 
+    # Relationship to EmployeeOnboardingCredential (1-to-1)
+    onboarding_credential = db.relationship(
+        'EmployeeOnboardingCredential',
+        backref=db.backref('employee', uselist=False),
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+
     @property
     def is_temporary_password_active(self) -> bool:
         """Indicates whether the employee's temporary password is still active and retrievable."""
+        if self.onboarding_credential:
+            return self.onboarding_credential.is_active
         return bool(self.temporary_password_active and self.temp_password_encrypted)
 
     def set_password(self, password: str):
@@ -71,26 +81,42 @@ class Employee(db.Model):
         self.temporary_password_active = False
         self.temp_password_encrypted = None
         self.updated_at = datetime.now(timezone.utc)
+        if self.onboarding_credential:
+            self.onboarding_credential.mark_reset()
 
     def set_temp_password(self, plaintext: str, secret_key: str):
-        """Encrypts temporary password for onboarding dispatch and Admin Portal display."""
+        """Encrypts temporary password into onboarding_credential and marks active."""
         if not plaintext or not secret_key:
+            if self.onboarding_credential:
+                self.onboarding_credential.mark_reset()
             self.temp_password_encrypted = None
             self.temporary_password_active = False
             return
+
+        from .employee_onboarding_credential import EmployeeOnboardingCredential
+        if not self.onboarding_credential:
+            self.onboarding_credential = EmployeeOnboardingCredential(
+                employee_id=self.employee_id,
+                status='ACTIVE'
+            )
+            db.session.add(self.onboarding_credential)
+
+        self.onboarding_credential.set_password(plaintext, secret_key)
+        self.temporary_password_active = True
         try:
             encrypted_bytes = _xor_cipher(plaintext.encode('utf-8'), secret_key.encode('utf-8'))
             self.temp_password_encrypted = base64.b64encode(encrypted_bytes).decode('utf-8')
-            self.temporary_password_active = True
         except Exception:
-            self.temp_password_encrypted = None
-            self.temporary_password_active = False
+            pass
 
     def get_temp_password(self, secret_key: str) -> str:
         """
         Decrypts temporary password for authorized Admin Portal view and onboarding email.
         Returns empty string if the temporary password has been reset or is unavailable.
         """
+        if self.onboarding_credential:
+            return self.onboarding_credential.decrypt_password(secret_key)
+
         if not self.temporary_password_active or not self.temp_password_encrypted or not secret_key:
             return ""
         try:
@@ -101,7 +127,9 @@ class Employee(db.Model):
             return ""
 
     def clear_temp_password(self):
-        """Purges encrypted temporary password and marks temporary_password_active = False."""
+        """Purges encrypted temporary password and marks credential as RESET."""
+        if self.onboarding_credential:
+            self.onboarding_credential.mark_reset()
         self.temp_password_encrypted = None
         self.temporary_password_active = False
 

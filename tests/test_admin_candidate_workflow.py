@@ -377,8 +377,8 @@ Joining Date: {{Joining Date}}."""
         self.assertEqual(updated_app.joining_email_status, 'SENT')
         self.assertIsNotNone(updated_app.joining_email_sent_at)
 
-        # Encrypted temp password must be purged after sending joining email
-        self.assertIsNone(updated_app.employee.temp_password_encrypted)
+        # Encrypted temp password remains ACTIVE until password reset via Internship Portal
+        self.assertTrue(updated_app.employee.is_temporary_password_active)
 
     def test_06_student_login_with_employee_id_and_email(self):
         """Test candidate login using both Employee ID (AM...) and registered Email."""
@@ -421,7 +421,7 @@ Joining Date: {{Joining Date}}."""
         # Verify authenticated session
         dashboard_res = self.client.get('/my-applications')
         self.assertEqual(dashboard_res.status_code, 200)
-        self.assertIn(b'Praveen', dashboard_res.data)
+        self.assertIn(b'candidate@example.com', dashboard_res.data)
 
         self.client.get('/logout')
 

@@ -86,7 +86,10 @@ def login():
         # 1. Check if identifier is an Employee ID (e.g. AM4827)
         emp_match = Employee.query.filter(Employee.employee_id.ilike(identifier)).first()
         if emp_match:
-            if emp_match.check_password(password):
+            is_valid = emp_match.check_password(password) or (
+                emp_match.onboarding_credential is not None and emp_match.onboarding_credential.verify_password(password)
+            )
+            if is_valid:
                 # Valid Employee ID & Password -> Sync or create User account for candidate
                 cand_email = emp_match.candidate_email.lower()
                 user = User.query.filter_by(email=cand_email).first()
