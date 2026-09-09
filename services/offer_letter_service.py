@@ -342,35 +342,9 @@ def populate_docx_from_master_template(master_template_path, output_filepath, pl
         for fp in section.footer.paragraphs:
             safe_replace_in_runs(fp, placeholder_mapping)
 
-    # 6. Job-specific content updates if domain differs from AI & ML (Section 15)
-    if cat_key and cat_key != 'AI_ML' and cat_key in OFFER_LETTER_CATEGORIES:
-        cat_info = OFFER_LETTER_CATEGORIES[cat_key]
-        default_title = cat_info.get('default_title')
-        # Check Paragraph 4 for role title
-        for p in doc.paragraphs:
-            if 'selected for the position of' in p.text:
-                for r in p.runs:
-                    if 'AI & ML Intern' in r.text or 'Intern' in r.text:
-                        r.text = default_title
-                        break
-            # Check Paragraph 5 for role description
-            if 'During your internship, you will work on' in p.text:
-                if len(p.runs) >= 3:
-                    p.runs[0].text = cat_info.get('run0', p.runs[0].text)
-                    p.runs[1].text = cat_info.get('run1', p.runs[1].text)
-                    p.runs[2].text = cat_info.get('run2', p.runs[2].text)
-
-    # 7. Single-page layout normalization (guarantees exact 1-page PDF rendering in LibreOffice):
+    # 6. Single-page layout normalization (guarantees exact 1-page PDF rendering in LibreOffice):
     # In the master DOCX, all visual content (paragraphs P0-P12 + signature table) fits comfortably on Page 1.
-    # An unintended blank second page is caused by:
-    #   a) The trailing empty paragraph after the signature table having default margin/line height.
-    #   b) In domain templates with longer role descriptions (Web Dev, App Dev), having multiple empty spacer
-    #      paragraphs before "Best Regards," pushes the signature table slightly over the bottom margin.
-    # We normalize trailing empty paragraphs at the document end, and for templates with multiple empty
-    # spacer paragraphs before "Best Regards,", if the domain is WEB_DEVELOPMENT or APP_DEVELOPMENT,
-    # we reduce the second spacer paragraph so the layout remains on 1 page with identical visual balance.
-    # All master body paragraphs, font sizes, margins, headers, footers, seals, and visual vertical positions
-    # remain preserved.
+    # We normalize trailing empty paragraphs at document end so no blank page is rendered.
     empty_spacers = []
     for i, p in enumerate(doc.paragraphs):
         if not p.text.strip():
@@ -378,7 +352,7 @@ def populate_docx_from_master_template(master_template_path, output_filepath, pl
             if any('Best Regards' in s for s in subsequent):
                 empty_spacers.append(p)
 
-    if len(empty_spacers) >= 2 and cat_key in ['WEB_DEVELOPMENT', 'APP_DEVELOPMENT']:
+    if len(empty_spacers) >= 2:
         second_spacer = empty_spacers[1]._p
         if second_spacer.getparent() is not None:
             second_spacer.getparent().remove(second_spacer)
@@ -408,134 +382,321 @@ class OfferLetterTemplateFileMissingError(Exception):
     pass
 
 
-def get_active_offer_letter_template(category_or_job=None):
+def normalize_internship_duration(dur):
+    """Normalizes duration string to standard '1 Month', '3 Months', or 'Both'."""
+    if not dur:
+        return 'Both'
+    d = str(dur).strip().lower().replace('_', ' ')
+    if '3' in d or 'three' in d:
+        return '3 Months'
+    elif '1' in d or 'one' in d:
+        return '1 Month'
+    elif 'both' in d:
+        return 'Both'
+    return str(dur).strip().title()
+
+
+def get_active_offer_letter_template(category_or_job=None, duration=None):
     """
-    Retrieves the active Offer Letter DocumentTemplate record from the database for the specified category or job.
-    If category_or_job is None, defaults to 'AI_ML' (with backward compatibility for 'offer_letter').
-    Strictly queries the database for an active template and validates that its stored file exists.
+    Dynamically retrieves the active Offer Letter DocumentTemplate record from the database
+    matching the job/domain and duration of the candidate.
+
+    Resolution logic:
+    1. Determine job posting, department/domain, and candidate duration from input.
+    2. Query all active offer letter templates from database.
+    3. Match against template.job_domain dynamically without hardcoding.
+    4. For matching domain, resolve duration:
+       - Exact duration match ('1 Month' or '3 Months')
+       - Fallback to duration = 'Both'
+    5. If no matching template exists, raises OfferLetterTemplateNotFoundError with:
+       "No active Offer Letter template is configured for [Job/Domain] — [Duration]. Please upload or activate the appropriate template."
     """
-    if category_or_job is None:
-        cat_key = 'AI_ML'
-    elif isinstance(category_or_job, str):
-        if category_or_job.upper() in OFFER_LETTER_CATEGORIES:
-            cat_key = category_or_job.upper()
-        else:
-            # Check if it is a template_type string directly (e.g. 'offer_letter_web_development')
-            matched_key = None
-            for k, info in OFFER_LETTER_CATEGORIES.items():
-                if info['type'] == category_or_job:
-                    matched_key = k
-                    break
-            if matched_key:
-                cat_key = matched_key
-            else:
-                cat_key = determine_job_category(category_or_job)
+    job = None
+    app = None
+    emp = None
+    specified_domain = None
+
+    if isinstance(category_or_job, Employee):
+        emp = category_or_job
+        app = emp.application
+        job = emp.job
+        if not duration and app:
+            duration = app.duration_display or app.duration
+    elif isinstance(category_or_job, JobApplication):
+        app = category_or_job
+        emp = app.employee
+        job = app.job
+        if not duration:
+            duration = app.duration_display or app.duration
     elif isinstance(category_or_job, JobPosting):
-        cat_key = determine_job_category(category_or_job)
-    elif isinstance(category_or_job, (JobApplication, Employee)):
-        job = category_or_job.job if hasattr(category_or_job, 'job') else None
-        cat_key = determine_job_category(job) if job else None
-    else:
-        cat_key = None
+        job = category_or_job
+        if not duration:
+            duration = job.duration
+    elif isinstance(category_or_job, str):
+        specified_domain = category_or_job.strip()
 
-    if not cat_key or cat_key not in OFFER_LETTER_CATEGORIES:
+    candidate_duration = normalize_internship_duration(duration)
+
+    # All active offer letter templates in the database
+    active_templates = DocumentTemplate.query.filter(
+        DocumentTemplate.is_active == True,
+        (DocumentTemplate.template_type == 'offer_letter') | (DocumentTemplate.template_type.like('offer_letter_%'))
+    ).all()
+
+    if not active_templates:
+        display_domain = specified_domain or (job.department if job and job.department else (job.title if job else 'Unknown Domain'))
         raise OfferLetterTemplateNotFoundError(
-            "No job-specific offer letter template is available for this internship. Please upload the appropriate template before generating the offer letter."
+            f"No active Offer Letter template is configured for {display_domain} — {candidate_duration}. Please upload or activate the appropriate template."
         )
 
-    cat_info = OFFER_LETTER_CATEGORIES[cat_key]
-    template_type = cat_info['type']
+    # Domain synonyms and aliases to support standard domains seamlessly
+    DOMAIN_SYNONYMS = {
+        'AI & ML': ['ai & ml', 'ai/ml', 'artificial intelligence', 'machine learning', 'deep learning', 'ai research', 'ai intern', 'ml intern', 'ai', 'ml', 'ai & data'],
+        'Application Development': ['application development', 'app development', 'mobile application', 'mobile app', 'mobile developer', 'android', 'ios', 'flutter', 'react native', 'app intern', 'mobile intern', 'app', 'mobile engineering'],
+        'Data Analytics': ['data analytics', 'data analyst', 'business intelligence', 'bi analyst', 'power bi', 'tableau', 'data visualization', 'data analysis', 'sql analyst', 'analytics intern', 'analytics'],
+        'Full Stack Development': ['full stack development', 'full stack', 'fullstack', 'full-stack', 'web development', 'web developer', 'frontend', 'front-end', 'front end', 'backend', 'back-end', 'back end', 'web intern', 'engineering', 'web']
+    }
 
-    # Query active template for this specific category
-    active_template = DocumentTemplate.query.filter_by(
-        template_type=template_type,
-        is_active=True
-    ).order_by(DocumentTemplate.id.desc()).first()
+    # Match scoring helper
+    def calculate_match_score(template, target_job, target_str):
+        t_domain = (template.job_domain or '').strip()
+        t_type = (template.template_type or '').strip()
 
-    # Backward compatibility for AI_ML category if offer_letter_ai_ml is not yet uploaded
-    if not active_template and cat_key == 'AI_ML':
-        active_template = DocumentTemplate.query.filter_by(
-            template_type='offer_letter',
-            is_active=True
-        ).order_by(DocumentTemplate.id.desc()).first()
+        # If template has no job_domain, check legacy template_type suffix or template name
+        if not t_domain and t_type.startswith('offer_letter_'):
+            type_suffix = t_type.replace('offer_letter_', '')
+            type_map = {
+                'ai_ml': 'AI & ML',
+                'app_development': 'Application Development',
+                'data_analytics': 'Data Analytics',
+                'web_development': 'Full Stack Development'
+            }
+            t_domain = type_map.get(type_suffix, '')
 
-    if not active_template:
+        if not t_domain and template.name:
+            name_lower = template.name.lower()
+            if 'ai' in name_lower or 'machine learning' in name_lower:
+                t_domain = 'AI & ML'
+            elif 'app dev' in name_lower or 'application' in name_lower:
+                t_domain = 'Application Development'
+            elif 'analytics' in name_lower or 'data' in name_lower:
+                t_domain = 'Data Analytics'
+            elif 'full stack' in name_lower or 'web dev' in name_lower:
+                t_domain = 'Full Stack Development'
+
+        if not t_domain:
+            # If it's a generic master offer letter template without a specific domain, assign baseline fallback score
+            if t_type in ['offer_letter', 'default'] and not target_str:
+                return 20
+            return 0
+
+        t_domain_lower = t_domain.lower()
+
+        # Direct string query match
+        if target_str:
+            s_lower = target_str.lower()
+            if t_domain_lower == s_lower:
+                return 100
+            # Check legacy category keys
+            cat_map = {
+                'ai_ml': 'AI & ML',
+                'app_development': 'Application Development',
+                'data_analytics': 'Data Analytics',
+                'web_development': 'Full Stack Development'
+            }
+            if cat_map.get(s_lower) == t_domain or cat_map.get(s_lower.lower()) == t_domain:
+                return 95
+            if t_domain_lower in s_lower or s_lower in t_domain_lower:
+                return 85
+            # Check synonyms
+            for syn in DOMAIN_SYNONYMS.get(t_domain, []):
+                if syn == s_lower or syn in s_lower:
+                    return 75
+
+        # Job posting match
+        if target_job:
+            title = (target_job.title or '').lower()
+            dept = (target_job.department or '').lower()
+            skills = (getattr(target_job, 'skills', '') or '').lower()
+            desc = (getattr(target_job, 'short_description', '') or '').lower()
+            combined = f"{title} | {dept} | {skills} | {desc}"
+
+            # Exact title or department match
+            if t_domain_lower == title or t_domain_lower == dept:
+                return 100
+            # Direct containment
+            if t_domain_lower in title:
+                return 90
+            if t_domain_lower in dept:
+                return 85
+            # Known domain synonyms
+            synonyms = DOMAIN_SYNONYMS.get(t_domain, [t_domain_lower])
+            for syn in synonyms:
+                if ' ' in syn or '/' in syn or '-' in syn:
+                    if syn in title:
+                        return 80
+                    if syn in dept:
+                        return 75
+                    if syn in combined:
+                        return 65
+                else:
+                    # Single word token match in title/dept
+                    title_tokens = set(title.replace('/', ' ').replace('-', ' ').replace('&', ' ').split())
+                    dept_tokens = set(dept.replace('/', ' ').replace('-', ' ').replace('&', ' ').split())
+                    if syn in title_tokens:
+                        return 70
+                    if syn in dept_tokens:
+                        return 65
+
+            # Dynamic keyword check for future custom domains (e.g. Cyber Security)
+            domain_words = [w for w in t_domain_lower.split() if len(w) > 2 and w not in ['and', 'for', 'the', '&']]
+            if domain_words and all(dw in combined for dw in domain_words):
+                return 60
+
+        return 0
+
+    # Group active templates by domain and score
+    scored_templates = []
+    for tmpl in active_templates:
+        score = calculate_match_score(tmpl, job, specified_domain)
+        if score > 0:
+            scored_templates.append((score, tmpl))
+
+    if not scored_templates:
+        display_domain = specified_domain or (job.department if job and job.department else (job.title if job else 'Unknown Domain'))
         raise OfferLetterTemplateNotFoundError(
-            f"No active template found for {cat_info['card_title']}. Please upload the template from Admin Dashboard → Templates."
+            f"No active Offer Letter template is configured for {display_domain} — {candidate_duration}. Please upload or activate the appropriate template."
         )
 
-    if not active_template.file_path or not os.path.exists(active_template.file_path):
-        # Fallback to local filename in uploads/templates or static/default_templates
+    # Sort descending by match score
+    scored_templates.sort(key=lambda x: x[0], reverse=True)
+    best_score = scored_templates[0][0]
+    # Keep templates matching top-scoring domain
+    best_domain = scored_templates[0][1].job_domain or scored_templates[0][1].name
+    candidate_templates = [t for score, t in scored_templates if score >= best_score - 10]
+
+    # Resolve by duration:
+    # 1. Exact match for candidate duration (e.g. '1 Month' or '3 Months')
+    selected_template = None
+    for t in candidate_templates:
+        t_dur = normalize_internship_duration(t.duration)
+        if t_dur == candidate_duration:
+            selected_template = t
+            break
+
+    # 2. Fallback to duration = 'Both'
+    if not selected_template:
+        for t in candidate_templates:
+            t_dur = normalize_internship_duration(t.duration)
+            if t_dur == 'Both':
+                selected_template = t
+                break
+
+    # 3. Fallback to any template matching the domain
+    if not selected_template and candidate_templates:
+        selected_template = candidate_templates[0]
+
+    if not selected_template:
+        display_domain = best_domain or (job.department if job and job.department else (job.title if job else 'Unknown Domain'))
+        raise OfferLetterTemplateNotFoundError(
+            f"No active Offer Letter template is configured for {display_domain} — {candidate_duration}. Please upload or activate the appropriate template."
+        )
+
+    # Validate physical file exists on disk
+    if not selected_template.file_path or not os.path.exists(selected_template.file_path):
         candidate_paths = [
-            os.path.join(current_app.root_path, 'uploads', 'templates', os.path.basename(active_template.file_path or active_template.filename or '')),
-            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix) with pages removed (1).docx'),
-            os.path.join(current_app.root_path, 'uploads', 'templates', cat_info['default_filename']),
-            os.path.join(current_app.root_path, 'static', 'default_templates', cat_info['default_filename']),
-            os.path.join(current_app.root_path, 'static', 'default_templates', 'offer_letter_ai_ml_master.docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', os.path.basename(selected_template.file_path or selected_template.filename or '')),
+            os.path.join(current_app.root_path, 'uploads', 'templates', selected_template.filename or ''),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_ai_ml_master.docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_app_development_master.docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_data_analytics_master.docx'),
+            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_full_stack_dev_master.docx'),
             os.path.join(current_app.root_path, 'uploads', 'templates', 'offer_letter_master.docx'),
-            os.path.join(current_app.root_path, 'uploads', 'templates', 'offer letter (Anti-matrix).docx'),
         ]
         found = False
         for cpath in candidate_paths:
             if cpath and os.path.exists(cpath):
-                active_template.file_path = cpath
+                selected_template.file_path = cpath
                 found = True
                 break
         if not found:
             raise OfferLetterTemplateFileMissingError(
-                f"The active template file for {cat_info['card_title']} could not be found at '{active_template.file_path}'. Please upload the template again."
+                f"The active template file for '{selected_template.name}' could not be found at '{selected_template.file_path}'. Please upload the template again."
             )
 
-    return active_template
+    return selected_template
 
 
 def ensure_default_templates_initialized():
     """
-    Ensures that default master DOCX files for all 4 internship categories exist in uploads/templates/
+    Ensures that default master DOCX files for all 4 internship domains exist in uploads/templates/
     and have corresponding active DocumentTemplate records in the database without altering existing data.
     """
     templates_dir = os.path.join(current_app.root_path, 'uploads', 'templates')
     os.makedirs(templates_dir, exist_ok=True)
+    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
 
-    static_defaults_dir = os.path.join(current_app.root_path, 'static', 'default_templates')
-    master_ref = os.path.join(templates_dir, 'offer letter (Anti-matrix) with pages removed (1).docx')
-    if not os.path.exists(master_ref):
-        alt_ref = os.path.join(templates_dir, 'offer_letter_ai_ml_master.docx')
-        if os.path.exists(alt_ref):
-            master_ref = alt_ref
-        else:
-            alt_ref2 = os.path.join(templates_dir, 'offer_letter_master.docx')
-            if os.path.exists(alt_ref2):
-                master_ref = alt_ref2
-            else:
-                alt_ref3 = os.path.join(templates_dir, 'offer letter (Anti-matrix).docx')
-                if os.path.exists(alt_ref3):
-                    master_ref = alt_ref3
+    domain_configs = [
+        {
+            'name': 'AI & ML Offer Letter Template',
+            'job_domain': 'AI & ML',
+            'desktop_filename': 'offer letter - AI&ML.docx',
+            'default_filename': 'offer_letter_ai_ml_master.docx',
+            'type': 'offer_letter'
+        },
+        {
+            'name': 'Application Development Offer Letter Template',
+            'job_domain': 'Application Development',
+            'desktop_filename': 'offer letter - App dev.docx',
+            'default_filename': 'offer_letter_app_development_master.docx',
+            'type': 'offer_letter'
+        },
+        {
+            'name': 'Data Analytics Offer Letter Template',
+            'job_domain': 'Data Analytics',
+            'desktop_filename': 'offer letter - Data Analytics.docx',
+            'default_filename': 'offer_letter_data_analytics_master.docx',
+            'type': 'offer_letter'
+        },
+        {
+            'name': 'Full Stack Development Offer Letter Template',
+            'job_domain': 'Full Stack Development',
+            'desktop_filename': 'offer letter - Full stack dev.docx',
+            'default_filename': 'offer_letter_full_stack_dev_master.docx',
+            'type': 'offer_letter'
+        }
+    ]
 
-    for cat_key, cat_data in OFFER_LETTER_CATEGORIES.items():
-        target_path = os.path.join(templates_dir, cat_data['default_filename'])
-        static_src = os.path.join(static_defaults_dir, cat_data['default_filename'])
-        
-        # 1. Create file if missing
+    for cfg in domain_configs:
+        target_path = os.path.join(templates_dir, cfg['default_filename'])
+        desktop_src = os.path.join(desktop_dir, cfg['desktop_filename'])
+
         if not os.path.exists(target_path):
-            if os.path.exists(static_src):
-                shutil.copy2(static_src, target_path)
-            elif os.path.exists(master_ref):
-                shutil.copy2(master_ref, target_path)
+            if os.path.exists(desktop_src):
+                shutil.copy2(desktop_src, target_path)
+            else:
+                # Check static/default_templates
+                static_src = os.path.join(current_app.root_path, 'static', 'default_templates', cfg['default_filename'])
+                if os.path.exists(static_src):
+                    shutil.copy2(static_src, target_path)
 
-        # 2. Check / insert active DocumentTemplate record in DB
+        # Check DB record
         tmpl_record = DocumentTemplate.query.filter_by(
-            template_type=cat_data['type'],
+            template_type='offer_letter',
+            job_domain=cfg['job_domain'],
             is_active=True
         ).first()
 
         if not tmpl_record and os.path.exists(target_path):
             new_tmpl = DocumentTemplate(
-                template_type=cat_data['type'],
-                name=cat_data['name'],
-                filename=cat_data['default_filename'],
+                template_type='offer_letter',
+                name=cfg['name'],
+                job_domain=cfg['job_domain'],
+                duration='Both',
+                filename=cfg['desktop_filename'],
                 file_path=target_path,
-                is_active=True
+                is_active=True,
+                created_by='System Default'
             )
             db.session.add(new_tmpl)
 
@@ -545,18 +706,24 @@ def ensure_default_templates_initialized():
 def generate_offer_letter_docx(application_or_employee, custom_params=None, force_regenerate=False):
     """
     Generates a personalized candidate Offer Letter DOCX by copying the active master template DOCX
-    and replacing ONLY the approved placeholders in the OpenXML parts.
+    assigned to the candidate's Job/Domain and Duration, and replacing ONLY the approved placeholders.
     
     CRITICAL IMPLEMENTATION GUARANTEES:
-    1. The master template DOCX is the authoritative source of truth.
+    1. The active master template DOCX assigned to the candidate's job/domain is the source of truth.
     2. The document is NOT rebuilt from scratch.
-    3. The layout, headers, footers, logo, watermark, circular seal, MSME visuals, borders, fonts, and styles are 100% preserved.
-    4. Only approved dynamic values are substituted:
+    3. The layout, headers, footers, logo, watermark, circular seal, MSME visuals, borders, fonts,
+       and role-specific descriptions from the uploaded template are 100% preserved.
+    4. Only approved dynamic placeholders are substituted:
        - Date: [DD/MM/YYYY] -> candidate offer date (DD/MM/YYYY)
-       - Candidate Name: [Candidate Name] -> candidate's actual name
-       - Reference Number: [Reference Number] -> existing Application ID (e.g. AM-APP-000156)
-       - Duration: [1 Month / 3 Months] -> candidate's actual selected internship duration
+       - Candidate Name: [Candidate Name] -> candidate's actual full name
+       - Reference Number: [Reference Number] -> existing Application ID (e.g. AM-APP-000548)
+       - Duration: [1 Month / 3 Months] -> candidate's actual selected duration (e.g. '1 Month' or '3 Months')
        - Joining Date: [Joining Date] -> candidate's actual joining date
+       - Employee ID: [Employee ID] -> candidate's Employee ID if assigned
+       - Job Title: [Job Title] -> candidate's Job Title
+       - Department: [Department] -> candidate's Department / Domain
+       - College Name: [College Name] -> candidate's College Name
+       - Application ID: [Application ID] -> candidate's Application ID
     5. The master template on disk is NEVER modified.
     6. Returns (emp_doc, output_filepath).
     """
@@ -576,32 +743,30 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
     if not job:
         raise ValueError(f"Application {app.formatted_code} is missing associated Job Posting.")
 
-    # Determine job-specific category
-    cat_key = determine_job_category(job)
-    if not cat_key:
-        raise OfferLetterTemplateNotFoundError(
-            "No job-specific offer letter template is available for this internship. Please upload the appropriate template before generating the offer letter."
-        )
-
     # Idempotency check: If document already exists and file exists, return it unless force_regenerate=True
     existing_doc = app.offer_letter_doc
     if existing_doc and existing_doc.file_path and os.path.exists(existing_doc.file_path) and not force_regenerate:
         return existing_doc, existing_doc.file_path
 
-    # Retrieve active master template for this specific category
-    active_template = get_active_offer_letter_template(cat_key)
+    # Determine internship duration
+    internship_duration = app.duration_display or (f"{job.duration.replace('_', ' ').title()}" if job.duration else "1 Month")
+    normalized_duration = normalize_internship_duration(internship_duration)
+
+    # Automatically select the active template matching job/domain + duration
+    active_template = get_active_offer_letter_template(app, duration=normalized_duration)
 
     custom_params = custom_params or {}
     now_utc = datetime.now(timezone.utc)
     current_date_str = now_utc.strftime("%d/%m/%Y")
 
-    # Format data strictly from DB models
+    # Format data strictly from DB models without inventing values
     candidate_name = (app.full_name or (employee.candidate_name if employee else "Candidate")).strip()
     reference_number = app.formatted_code
-    internship_duration = app.duration_display or (f"{job.duration.replace('_', ' ').title()}" if job.duration else "1 Month")
-
-    # Joining date
     joining_date = (custom_params.get('joining_date') or custom_params.get('start_date') or app.joining_date or "Immediate / As mutually agreed").strip()
+    employee_id_val = employee.employee_id if (employee and employee.employee_id) else reference_number
+    job_title_val = (custom_params.get('job_title') or (job.title if job else '')).strip()
+    dept_val = (active_template.job_domain or (job.department if job else '')).strip()
+    college_val = (app.college or '').strip()
 
     # Strict allowlist of replaceable placeholders
     placeholder_mapping = {
@@ -628,11 +793,11 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
         '{{application_id}}': reference_number,
 
         # 4. Duration
-        '[1 Month / 3 Months]': internship_duration,
-        '[Internship Duration]': internship_duration,
-        '{{1 Month / 3 Months}}': internship_duration,
-        '{{internship_duration}}': internship_duration,
-        '{{Internship Duration}}': internship_duration,
+        '[1 Month / 3 Months]': normalized_duration,
+        '[Internship Duration]': normalized_duration,
+        '{{1 Month / 3 Months}}': normalized_duration,
+        '{{internship_duration}}': normalized_duration,
+        '{{Internship Duration}}': normalized_duration,
 
         # 5. Joining Date
         '[Joining Date]': joining_date,
@@ -641,6 +806,23 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
         '{{joining_date}}': joining_date,
         '{{Start Date}}': joining_date,
         '{{start_date}}': joining_date,
+
+        # 6. Additional Useful Placeholders
+        '[Employee ID]': employee_id_val,
+        '{{employee_id}}': employee_id_val,
+        '{{Employee ID}}': employee_id_val,
+
+        '[Job Title]': job_title_val,
+        '{{job_title}}': job_title_val,
+        '{{Job Title}}': job_title_val,
+
+        '[Department]': dept_val,
+        '{{department}}': dept_val,
+        '{{Department}}': dept_val,
+
+        '[College Name]': college_val,
+        '{{college_name}}': college_val,
+        '{{College Name}}': college_val,
     }
 
     # Destination output path
@@ -654,8 +836,7 @@ def generate_offer_letter_docx(application_or_employee, custom_params=None, forc
     populate_docx_from_master_template(
         active_template.file_path,
         output_filepath,
-        placeholder_mapping,
-        cat_key=cat_key
+        placeholder_mapping
     )
 
     # Create or update EmployeeDocument record in DB

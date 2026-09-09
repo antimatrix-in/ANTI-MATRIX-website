@@ -280,293 +280,280 @@
           <h2 style="font-family: var(--font-admin-heading); font-size: 1.25rem; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0 0 0.2rem 0;">
             {{ icon('file-text', size=18, color='var(--color-primary-light)') }} Document Templates
           </h2>
-          <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">Official Microsoft Word (.docx) Master Files &amp; Domain-Specific Templates</p>
+          <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">Dynamic Role/Job Based Offer Letter Master Files &amp; Master Documents</p>
         </div>
       </div>
 
-      <!-- Subsection: 4 Job-Specific Offer Letter Templates -->
-      <div style="margin-bottom: var(--space-2xl);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md);">
-          <h3 style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 6px;">
-            {{ icon('award', size=16, color='var(--color-primary-light)') }} Offer Letter Templates
-          </h3>
-          <span style="font-size: 0.775rem; color: var(--color-text-muted);">Manage job-specific internship offer letter templates</span>
+      <!-- Subsection: Upload Offer Letter Template Form -->
+      <div class="card" style="padding: var(--space-xl); border-color: rgba(16, 185, 129, 0.35); margin-bottom: var(--space-xl); background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-sm);">
+          <div>
+            <h3 style="font-family: var(--font-admin-heading); font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.2rem 0; display: flex; align-items: center; gap: 8px;">
+              {{ icon('upload-cloud', size=18, color='var(--color-primary-light)') }} Upload Offer Letter Template
+            </h3>
+            <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">
+              Upload a DOCX template and assign it to an approved Job / Domain and Internship Duration.
+            </p>
+          </div>
+          <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; font-weight: 700;">
+            Role-Based Template Mapping
+          </span>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg);">
-          
-          <!-- 1. AI & ML Internship Offer Letter -->
-          <div class="card" style="padding: var(--space-lg); border-color: {% if offer_ai_ml_template and offer_ai_ml_exists %}rgba(16, 185, 129, 0.35){% else %}rgba(234, 179, 8, 0.35){% endif %}; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-sm);">
-                <div>
-                  <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); border-color: rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700;">
-                    AI &amp; ML Domain
-                  </span>
-                  <h4 style="font-family: var(--font-admin-heading); font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
-                    1. AI &amp; ML Internship
-                  </h4>
-                </div>
-                <div style="color: {% if offer_ai_ml_template and offer_ai_ml_exists %}var(--color-primary-light){% else %}#eab308{% endif %};">
-                  {{ icon('cpu', size=22) }}
-                </div>
-              </div>
+        <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter') }}" enctype="multipart/form-data" id="upload-template-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-              <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: var(--space-sm); line-height: 1.45;">
-                Offer letter template for AI &amp; ML, Deep Learning, and AI Research internships.
-              </p>
-
-              <!-- Template Status Box -->
-              <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); font-size: 0.8rem;">
-                <div style="margin-bottom: 0.25rem;">
-                  <span style="color: var(--color-text-dim); font-size: 0.725rem;">Current Template:</span>
-                  <strong style="color: {% if offer_ai_ml_template and offer_ai_ml_exists %}var(--color-primary-light){% else %}var(--color-text-muted){% endif %}; font-family: var(--font-mono, monospace); display: block; word-break: break-all; font-size: 0.775rem;">
-                    {{ offer_ai_ml_template.filename if (offer_ai_ml_template and offer_ai_ml_exists) else 'Not Uploaded' }}
-                  </strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
-                  <div>
-                    <span style="color: var(--color-text-dim); font-size: 0.725rem;">Status:</span>
-                    {% if offer_ai_ml_template and offer_ai_ml_exists %}
-                    <span class="badge-status active" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem;">Active</span>
-                    {% else %}
-                    <span class="badge-status inactive" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem; background: rgba(234,179,8,0.15); color: #eab308;">Not Uploaded</span>
-                    {% endif %}
-                  </div>
-                  {% if offer_ai_ml_template %}
-                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">{{ offer_ai_ml_template.created_at.strftime('%d %b %Y') }}</span>
-                  {% endif %}
-                </div>
-              </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);">
+            
+            <!-- 1. Document Type -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">DOCUMENT TYPE</label>
+              <select name="document_type" class="form-input" style="font-size: 0.85rem; background: #f8fafc; cursor: default;">
+                <option value="offer_letter" selected>Offer Letter</option>
+              </select>
             </div>
 
-            <!-- Upload & Actions -->
-            <div>
-              <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter_ai_ml') }}" enctype="multipart/form-data" style="margin-bottom: var(--space-xs);">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                  <input type="file" name="template_file" accept=".docx" class="form-input" required style="padding: 0.25rem 0.4rem; font-size: 0.75rem;" />
-                  <button type="submit" class="btn {% if offer_ai_ml_template and offer_ai_ml_exists %}btn-outline{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.725rem; padding: 0.25rem 0.55rem; white-space: nowrap;">
-                    {% if offer_ai_ml_template and offer_ai_ml_exists %}Replace{% else %}Upload{% endif %}
-                  </button>
-                </div>
-              </form>
-
-              {% if offer_ai_ml_template and offer_ai_ml_exists %}
-              <a href="{{ url_for('admin.download_document_template', template_type='offer_letter_ai_ml') }}" class="btn btn-ghost btn-sm" style="width: 100%; justify-content: center; font-size: 0.75rem; gap: 4px; padding: 0.25rem;">
-                {{ icon('download', size=12) }} Download Template
-              </a>
-              {% endif %}
+            <!-- 2. Job / Domain (Dynamic) -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                JOB / DOMAIN <span style="color: #ef4444;">*</span>
+              </label>
+              <select name="job_domain" id="job_domain_select" class="form-input" required style="font-size: 0.85rem;" onchange="handleDomainChange(this)">
+                <option value="">-- Select Job / Domain --</option>
+                {% for domain in available_domains %}
+                <option value="{{ domain }}">{{ domain }}</option>
+                {% endfor %}
+                <option value="__custom__">+ Add Custom / Other Domain...</option>
+              </select>
+              <input
+                type="text"
+                name="custom_job_domain"
+                id="custom_job_domain_input"
+                class="form-input"
+                placeholder="Type new domain name (e.g. Cyber Security)..."
+                style="display: none; margin-top: 6px; font-size: 0.85rem;"
+                oninput="handleCustomDomainInput(this)"
+              />
             </div>
+
+            <!-- 3. Duration -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                DURATION <span style="color: #ef4444;">*</span>
+              </label>
+              <select name="duration" id="duration_select" class="form-input" required style="font-size: 0.85rem;" onchange="updateTemplateNameSuggestion()">
+                <option value="Both" selected>Both (1 Month &amp; 3 Months)</option>
+                <option value="1 Month">1 Month</option>
+                <option value="3 Months">3 Months</option>
+              </select>
+            </div>
+
+            <!-- 4. Template Name -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                TEMPLATE NAME <span style="color: #ef4444;">*</span>
+              </label>
+              <input
+                type="text"
+                name="template_name"
+                id="template_name_input"
+                class="form-input"
+                placeholder="e.g. AI & ML Offer Letter Template"
+                required
+                style="font-size: 0.85rem;"
+              />
+            </div>
+
           </div>
 
-          <!-- 2. Web Development Internship Offer Letter -->
-          <div class="card" style="padding: var(--space-lg); border-color: {% if offer_web_dev_template and offer_web_dev_exists %}rgba(56, 189, 248, 0.35){% else %}rgba(234, 179, 8, 0.35){% endif %}; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-sm);">
-                <div>
-                  <span class="badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); font-size: 0.7rem; font-weight: 700;">
-                    Web Dev Domain
-                  </span>
-                  <h4 style="font-family: var(--font-admin-heading); font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
-                    2. Web Development
-                  </h4>
-                </div>
-                <div style="color: {% if offer_web_dev_template and offer_web_dev_exists %}#38bdf8{% else %}#eab308{% endif %};">
-                  {{ icon('globe', size=22) }}
-                </div>
-              </div>
-
-              <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: var(--space-sm); line-height: 1.45;">
-                Offer letter template for Frontend, Backend, and Full Stack Web Development internships.
-              </p>
-
-              <!-- Template Status Box -->
-              <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); font-size: 0.8rem;">
-                <div style="margin-bottom: 0.25rem;">
-                  <span style="color: var(--color-text-dim); font-size: 0.725rem;">Current Template:</span>
-                  <strong style="color: {% if offer_web_dev_template and offer_web_dev_exists %}#38bdf8{% else %}var(--color-text-muted){% endif %}; font-family: var(--font-mono, monospace); display: block; word-break: break-all; font-size: 0.775rem;">
-                    {{ offer_web_dev_template.filename if (offer_web_dev_template and offer_web_dev_exists) else 'Not Uploaded' }}
-                  </strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
-                  <div>
-                    <span style="color: var(--color-text-dim); font-size: 0.725rem;">Status:</span>
-                    {% if offer_web_dev_template and offer_web_dev_exists %}
-                    <span class="badge-status active" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem;">Active</span>
-                    {% else %}
-                    <span class="badge-status inactive" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem; background: rgba(234,179,8,0.15); color: #eab308;">Not Uploaded</span>
-                    {% endif %}
-                  </div>
-                  {% if offer_web_dev_template %}
-                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">{{ offer_web_dev_template.created_at.strftime('%d %b %Y') }}</span>
-                  {% endif %}
-                </div>
-              </div>
+          <!-- Template File and Upload Button Row -->
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-md); align-items: flex-end; background: #f8fafc; padding: var(--space-md); border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 4px;">
+                TEMPLATE FILE <span style="color: #ef4444;">*</span>
+              </label>
+              <input
+                type="file"
+                name="template_file"
+                accept=".docx"
+                class="form-input"
+                required
+                style="font-size: 0.825rem; padding: 0.35rem 0.5rem; background: #ffffff;"
+              />
+              <span style="font-size: 0.725rem; color: var(--color-text-muted); display: block; margin-top: 3px;">
+                Upload official Microsoft Word document (.docx) with letterhead, logo, and placeholders intact.
+              </span>
             </div>
 
-            <!-- Upload & Actions -->
             <div>
-              <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter_web_development') }}" enctype="multipart/form-data" style="margin-bottom: var(--space-xs);">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                  <input type="file" name="template_file" accept=".docx" class="form-input" required style="padding: 0.25rem 0.4rem; font-size: 0.75rem;" />
-                  <button type="submit" class="btn {% if offer_web_dev_template and offer_web_dev_exists %}btn-outline{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.725rem; padding: 0.25rem 0.55rem; white-space: nowrap;">
-                    {% if offer_web_dev_template and offer_web_dev_exists %}Replace{% else %}Upload{% endif %}
-                  </button>
-                </div>
-              </form>
-
-              {% if offer_web_dev_template and offer_web_dev_exists %}
-              <a href="{{ url_for('admin.download_document_template', template_type='offer_letter_web_development') }}" class="btn btn-ghost btn-sm" style="width: 100%; justify-content: center; font-size: 0.75rem; gap: 4px; padding: 0.25rem;">
-                {{ icon('download', size=12) }} Download Template
-              </a>
-              {% endif %}
+              <button type="submit" class="btn btn-primary" style="gap: 8px; font-weight: 700; white-space: nowrap; height: 42px; padding: 0 1.25rem;">
+                {{ icon('upload-cloud', size=16) }} UPLOAD TEMPLATE
+              </button>
             </div>
           </div>
+        </form>
+      </div>
 
-          <!-- 3. App Development Internship Offer Letter -->
-          <div class="card" style="padding: var(--space-lg); border-color: {% if offer_app_dev_template and offer_app_dev_exists %}rgba(168, 85, 247, 0.35){% else %}rgba(234, 179, 8, 0.35){% endif %}; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-sm);">
-                <div>
-                  <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; border-color: rgba(168, 85, 247, 0.3); font-size: 0.7rem; font-weight: 700;">
-                    App Dev Domain
-                  </span>
-                  <h4 style="font-family: var(--font-admin-heading); font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
-                    3. App Development
-                  </h4>
-                </div>
-                <div style="color: {% if offer_app_dev_template and offer_app_dev_exists %}#c084fc{% else %}#eab308{% endif %};">
-                  {{ icon('smartphone', size=22) }}
-                </div>
-              </div>
-
-              <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: var(--space-sm); line-height: 1.45;">
-                Offer letter template for Mobile, Android, iOS, and Flutter App Development internships.
-              </p>
-
-              <!-- Template Status Box -->
-              <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); font-size: 0.8rem;">
-                <div style="margin-bottom: 0.25rem;">
-                  <span style="color: var(--color-text-dim); font-size: 0.725rem;">Current Template:</span>
-                  <strong style="color: {% if offer_app_dev_template and offer_app_dev_exists %}#c084fc{% else %}var(--color-text-muted){% endif %}; font-family: var(--font-mono, monospace); display: block; word-break: break-all; font-size: 0.775rem;">
-                    {{ offer_app_dev_template.filename if (offer_app_dev_template and offer_app_dev_exists) else 'Not Uploaded' }}
-                  </strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
-                  <div>
-                    <span style="color: var(--color-text-dim); font-size: 0.725rem;">Status:</span>
-                    {% if offer_app_dev_template and offer_app_dev_exists %}
-                    <span class="badge-status active" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem;">Active</span>
-                    {% else %}
-                    <span class="badge-status inactive" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem; background: rgba(234,179,8,0.15); color: #eab308;">Not Uploaded</span>
-                    {% endif %}
-                  </div>
-                  {% if offer_app_dev_template %}
-                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">{{ offer_app_dev_template.created_at.strftime('%d %b %Y') }}</span>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-
-            <!-- Upload & Actions -->
-            <div>
-              <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter_app_development') }}" enctype="multipart/form-data" style="margin-bottom: var(--space-xs);">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                  <input type="file" name="template_file" accept=".docx" class="form-input" required style="padding: 0.25rem 0.4rem; font-size: 0.75rem;" />
-                  <button type="submit" class="btn {% if offer_app_dev_template and offer_app_dev_exists %}btn-outline{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.725rem; padding: 0.25rem 0.55rem; white-space: nowrap;">
-                    {% if offer_app_dev_template and offer_app_dev_exists %}Replace{% else %}Upload{% endif %}
-                  </button>
-                </div>
-              </form>
-
-              {% if offer_app_dev_template and offer_app_dev_exists %}
-              <a href="{{ url_for('admin.download_document_template', template_type='offer_letter_app_development') }}" class="btn btn-ghost btn-sm" style="width: 100%; justify-content: center; font-size: 0.75rem; gap: 4px; padding: 0.25rem;">
-                {{ icon('download', size=12) }} Download Template
-              </a>
-              {% endif %}
-            </div>
+      <!-- Subsection: Admin Template List Table -->
+      <div class="card" style="padding: var(--space-xl); margin-bottom: var(--space-xl); background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+          <div>
+            <h3 style="font-family: var(--font-admin-heading); font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.15rem 0; display: flex; align-items: center; gap: 6px;">
+              {{ icon('list', size=16, color='var(--color-primary-light)') }} Uploaded Templates
+            </h3>
+            <span style="font-size: 0.775rem; color: var(--color-text-muted);">
+              Active and historical Offer Letter templates in the system
+            </span>
           </div>
-
-          <!-- 4. Data Analytics Internship Offer Letter -->
-          <div class="card" style="padding: var(--space-lg); border-color: {% if offer_data_analytics_template and offer_data_analytics_exists %}rgba(245, 158, 11, 0.35){% else %}rgba(234, 179, 8, 0.35){% endif %}; display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-sm);">
-                <div>
-                  <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); font-size: 0.7rem; font-weight: 700;">
-                    Data Analytics Domain
-                  </span>
-                  <h4 style="font-family: var(--font-admin-heading); font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0.35rem 0 0.15rem 0;">
-                    4. Data Analytics
-                  </h4>
-                </div>
-                <div style="color: {% if offer_data_analytics_template and offer_data_analytics_exists %}#fbbf24{% else %}#eab308{% endif %};">
-                  {{ icon('bar-chart-2', size=22) }}
-                </div>
-              </div>
-
-              <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: var(--space-sm); line-height: 1.45;">
-                Offer letter template for Data Analytics, Visualization, and BI internships.
-              </p>
-
-              <!-- Template Status Box -->
-              <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); font-size: 0.8rem;">
-                <div style="margin-bottom: 0.25rem;">
-                  <span style="color: var(--color-text-dim); font-size: 0.725rem;">Current Template:</span>
-                  <strong style="color: {% if offer_data_analytics_template and offer_data_analytics_exists %}#fbbf24{% else %}var(--color-text-muted){% endif %}; font-family: var(--font-mono, monospace); display: block; word-break: break-all; font-size: 0.775rem;">
-                    {{ offer_data_analytics_template.filename if (offer_data_analytics_template and offer_data_analytics_exists) else 'Not Uploaded' }}
-                  </strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
-                  <div>
-                    <span style="color: var(--color-text-dim); font-size: 0.725rem;">Status:</span>
-                    {% if offer_data_analytics_template and offer_data_analytics_exists %}
-                    <span class="badge-status active" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem;">Active</span>
-                    {% else %}
-                    <span class="badge-status inactive" style="font-size: 0.65rem; padding: 0.05rem 0.35rem; margin-left: 0.25rem; background: rgba(234,179,8,0.15); color: #eab308;">Not Uploaded</span>
-                    {% endif %}
-                  </div>
-                  {% if offer_data_analytics_template %}
-                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">{{ offer_data_analytics_template.created_at.strftime('%d %b %Y') }}</span>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-
-            <!-- Upload & Actions -->
-            <div>
-              <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter_data_analytics') }}" enctype="multipart/form-data" style="margin-bottom: var(--space-xs);">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div style="display: flex; gap: 4px; margin-bottom: 4px;">
-                  <input type="file" name="template_file" accept=".docx" class="form-input" required style="padding: 0.25rem 0.4rem; font-size: 0.75rem;" />
-                  <button type="submit" class="btn {% if offer_data_analytics_template and offer_data_analytics_exists %}btn-outline{% else %}btn-primary{% endif %} btn-sm" style="font-size: 0.725rem; padding: 0.25rem 0.55rem; white-space: nowrap;">
-                    {% if offer_data_analytics_template and offer_data_analytics_exists %}Replace{% else %}Upload{% endif %}
-                  </button>
-                </div>
-              </form>
-
-              {% if offer_data_analytics_template and offer_data_analytics_exists %}
-              <a href="{{ url_for('admin.download_document_template', template_type='offer_letter_data_analytics') }}" class="btn btn-ghost btn-sm" style="width: 100%; justify-content: center; font-size: 0.75rem; gap: 4px; padding: 0.25rem;">
-                {{ icon('download', size=12) }} Download Template
-              </a>
-              {% endif %}
-            </div>
+          <div>
+            <span class="badge" style="background: rgba(56, 189, 248, 0.12); color: #0284c7; font-size: 0.75rem; font-weight: 700;">
+              {{ offer_templates|length }} Total Templates
+            </span>
           </div>
-
         </div>
+
+        {% if offer_templates %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; background: #f8fafc;">
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Template Name</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Job / Domain</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Duration</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Status</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Uploaded Date</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tmpl in offer_templates %}
+              <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                
+                <!-- Template Name & File -->
+                <td style="padding: 12px;">
+                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ tmpl.name }}</div>
+                  <div style="font-size: 0.75rem; color: #64748b; font-family: var(--font-mono, monospace);">
+                    {{ icon('file-text', size=12) }} {{ tmpl.filename }}
+                  </div>
+                </td>
+
+                <!-- Job / Domain -->
+                <td style="padding: 12px;">
+                  {% set domain_label = tmpl.job_domain or (tmpl.template_type|replace('offer_letter_', '')|replace('_', ' ')|title) %}
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border-color: rgba(16, 185, 129, 0.25); font-weight: 600; font-size: 0.75rem;">
+                    {{ domain_label if domain_label != 'Offer Letter' else 'General' }}
+                  </span>
+                </td>
+
+                <!-- Duration -->
+                <td style="padding: 12px;">
+                  <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; border-color: rgba(99, 102, 241, 0.25); font-weight: 600; font-size: 0.75rem;">
+                    {{ tmpl.duration or 'Both' }}
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td style="padding: 12px;">
+                  {% if tmpl.is_active %}
+                  <span class="badge-status active" style="font-size: 0.7rem; padding: 2px 8px;">Active</span>
+                  {% else %}
+                  <span class="badge-status inactive" style="font-size: 0.7rem; padding: 2px 8px; background: rgba(148, 163, 184, 0.15); color: #64748b;">Inactive</span>
+                  {% endif %}
+                </td>
+
+                <!-- Uploaded Date -->
+                <td style="padding: 12px; color: #64748b; font-size: 0.8rem; white-space: nowrap;">
+                  {{ tmpl.created_at.strftime('%d %b %Y') if tmpl.created_at else '—' }}
+                </td>
+
+                <!-- Actions -->
+                <td style="padding: 12px; text-align: right; white-space: nowrap;">
+                  <div style="display: inline-flex; gap: 4px; align-items: center;">
+                    
+                    <!-- Preview Action -->
+                    <button
+                      type="button"
+                      class="btn btn-outline btn-sm"
+                      onclick="openTemplatePreview('{{ tmpl.id }}')"
+                      style="padding: 3px 8px; font-size: 0.75rem; gap: 4px;"
+                      title="Preview Template Details & Placeholders"
+                    >
+                      {{ icon('eye', size=12) }} Preview
+                    </button>
+
+                    <!-- Download Action -->
+                    <a
+                      href="{{ url_for('admin.download_document_template_by_id', template_id=tmpl.id) }}"
+                      class="btn btn-ghost btn-sm"
+                      style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #0284c7;"
+                      title="Download DOCX File"
+                    >
+                      {{ icon('download', size=12) }} Download
+                    </a>
+
+                    <!-- Activate / Deactivate Actions -->
+                    {% if not tmpl.is_active %}
+                    <form method="POST" action="{{ url_for('admin.activate_document_template', template_id=tmpl.id) }}" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #059669; border-color: rgba(5, 150, 105, 0.3);">
+                        {{ icon('check-circle', size=12) }} Activate
+                      </button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('admin.deactivate_document_template', template_id=tmpl.id) }}" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <button type="submit" class="btn btn-ghost btn-sm" style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #d97706;" onclick="return confirm('Deactivate this template? It will no longer be selected for new offer letter generation.');">
+                        {{ icon('slash', size=12) }} Deactivate
+                      </button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Delete Action (Protected) -->
+                    <form method="POST" action="{{ url_for('admin.delete_document_template', template_id=tmpl.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete template \'{{ tmpl.name }}\'? This action cannot be undone.');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <button
+                        type="submit"
+                        class="btn btn-ghost btn-sm"
+                        style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #ef4444;"
+                        title="Delete Template"
+                      >
+                        {{ icon('trash-2', size=12) }} Delete
+                      </button>
+                    </form>
+
+                  </div>
+                </td>
+
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: var(--space-xl); color: #64748b; background: #f8fafc; border-radius: 8px;">
+          {{ icon('inbox', size=32, color='#94a3b8') }}
+          <p style="margin-top: 8px; font-size: 0.875rem;">No Offer Letter templates uploaded yet. Use the form above to add your first template.</p>
+        </div>
+        {% endif %}
 
         <!-- Placeholders Helper Pill Box for Offer Letters -->
-        <div style="margin-top: var(--space-md); font-size: 0.775rem; color: var(--color-text-dim); background: rgba(16, 185, 129, 0.05); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); border: 1px solid rgba(16, 185, 129, 0.15);">
-          <strong style="color: var(--color-primary-light);">Supported Offer Letter Placeholders:</strong> 
-          <code style="color: var(--color-primary-light);">&#123;&#123;offer_date&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;candidate_name&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;reference_number&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;job_title&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;internship_duration&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;joining_date&#125;&#125;</code>, 
-          <code style="color: var(--color-primary-light);">&#123;&#123;employee_id&#125;&#125;</code>
+        <div style="margin-top: var(--space-lg); font-size: 0.775rem; color: var(--color-text-dim); background: rgba(16, 185, 129, 0.05); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); border: 1px solid rgba(16, 185, 129, 0.15);">
+          <strong style="color: var(--color-primary-light);">Dynamic Offer Letter Placeholders Replaced on Generation:</strong><br>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[DD/MM/YYYY]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Candidate Name]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Reference Number]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[1 Month / 3 Months]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Joining Date]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Employee ID]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Job Title]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Department]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[College Name]</span>
+            <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Application ID]</span>
+          </div>
+          <span style="font-size: 0.725rem; color: #64748b; margin-top: 4px; display: block;">
+            The uploaded DOCX template itself contains the approved position description, formatting, MSME and Anti-Matrix branding. Only matching placeholders are substituted dynamically.
+          </span>
         </div>
       </div>
 
@@ -698,6 +685,35 @@
   </div>
 </div>
 
+<!-- Document Template Preview Modal -->
+<div id="templatePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #ffffff; width: 100%; max-width: 720px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    
+    <!-- Modal Header -->
+    <div style="background: #070a12; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981;">
+      <div>
+        <h3 id="docPreviewTitle" style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 800;">Template Preview</h3>
+        <span style="font-size: 0.75rem; color: #94a3b8;">Dynamic Offer Letter Template Metadata &amp; Placeholders</span>
+      </div>
+      <button type="button" onclick="closeTemplatePreview()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div id="docPreviewContent" style="padding: 20px 24px; overflow-y: auto; flex: 1; background: #f8fafc;">
+      <!-- Content populated via AJAX -->
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding: 12px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <a id="docPreviewDownloadBtn" href="#" class="btn btn-outline btn-sm" style="gap: 6px;">
+        {{ icon('download', size=14) }} Download DOCX Template
+      </a>
+      <button type="button" class="btn btn-primary btn-sm" onclick="closeTemplatePreview()">Close</button>
+    </div>
+
+  </div>
+</div>
+
 <script>
 function copyVar(el) {
   const text = el.innerText;
@@ -749,6 +765,154 @@ function openEmailPreview(templateType) {
 
 function closeEmailPreview() {
   document.getElementById('emailPreviewModal').style.display = 'none';
+}
+
+function handleDomainChange(selectEl) {
+  const customInput = document.getElementById('custom_job_domain_input');
+  if (selectEl.value === '__custom__') {
+    customInput.style.display = 'block';
+    customInput.required = true;
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.required = false;
+    customInput.value = '';
+  }
+  updateTemplateNameSuggestion();
+}
+
+function handleCustomDomainInput(inputEl) {
+  updateTemplateNameSuggestion();
+}
+
+function updateTemplateNameSuggestion() {
+  const domainSelect = document.getElementById('job_domain_select');
+  const customInput = document.getElementById('custom_job_domain_input');
+  const durationSelect = document.getElementById('duration_select');
+  const nameInput = document.getElementById('template_name_input');
+
+  let domain = domainSelect ? domainSelect.value : '';
+  if (domain === '__custom__' && customInput) {
+    domain = customInput.value.trim();
+  }
+  const duration = durationSelect ? durationSelect.value : 'Both';
+
+  if (domain && domain !== '__custom__') {
+    let suffix = duration === 'Both' ? '' : ` (${duration})`;
+    nameInput.placeholder = `${domain} Offer Letter Template${suffix}`;
+    if (!nameInput.value || nameInput.dataset.autoFilled === 'true') {
+      nameInput.value = `${domain} Offer Letter Template${suffix}`;
+      nameInput.dataset.autoFilled = 'true';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInput = document.getElementById('template_name_input');
+  if (nameInput) {
+    nameInput.addEventListener('input', () => {
+      nameInput.dataset.autoFilled = 'false';
+    });
+  }
+});
+
+function openTemplatePreview(templateId) {
+  const modal = document.getElementById('templatePreviewModal');
+  const title = document.getElementById('docPreviewTitle');
+  const content = document.getElementById('docPreviewContent');
+  const downloadBtn = document.getElementById('docPreviewDownloadBtn');
+
+  title.innerText = 'Loading Template Details...';
+  content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Loading template metadata and placeholder analysis...</div>';
+  downloadBtn.href = `/admin/templates/document/${templateId}/download`;
+  modal.style.display = 'flex';
+
+  fetch(`/admin/templates/document/${templateId}/preview-info`)
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to load template information');
+      return res.json();
+    })
+    .then(data => {
+      title.innerText = data.name || 'Offer Letter Template Preview';
+      
+      const statusBadge = data.is_active
+        ? '<span class="badge-status active" style="font-size: 0.75rem; padding: 2px 8px;">Active</span>'
+        : '<span class="badge-status inactive" style="font-size: 0.75rem; padding: 2px 8px; background: rgba(148, 163, 184, 0.15); color: #64748b;">Inactive</span>';
+
+      let placeholdersHtml = '';
+      if (data.detected_placeholders && data.detected_placeholders.length > 0) {
+        placeholdersHtml = data.detected_placeholders.map(p => 
+          `<span class="badge" style="font-family: monospace; background: rgba(16, 185, 129, 0.1); color: #059669; border-color: rgba(16, 185, 129, 0.25); font-size: 0.8rem; padding: 3px 8px;">${p}</span>`
+        ).join(' ');
+      } else {
+        placeholdersHtml = '<span style="color: #64748b; font-size: 0.85rem;">No dynamic placeholder tags detected.</span>';
+      }
+
+      let paragraphsHtml = '';
+      if (data.paragraphs_preview && data.paragraphs_preview.length > 0) {
+        paragraphsHtml = data.paragraphs_preview.map(p => 
+          `<p style="margin: 0 0 8px 0; color: #334155; font-size: 0.825rem; line-height: 1.5;">${p}</p>`
+        ).join('');
+      } else {
+        paragraphsHtml = '<p style="color: #64748b; font-size: 0.825rem;">No text excerpt available.</p>';
+      }
+
+      content.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Job / Domain</span>
+            <strong style="color: #0f172a; font-size: 0.9rem;">${data.job_domain}</strong>
+          </div>
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Duration</span>
+            <strong style="color: #4f46e5; font-size: 0.9rem;">${data.duration}</strong>
+          </div>
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Status</span>
+            <div style="margin-top: 3px;">${statusBadge}</div>
+          </div>
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Uploaded File</span>
+            <span style="font-family: monospace; font-size: 0.775rem; color: #0f172a; word-break: break-all;">${data.filename || '—'}</span>
+          </div>
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Uploaded By</span>
+            <span style="font-size: 0.825rem; color: #334155;">${data.created_by || 'Admin'}</span>
+          </div>
+          <div>
+            <span style="font-size: 0.725rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Upload Date</span>
+            <span style="font-size: 0.825rem; color: #334155;">${data.created_at || '—'}</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px; background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.775rem; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>Detected Dynamic Placeholders (${data.detected_placeholders ? data.detected_placeholders.length : 0})</span>
+            <span style="font-size: 0.7rem; color: #10b981; text-transform: none; font-weight: 600;">Replaced dynamically during generation</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${placeholdersHtml}
+          </div>
+        </div>
+
+        <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.775rem; text-transform: uppercase; color: #475569; font-weight: 700; margin-bottom: 8px;">
+            Document Excerpt Preview
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #edf2f7; border-radius: 6px; padding: 12px; max-height: 200px; overflow-y: auto;">
+            ${paragraphsHtml}
+          </div>
+        </div>
+      `;
+    })
+    .catch(err => {
+      title.innerText = 'Template Preview Error';
+      content.innerHTML = `<div style="padding: 24px; color: #ef4444; background: #fee2e2; border-radius: 8px;">Failed to load template details: ${err.message}</div>`;
+    });
+}
+
+function closeTemplatePreview() {
+  document.getElementById('templatePreviewModal').style.display = 'none';
 }
 </script>
 {% endblock %}

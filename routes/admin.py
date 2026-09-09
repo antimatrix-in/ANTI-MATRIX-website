@@ -1,6 +1,8 @@
 import os
+import re
 import uuid
 import time
+import docx
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import (
@@ -1297,52 +1299,56 @@ def admin_reset_employee_password(employee_id):
 
 
 # =====================================================================
+# =====================================================================
 # TEMPLATE MANAGEMENT (EMAIL & DOCUMENT TEMPLATES)
 # =====================================================================
 
 @admin_bp.route('/templates', methods=['GET'])
 @admin_required
 def templates():
-    """Template Management Hub for Email and Document Templates."""
+    """Template Management Hub for Email and Dynamic Role/Job Based Document Templates."""
     # Ensure standard email templates exist
     app_success_email = EmailTemplate.query.filter_by(template_type='application_successful').first()
     offer_letter_email = EmailTemplate.query.filter_by(template_type='offer_letter').first()
     joining_email = EmailTemplate.query.filter_by(template_type='joining_credentials').first()
-    
-    # 4 Category-Specific Offer Letter Master Templates
-    offer_ai_ml_template = DocumentTemplate.query.filter_by(template_type='offer_letter_ai_ml', is_active=True).order_by(DocumentTemplate.id.desc()).first()
-    if not offer_ai_ml_template:
-        offer_ai_ml_template = DocumentTemplate.query.filter_by(template_type='offer_letter', is_active=True).order_by(DocumentTemplate.id.desc()).first()
-    offer_ai_ml_exists = bool(offer_ai_ml_template and offer_ai_ml_template.file_path and os.path.exists(offer_ai_ml_template.file_path))
 
-    offer_web_dev_template = DocumentTemplate.query.filter_by(template_type='offer_letter_web_development', is_active=True).order_by(DocumentTemplate.id.desc()).first()
-    offer_web_dev_exists = bool(offer_web_dev_template and offer_web_dev_template.file_path and os.path.exists(offer_web_dev_template.file_path))
+    # Query all Offer Letter templates (both active and historical)
+    offer_templates = DocumentTemplate.query.filter(
+        (DocumentTemplate.template_type == 'offer_letter') | (DocumentTemplate.template_type.like('offer_letter_%'))
+    ).order_by(DocumentTemplate.is_active.desc(), DocumentTemplate.id.desc()).all()
 
-    offer_app_dev_template = DocumentTemplate.query.filter_by(template_type='offer_letter_app_development', is_active=True).order_by(DocumentTemplate.id.desc()).first()
-    offer_app_dev_exists = bool(offer_app_dev_template and offer_app_dev_template.file_path and os.path.exists(offer_app_dev_template.file_path))
-
-    offer_data_analytics_template = DocumentTemplate.query.filter_by(template_type='offer_letter_data_analytics', is_active=True).order_by(DocumentTemplate.id.desc()).first()
-    offer_data_analytics_exists = bool(offer_data_analytics_template and offer_data_analytics_template.file_path and os.path.exists(offer_data_analytics_template.file_path))
-
+    # Other master templates (Experience Letter, Certificate)
     exp_doc_template = DocumentTemplate.query.filter_by(template_type='experience_letter', is_active=True).order_by(DocumentTemplate.id.desc()).first()
     exp_template_file_exists = bool(exp_doc_template and exp_doc_template.file_path and os.path.exists(exp_doc_template.file_path))
 
     cert_doc_template = DocumentTemplate.query.filter_by(template_type='certificate', is_active=True).order_by(DocumentTemplate.id.desc()).first()
     cert_template_file_exists = bool(cert_doc_template and cert_doc_template.file_path and os.path.exists(cert_doc_template.file_path))
 
+    # Dynamically compile available Job / Domain options from DB
+    domain_set = set()
+    # 1. Standard expected domains
+    for d in ['AI & ML', 'Application Development', 'Data Analytics', 'Full Stack Development']:
+        domain_set.add(d)
+
+    # 2. Existing Job Postings departments and titles
+    for jp in JobPosting.query.all():
+        if jp.department and jp.department.strip():
+            domain_set.add(jp.department.strip())
+
+    # 3. Existing uploaded templates job_domains
+    for ot in offer_templates:
+        if ot.job_domain and ot.job_domain.strip():
+            domain_set.add(ot.job_domain.strip())
+
+    available_domains = sorted(list(domain_set))
+
     return render_template(
         'admin/templates.html',
         app_success_email=app_success_email,
         offer_letter_email=offer_letter_email,
         joining_email=joining_email,
-        offer_ai_ml_template=offer_ai_ml_template,
-        offer_ai_ml_exists=offer_ai_ml_exists,
-        offer_web_dev_template=offer_web_dev_template,
-        offer_web_dev_exists=offer_web_dev_exists,
-        offer_app_dev_template=offer_app_dev_template,
-        offer_app_dev_exists=offer_app_dev_exists,
-        offer_data_analytics_template=offer_data_analytics_template,
-        offer_data_analytics_exists=offer_data_analytics_exists,
+        offer_templates=offer_templates,
+        available_domains=available_domains,
         exp_doc_template=exp_doc_template,
         exp_template_file_exists=exp_template_file_exists,
         cert_doc_template=cert_doc_template,
@@ -1427,23 +1433,17 @@ def send_test_email_route(template_type):
     return redirect(url_for('admin.templates'))
 
 
+@admin_bp.route('/templates/document/offer-letter/upload', methods=['POST'])
 @admin_bp.route('/templates/document/<string:template_type>/upload', methods=['POST'])
 @admin_required
-def upload_document_template(template_type):
-    """Upload / replace a master DOCX template (Offer Letters for 4 categories, Experience Letter, Certificate)."""
-    valid_types = [
-        'offer_letter',
-        'offer_letter_ai_ml',
-        'offer_letter_web_development',
-        'offer_letter_app_development',
-        'offer_letter_data_analytics',
-        'experience_letter',
-        'certificate'
-    ]
-    if template_type not in valid_types:
-        flash('Invalid document template type.', 'danger')
-        return redirect(url_for('admin.templates'))
-
+def upload_document_template(template_type='offer_letter'):
+    """
+    Upload / replace a master DOCX template.
+    For Offer Letters: dynamically maps to Job/Domain and Duration with duplicate protection.
+    For other documents (Experience Letter, Certificate): maintains single active master file.
+    """
+    doc_type = (request.form.get('document_type') or template_type or 'offer_letter').strip()
+    
     uploaded_file = request.files.get('template_file')
     if not uploaded_file or not uploaded_file.filename:
         flash('Please select a DOCX template file to upload.', 'danger')
@@ -1457,47 +1457,244 @@ def upload_document_template(template_type):
     templates_dir = os.path.join(current_app.root_path, 'uploads', 'templates')
     os.makedirs(templates_dir, exist_ok=True)
 
-    # Secure unique stored filename to preserve history
     unique_suffix = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
-    target_filename = f"{template_type}_{unique_suffix}.docx"
-    target_path = os.path.join(templates_dir, target_filename)
 
-    uploaded_file.save(target_path)
+    if doc_type == 'offer_letter' or doc_type.startswith('offer_letter'):
+        job_domain = (request.form.get('job_domain') or '').strip()
+        custom_domain = (request.form.get('custom_job_domain') or '').strip()
+        if custom_domain and (job_domain == '__custom__' or not job_domain):
+            job_domain = custom_domain
 
-    name_map = {
-        'offer_letter': 'Anti-Matrix Master Offer Letter',
-        'offer_letter_ai_ml': 'AI & ML Internship Offer Letter',
-        'offer_letter_web_development': 'Web Development Internship Offer Letter',
-        'offer_letter_app_development': 'App Development Internship Offer Letter',
-        'offer_letter_data_analytics': 'Data Analytics Internship Offer Letter',
-        'experience_letter': 'Anti-Matrix Master Experience Letter',
-        'certificate': 'Anti-Matrix Master Internship Certificate'
-    }
+        if not job_domain:
+            flash('Please select or specify a Job / Domain for the Offer Letter template.', 'danger')
+            return redirect(url_for('admin.templates'))
 
-    # Deactivate previous active templates of this specific type only
-    DocumentTemplate.query.filter_by(template_type=template_type, is_active=True).update({'is_active': False})
-    if template_type == 'offer_letter_ai_ml':
-        # Also deactivate generic offer_letter active flag so offer_letter_ai_ml takes precedence
-        DocumentTemplate.query.filter_by(template_type='offer_letter', is_active=True).update({'is_active': False})
+        duration = (request.form.get('duration') or 'Both').strip()
+        if duration not in ['Both', '1 Month', '3 Months']:
+            duration = 'Both'
 
-    new_doc_tmpl = DocumentTemplate(
-        template_type=template_type,
-        name=name_map.get(template_type, template_type.replace('_', ' ').title()),
-        filename=uploaded_file.filename,
-        file_path=target_path,
-        is_active=True
-    )
-    db.session.add(new_doc_tmpl)
+        template_name = (request.form.get('template_name') or '').strip()
+        if not template_name:
+            template_name = f"{job_domain} Offer Letter Template"
+
+        slug = re.sub(r'[^a-zA-Z0-9_]+', '_', job_domain.lower()).strip('_')
+        target_filename = f"offer_letter_{slug}_{unique_suffix}.docx"
+        target_path = os.path.join(templates_dir, target_filename)
+
+        uploaded_file.save(target_path)
+
+        # DUPLICATE PROTECTION:
+        # Deactivate any currently active template with the exact same Job/Domain + Duration
+        DocumentTemplate.query.filter_by(
+            template_type='offer_letter',
+            job_domain=job_domain,
+            duration=duration,
+            is_active=True
+        ).update({'is_active': False})
+
+        # Also deactivate any legacy category active template if matching
+        cat_key = determine_job_category(job_domain)
+        if cat_key and cat_key in OFFER_LETTER_CATEGORIES:
+            legacy_type = OFFER_LETTER_CATEGORIES[cat_key]['type']
+            DocumentTemplate.query.filter_by(template_type=legacy_type, is_active=True).update({'is_active': False})
+
+        new_doc_tmpl = DocumentTemplate(
+            template_type='offer_letter',
+            name=template_name,
+            job_domain=job_domain,
+            duration=duration,
+            filename=uploaded_file.filename,
+            file_path=target_path,
+            is_active=True,
+            created_by=getattr(current_user, 'username', 'Admin') if current_user and current_user.is_authenticated else 'Admin'
+        )
+        db.session.add(new_doc_tmpl)
+        db.session.commit()
+
+        flash(f"Offer Letter template '{template_name}' uploaded successfully and activated for {job_domain} ({duration}).", 'success')
+        return redirect(url_for('admin.templates'))
+
+    else:
+        # Experience Letter or Certificate
+        valid_types = ['experience_letter', 'certificate']
+        if doc_type not in valid_types:
+            flash('Invalid document template type.', 'danger')
+            return redirect(url_for('admin.templates'))
+
+        target_filename = f"{doc_type}_{unique_suffix}.docx"
+        target_path = os.path.join(templates_dir, target_filename)
+        uploaded_file.save(target_path)
+
+        name_map = {
+            'experience_letter': 'Anti-Matrix Master Experience Letter',
+            'certificate': 'Anti-Matrix Master Internship Certificate'
+        }
+
+        DocumentTemplate.query.filter_by(template_type=doc_type, is_active=True).update({'is_active': False})
+
+        new_doc_tmpl = DocumentTemplate(
+            template_type=doc_type,
+            name=name_map.get(doc_type, doc_type.replace('_', ' ').title()),
+            filename=uploaded_file.filename,
+            file_path=target_path,
+            is_active=True,
+            created_by=getattr(current_user, 'username', 'Admin') if current_user and current_user.is_authenticated else 'Admin'
+        )
+        db.session.add(new_doc_tmpl)
+        db.session.commit()
+
+        flash(f"Template '{uploaded_file.filename}' uploaded and set as ACTIVE for {name_map.get(doc_type, doc_type)}.", 'success')
+        return redirect(url_for('admin.templates'))
+
+
+@admin_bp.route('/templates/document/<int:template_id>/activate', methods=['POST'])
+@admin_required
+def activate_document_template(template_id):
+    """Activates a template, enforcing duplicate protection for job_domain + duration."""
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+
+    if tmpl.template_type == 'offer_letter' and tmpl.job_domain:
+        # Deactivate conflicting active template for the same job_domain + duration
+        DocumentTemplate.query.filter(
+            DocumentTemplate.id != tmpl.id,
+            DocumentTemplate.template_type == 'offer_letter',
+            DocumentTemplate.job_domain == tmpl.job_domain,
+            DocumentTemplate.duration == tmpl.duration,
+            DocumentTemplate.is_active == True
+        ).update({'is_active': False})
+    else:
+        # Deactivate other active templates of same template_type
+        DocumentTemplate.query.filter(
+            DocumentTemplate.id != tmpl.id,
+            DocumentTemplate.template_type == tmpl.template_type,
+            DocumentTemplate.is_active == True
+        ).update({'is_active': False})
+
+    tmpl.is_active = True
+    tmpl.updated_at = datetime.now(timezone.utc)
     db.session.commit()
 
-    flash(f"Document template '{uploaded_file.filename}' uploaded and set as ACTIVE for {name_map.get(template_type, template_type)} successfully.", 'success')
+    flash(f"Template '{tmpl.name}' is now ACTIVE.", 'success')
     return redirect(url_for('admin.templates'))
+
+
+@admin_bp.route('/templates/document/<int:template_id>/deactivate', methods=['POST'])
+@admin_required
+def deactivate_document_template(template_id):
+    """Deactivates an active template."""
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+    tmpl.is_active = False
+    tmpl.updated_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+    flash(f"Template '{tmpl.name}' has been deactivated.", 'info')
+    return redirect(url_for('admin.templates'))
+
+
+@admin_bp.route('/templates/document/<int:template_id>/delete', methods=['POST'])
+@admin_required
+def delete_document_template(template_id):
+    """
+    Safely deletes a template record only if not referenced by existing generated documents.
+    Protects historical candidate documents.
+    """
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+
+    # Check historical reference protection
+    ref_count = EmployeeDocument.query.filter_by(template_id=tmpl.id).count()
+    if ref_count > 0:
+        flash(
+            f"Cannot delete template '{tmpl.name}' because {ref_count} previously generated offer letter(s) reference it. "
+            "Please deactivate the template instead to preserve historical candidate documents.",
+            'danger'
+        )
+        return redirect(url_for('admin.templates'))
+
+    # If file exists on disk and is not shared, remove safely
+    if tmpl.file_path and os.path.exists(tmpl.file_path):
+        try:
+            # Check if any other template uses the exact same path
+            shared = DocumentTemplate.query.filter(DocumentTemplate.id != tmpl.id, DocumentTemplate.file_path == tmpl.file_path).count()
+            if shared == 0:
+                os.remove(tmpl.file_path)
+        except Exception:
+            pass
+
+    tmpl_name = tmpl.name
+    db.session.delete(tmpl)
+    db.session.commit()
+
+    flash(f"Template '{tmpl_name}' deleted successfully.", 'success')
+    return redirect(url_for('admin.templates'))
+
+
+@admin_bp.route('/templates/document/<int:template_id>/download', methods=['GET'])
+@admin_required
+def download_document_template_by_id(template_id):
+    """Download the specific master DOCX template file by ID."""
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+
+    if not tmpl.file_path or not os.path.exists(tmpl.file_path):
+        flash('Template file is not available on storage.', 'warning')
+        return redirect(url_for('admin.templates'))
+
+    return send_from_directory(
+        os.path.dirname(tmpl.file_path),
+        os.path.basename(tmpl.file_path),
+        as_attachment=True,
+        download_name=tmpl.filename or f"{tmpl.name}.docx"
+    )
+
+
+@admin_bp.route('/templates/document/<int:template_id>/preview-info', methods=['GET'])
+@admin_required
+def preview_document_template_info(template_id):
+    """Returns template metadata and detected placeholders as JSON for the admin preview modal."""
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+
+    detected_placeholders = []
+    paragraphs_preview = []
+    file_exists = bool(tmpl.file_path and os.path.exists(tmpl.file_path))
+
+    if file_exists:
+        try:
+            doc = docx.Document(tmpl.file_path)
+            all_text = " ".join([p.text for p in doc.paragraphs])
+            for t in doc.tables:
+                for row in t.rows:
+                    for cell in row.cells:
+                        all_text += " " + cell.text
+
+            # Find placeholders in square brackets or double curly braces
+            sq_matches = re.findall(r'\[[A-Za-z0-9_\s/]+\]', all_text)
+            curly_matches = re.findall(r'\{\{[A-Za-z0-9_\s/]+\}\}', all_text)
+            detected_placeholders = sorted(list(set(sq_matches + curly_matches)))
+
+            for p in doc.paragraphs[:6]:
+                if p.text.strip():
+                    paragraphs_preview.append(p.text.strip())
+        except Exception as e:
+            paragraphs_preview.append(f"Could not inspect document text: {str(e)}")
+
+    return jsonify({
+        'id': tmpl.id,
+        'name': tmpl.name,
+        'job_domain': tmpl.job_domain or 'General',
+        'duration': tmpl.duration or 'Both',
+        'is_active': tmpl.is_active,
+        'filename': tmpl.filename,
+        'file_exists': file_exists,
+        'created_at': tmpl.created_at.strftime('%d %b %Y, %I:%M %p') if tmpl.created_at else None,
+        'created_by': tmpl.created_by or 'Admin',
+        'detected_placeholders': detected_placeholders,
+        'paragraphs_preview': paragraphs_preview
+    })
 
 
 @admin_bp.route('/templates/document/<string:template_type>/download', methods=['GET'])
 @admin_required
 def download_document_template(template_type):
-    """Download / preview the active master DOCX template file."""
+    """Download / preview the active master DOCX template file by type (backward compatibility)."""
     doc_tmpl = DocumentTemplate.query.filter_by(template_type=template_type, is_active=True).order_by(DocumentTemplate.id.desc()).first()
     if not doc_tmpl and template_type == 'offer_letter_ai_ml':
         doc_tmpl = DocumentTemplate.query.filter_by(template_type='offer_letter', is_active=True).order_by(DocumentTemplate.id.desc()).first()
@@ -1521,7 +1718,7 @@ def download_document_template(template_type):
 @admin_bp.route('/employees/<string:employee_id>/offer-letter/generate', methods=['GET', 'POST'])
 @admin_required
 def generate_offer_letter(employee_id):
-    """Generate personalized Offer Letter DOCX for selected Employee."""
+    """Generate personalized Offer Letter DOCX for selected Employee using dynamic template mapping."""
     employee = Employee.query.filter_by(employee_id=employee_id).first_or_404()
     app_record = employee.application
     job = employee.job
@@ -1530,27 +1727,29 @@ def generate_offer_letter(employee_id):
         flash('Employee is missing linked application or job posting data.', 'danger')
         return redirect(url_for('admin.view_employee', employee_id=employee.employee_id))
 
-    # Determine job category and look up category-specific active template
-    cat_key = determine_job_category(job)
-    cat_info = OFFER_LETTER_CATEGORIES.get(cat_key) if cat_key else None
+    # Determine internship duration
+    internship_duration = app_record.duration_display or (f"{job.duration.replace('_', ' ').title()}" if job.duration else "1 Month")
 
+    # Dynamic template lookup by employee's job/domain + duration
     active_template = None
     template_exists = False
-    if cat_key:
-        try:
-            active_template = get_active_offer_letter_template(cat_key)
-            template_exists = bool(active_template and active_template.file_path and os.path.exists(active_template.file_path))
-        except (OfferLetterTemplateNotFoundError, OfferLetterTemplateFileMissingError):
-            active_template = None
-            template_exists = False
+    template_error_msg = None
+    try:
+        active_template = get_active_offer_letter_template(employee, duration=internship_duration)
+        template_exists = bool(active_template and active_template.file_path and os.path.exists(active_template.file_path))
+    except (OfferLetterTemplateNotFoundError, OfferLetterTemplateFileMissingError) as tmpl_err:
+        active_template = None
+        template_exists = False
+        template_error_msg = str(tmpl_err)
 
     if request.method == 'POST':
-        if not cat_key or not active_template or not template_exists:
-            flash("No job-specific offer letter template is available for this internship. Please upload the appropriate template before generating the offer letter.", 'danger')
+        if not active_template or not template_exists:
+            err = template_error_msg or f"No active Offer Letter template is configured for {job.department or job.title} — {internship_duration}. Please upload or activate the appropriate template."
+            flash(err, 'danger')
             return redirect(url_for('admin.generate_offer_letter', employee_id=employee.employee_id))
 
         custom_params = {
-            'job_title': (request.form.get('job_title') or '').strip() or (cat_info['default_title'] if cat_info else job.title),
+            'job_title': (request.form.get('job_title') or '').strip() or job.title,
             'responsibilities': (request.form.get('responsibilities') or '').strip() or None,
             'key_tasks': (request.form.get('key_tasks') or '').strip() or None,
             'joining_date': (request.form.get('joining_date') or '').strip() or 'Immediate / As mutually agreed',
@@ -1561,7 +1760,7 @@ def generate_offer_letter(employee_id):
 
         try:
             emp_doc, output_path = generate_offer_letter_docx(employee, custom_params)
-            flash(f"Offer Letter for {employee.candidate_name} ({employee.employee_id}) generated successfully using {cat_info['name'] if cat_info else 'Offer Letter Template'}!", 'success')
+            flash(f"Offer Letter for {employee.candidate_name} ({employee.employee_id}) generated successfully using {active_template.name}!", 'success')
             return redirect(url_for('admin.verify_offer_letter', employee_id=employee.employee_id))
         except (OfferLetterTemplateNotFoundError, OfferLetterTemplateFileMissingError) as e:
             flash(str(e), 'danger')
@@ -1576,10 +1775,9 @@ def generate_offer_letter(employee_id):
         employee=employee,
         app=app_record,
         job=job,
-        category_key=cat_key,
-        category_info=cat_info,
         active_template=active_template,
-        template_exists=template_exists
+        template_exists=template_exists,
+        template_error_msg=template_error_msg
     )
 
 

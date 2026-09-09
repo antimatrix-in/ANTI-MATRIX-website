@@ -11,6 +11,9 @@ class DocumentTemplate(db.Model):
     filename = db.Column(db.String(255), nullable=False)  # Original display filename
     file_path = db.Column(db.String(500), nullable=False)  # Stored absolute/relative filesystem path
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    job_domain = db.Column(db.String(100), nullable=True, index=True)  # e.g. 'AI & ML', 'Application Development', 'Data Analytics', 'Full Stack Development'
+    duration = db.Column(db.String(50), nullable=True, default='Both', index=True)  # 'Both', '1 Month', '3 Months'
+    created_by = db.Column(db.String(100), nullable=True, default='Admin')
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(
         db.DateTime,
@@ -20,11 +23,24 @@ class DocumentTemplate(db.Model):
     )
 
     @property
+    def template_name(self):
+        return self.name
+
+    @template_name.setter
+    def template_name(self, value):
+        self.name = value
+
+    @property
     def original_filename(self):
         return self.filename
 
+    @property
+    def is_used_in_generated_documents(self):
+        """Checks if any EmployeeDocument references this template ID."""
+        return len(self.generated_documents) > 0
+
     def __repr__(self):
-        return f"<DocumentTemplate id={self.id} type='{self.template_type}' active={self.is_active} filename='{self.filename}'>"
+        return f"<DocumentTemplate id={self.id} type='{self.template_type}' domain='{self.job_domain}' duration='{self.duration}' active={self.is_active} name='{self.name}'>"
 
 
 class EmailTemplate(db.Model):
