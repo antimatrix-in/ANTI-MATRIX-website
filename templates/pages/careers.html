@@ -81,14 +81,12 @@
               <span style="font-size: 0.85rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
                 {{ icon('briefcase', size=13, color='var(--color-primary)') }} {{ featured_job.employment_type }}
               </span>
-              {% if featured_job.duration_display %}
+              {% if featured_job.is_internship %}
                 <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 4px; background: rgba(37, 99, 235, 0.08); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.2);">
-                  {{ icon('clock', size=12) }} {{ featured_job.duration_display }}
+                  {{ icon('clock', size=12) }} 1 or 3 Months
                 </span>
-              {% endif %}
-              {% if featured_job.fee_display %}
                 <span style="font-size: 0.85rem; color: var(--color-primary); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; background: rgba(5, 150, 105, 0.08); padding: 0.2rem 0.65rem; border-radius: 4px; border: 1px solid rgba(5, 150, 105, 0.2);">
-                  {{ icon('credit-card', size=13) }} Application Fee: {{ featured_job.fee_display }}
+                  {{ icon('credit-card', size=13) }} Application Fee: ₹199 / ₹399 <span style="font-size: 0.75rem; font-weight: 500; color: var(--color-text-dim);">(+ 18% GST)</span>
                 </span>
               {% elif featured_job.salary %}
                 <span style="font-size: 0.85rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
@@ -177,16 +175,19 @@
                 <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Work Arrangement</div>
                 <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.employment_type }}</div>
               </div>
-              {% if featured_job.duration_display %}
+              {% if featured_job.is_internship %}
                 <div>
                   <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Internship Duration</div>
-                  <div style="color: #2563eb; font-weight: 700;">{{ featured_job.duration_display }}</div>
+                  <div style="color: #2563eb; font-weight: 700;">1 Month or 3 Months (Selected during application)</div>
                 </div>
-              {% endif %}
-              {% if featured_job.fee_display %}
                 <div>
                   <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Application Fee</div>
-                  <div style="color: var(--color-primary); font-weight: 800; font-size: 1.15rem;">{{ featured_job.fee_display }}</div>
+                  <div style="color: var(--color-primary); font-weight: 800; font-size: 1.15rem;">₹199 / ₹399 <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-dim);">+ 18% GST</span></div>
+                </div>
+              {% elif featured_job.salary %}
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Compensation</div>
+                  <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.salary }}</div>
                 </div>
               {% endif %}
 
@@ -248,13 +249,11 @@
                   <span style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(16,185,129,0.1); color: var(--color-primary-light); border: 1px solid rgba(16,185,129,0.25);">{{ job.department }}</span>
                   <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('map-pin', size=11) }} {{ job.location }}</span>
                   <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('clock', size=11) }} {{ job.employment_type }}</span>
-                  {% if job.duration_display %}
+                  {% if job.is_internship %}
                     <span style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                      {{ icon('clock', size=11) }} {{ job.duration_display }}
+                      {{ icon('clock', size=11) }} 1 or 3 Months
                     </span>
-                  {% endif %}
-                  {% if job.fee_display %}
-                    <span style="font-size: 0.8rem; color: var(--color-primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">{{ icon('credit-card', size=11) }} Application Fee: {{ job.fee_display }}</span>
+                    <span style="font-size: 0.8rem; color: var(--color-primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">{{ icon('credit-card', size=11) }} Fee: ₹199 / ₹399 <span style="font-size: 0.7rem; font-weight: 500; color: var(--color-text-dim);">(+ 18% GST)</span></span>
                   {% elif job.salary %}
                     <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('credit-card', size=11) }} {{ job.salary }}</span>
                   {% endif %}
@@ -327,16 +326,14 @@
                     <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Employment Type</div>
                     <div style="color: var(--color-white); font-weight: 600;">{{ job.employment_type }}</div>
                   </div>
-                  {% if job.duration_display %}
+                  {% if job.is_internship %}
                     <div>
                       <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Internship Duration</div>
-                      <div style="color: #60a5fa; font-weight: 700;">{{ job.duration_display }}</div>
+                      <div style="color: #60a5fa; font-weight: 700;">1 Month or 3 Months (Selected during application)</div>
                     </div>
-                  {% endif %}
-                  {% if job.fee_display %}
                     <div>
                       <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Application Fee</div>
-                      <div style="color: var(--color-primary-light); font-weight: 700; font-size: 1.15rem;">{{ job.fee_display }}</div>
+                      <div style="color: var(--color-primary-light); font-weight: 700; font-size: 1.15rem;">₹199 / ₹399 <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-dim);">+ 18% GST</span></div>
                     </div>
                   {% elif job.salary %}
                     <div>

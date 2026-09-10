@@ -228,28 +228,14 @@
           </div>
         </div>
 
-        <!-- Section 2: Compensation & Program Configuration -->
+        <!-- Section 2: Compensation & Terms -->
         <div class="admin-form-section">
           <div class="admin-section-header">
-            <h2 class="admin-section-title">2. Compensation &amp; Program Duration</h2>
-            <span class="admin-section-desc">Tier selection and payment terms</span>
+            <h2 class="admin-section-title">2. Compensation &amp; Terms</h2>
+            <span class="admin-section-desc">Salary/stipend terms and application deadline (program duration is selected by candidate on application)</span>
           </div>
 
-          <div class="form-grid-3">
-            
-            <!-- Duration / Fee Tier -->
-            <div class="form-group">
-              <label for="duration" class="form-label">
-                <span>Program Tier &amp; Fee</span>
-              </label>
-              <select id="duration" name="duration" class="form-input" style="appearance: auto;" onchange="updateDurationTier(); updatePreview();">
-                <option value="" {{ 'selected' if not job.duration else '' }}>Standard Full-Time (Free)</option>
-                <option value="1_month" {{ 'selected' if job.duration == '1_month' else '' }}>1 Month Internship (₹199 Base + 18% GST = ₹234.82)</option>
-                <option value="3_months" {{ 'selected' if job.duration == '3_months' else '' }}>3 Months Internship (₹399 Base + 18% GST = ₹470.82 + Aadhaar Verification)</option>
-              </select>
-              <span id="tier-hint" class="form-hint">Standard opening. No application fee required.</span>
-            </div>
-
+          <div class="form-grid-2">
             <!-- Salary / Stipend -->
             <div class="form-group">
               <label for="salary" class="form-label">
@@ -468,26 +454,6 @@ function togglePreviewDrawer() {
   }
 }
 
-// Program Duration & Fee Tier update
-function updateDurationTier() {
-  var val = document.getElementById('duration').value;
-  var hint = document.getElementById('tier-hint');
-  var badge = document.getElementById('preview-duration-badge');
-
-  if (val === '1_month') {
-    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">1 Month Internship:</span> ₹199 base fee + 18% GST (₹234.82 total) applies at checkout.';
-    badge.textContent = '1 Month Internship (₹199 + 18% GST)';
-    badge.style.display = 'inline-block';
-  } else if (val === '3_months') {
-    hint.innerHTML = '<span style="color: #059669; font-weight: 600;">3 Months Internship:</span> ₹399 base fee + 18% GST (₹470.82 total) + Aadhaar ID verification required.';
-    badge.textContent = '3 Months Internship (₹399 + 18% GST)';
-    badge.style.display = 'inline-block';
-  } else {
-    hint.textContent = 'Standard opening. No application or verification fee required.';
-    badge.style.display = 'none';
-  }
-}
-
 // Character counter
 function handleShortDescChange() {
   var val = document.getElementById('short_description').value;
@@ -554,7 +520,6 @@ function updatePreview() {
 
 // Init on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
-  updateDurationTier();
   handleShortDescChange();
   updatePreview();
 });

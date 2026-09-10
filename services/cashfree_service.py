@@ -110,9 +110,7 @@ class CashfreeService:
         
         # Authoritative server-side fee & 18% GST calculation strictly from application duration
         from config import get_internship_fee_breakdown
-        app_duration = getattr(application, 'duration', None)
-        job_duration = getattr(job, 'duration', None) if job else None
-        target_duration = app_duration or job_duration or '1_month'
+        target_duration = getattr(application, 'duration', None) or '1_month'
 
         pricing = get_internship_fee_breakdown(target_duration)
         total_amount = pricing['total_amount']

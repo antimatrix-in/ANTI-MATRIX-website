@@ -94,8 +94,12 @@
             <span class="amt amt-g">{{ icon('briefcase',size=11) }} {{ job.department }}</span>
             <span class="amt">{{ icon('map-pin',size=11) }} {{ job.location }}</span>
             <span class="amt">{{ icon('clock',size=11) }} {{ job.employment_type }}</span>
-            {% if job.duration_display %}<span class="amt amt-b">{{ icon('calendar',size=11) }} {{ job.duration_display }}</span>{% endif %}
-            {% if job.fee_display %}<span class="amt amt-g" id="hero-fee-badge">{{ icon('credit-card',size=11) }} Fee: {{ job.fee_display }}</span>{% endif %}
+            {% if job.is_internship %}
+              <span class="amt amt-b">{{ icon('calendar',size=11) }} 1 or 3 Months</span>
+              <span class="amt amt-g" id="hero-fee-badge">{{ icon('credit-card',size=11) }} Fee: ₹199 / ₹399</span>
+            {% elif job.duration_display %}
+              <span class="amt amt-b">{{ icon('calendar',size=11) }} {{ job.duration_display }}</span>
+            {% endif %}
           </div>
           <h1 class="at">Apply for {{ job.title }}</h1>
           <p class="ad">{{ job.short_description }}</p>
@@ -173,11 +177,11 @@
             <div class="fgrp">
               <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; padding: 0.5rem 0;">
                 <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
-                  <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if (form_data.get('duration') == '1_month' or (not form_data.get('duration') and (job.duration == '1_month' or not job.duration))) %}checked{% endif %} required onchange="handleDurationSelection('1_month')" />
+                  <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if form_data.get('duration') == '1_month' %}checked{% endif %} required onchange="handleDurationSelection('1_month')" />
                   <span>1 Month <span style="font-size: 0.8rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹199 Base Fee</span></span>
                 </label>
                 <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
-                  <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if (form_data.get('duration') == '3_months' or (not form_data.get('duration') and job.duration == '3_months')) %}checked{% endif %} required onchange="handleDurationSelection('3_months')" />
+                  <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if form_data.get('duration') == '3_months' %}checked{% endif %} required onchange="handleDurationSelection('3_months')" />
                   <span>3 Months <span style="font-size: 0.8rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹399 Base Fee</span></span>
                 </label>
               </div>
@@ -186,7 +190,7 @@
           </div>
 
           <!-- Card 4: Identity Verification Documents (Conditional for 3 Months) -->
-          <div class="fcard docs-fc" id="identity-docs-card" style="{% if not (form_data.get('duration') == '3_months' or (not form_data.get('duration') and job.duration == '3_months')) %}display: none;{% endif %}">
+          <div class="fcard docs-fc" id="identity-docs-card" style="{% if not (form_data.get('duration') == '3_months') %}display: none;{% endif %}">
             <div class="fcard-h" style="border-bottom-color:#dbeafe">
               <div class="fcard-i db">{{ icon('shield',size=17) }}</div>
               <div style="flex:1"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px"><p class="fcard-t">4. Identity Verification Documents</p><span class="docs-badge">3-Month Requirement</span></div><p class="fcard-s">Mandatory compliance documents for the 3-Month Internship track</p></div>
@@ -241,8 +245,8 @@
             {% if job.is_internship %}
               <div class="feeblk">
                 <div class="feeblk-l">Internship Fee</div>
-                <div class="feeblk-a" id="sidebar-fee-amount">₹199</div>
-                <div class="feeblk-n" id="sidebar-fee-duration">1 Month &bull; One-time processing fee</div>
+                <div class="feeblk-a" id="sidebar-fee-amount">{% if form_data.get('duration') == '3_months' %}₹399{% elif form_data.get('duration') == '1_month' %}₹199{% else %}—{% endif %}</div>
+                <div class="feeblk-n" id="sidebar-fee-duration">{% if form_data.get('duration') == '3_months' %}3 Months &bull; One-time processing fee{% elif form_data.get('duration') == '1_month' %}1 Month &bull; One-time processing fee{% else %}Select 1 Month or 3 Months{% endif %}</div>
               </div>
               <button type="submit" class="subbtn" id="submit-application-btn">Proceed to Pay {{ icon('arrow-right',size=15) }}</button>
             {% else %}

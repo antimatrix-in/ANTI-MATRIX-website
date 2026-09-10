@@ -266,7 +266,7 @@ def apply_job(job_id):
         pan_fname, pan_fpath = None, None
         college_id_fname, college_id_fpath = None, None
 
-        if selected_duration == '3_months' or (not selected_duration and job.duration == '3_months'):
+        if selected_duration == '3_months':
             # 3 Months: Aadhaar is REQUIRED
             aadhaar_file = request.files.get('aadhaar')
             aadhaar_fname, aadhaar_fpath, aadhaar_err = save_secure_file(
@@ -461,7 +461,7 @@ def job_apply_review(app_id):
 
     # Calculate exact server fee & 18% GST breakdown strictly from application duration
     from config import get_internship_fee_breakdown
-    duration = application.duration or (job.duration if job else '1_month')
+    duration = application.duration or '1_month'
     pricing = get_internship_fee_breakdown(duration)
     fee_inr = pricing['total_amount']
     duration_label = pricing['duration_label']
@@ -513,7 +513,7 @@ def job_apply_test_payment(app_id):
 
     # 1. Determine server-side Application Base Fee & 18% GST calculation strictly from application duration
     from config import get_internship_fee_breakdown
-    duration = application.duration or (job.duration if job else '1_month')
+    duration = application.duration or '1_month'
     pricing = get_internship_fee_breakdown(duration)
     total_amount = pricing['total_amount']
     base_amount = pricing['base_amount']
@@ -673,7 +673,7 @@ def job_apply_checkout(app_id):
         return redirect(url_for('main.job_apply_review', app_id=application.id))
 
     from config import get_internship_fee_breakdown
-    duration = application.duration or (job.duration if job else '1_month')
+    duration = application.duration or '1_month'
     pricing = get_internship_fee_breakdown(duration)
     amount = float(order_data.get('order_amount', pricing['total_amount']))
     base_amount = pricing['base_amount']

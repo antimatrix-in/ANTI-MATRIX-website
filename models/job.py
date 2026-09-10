@@ -92,7 +92,9 @@ class JobPosting(db.Model):
 
     @property
     def is_internship(self):
-        return (self.employment_type and self.employment_type.lower() == 'internship') or bool(self.duration)
+        emp_type = (self.employment_type or '').strip().lower()
+        title_str = (self.title or '').strip().lower()
+        return ('intern' in emp_type) or ('intern' in title_str) or bool(self.duration)
 
     @property
     def duration_display(self):
