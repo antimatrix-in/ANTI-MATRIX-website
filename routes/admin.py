@@ -45,18 +45,15 @@ def admin_required(f):
 def dashboard():
     total_jobs = JobPosting.query.count()
     active_jobs = JobPosting.query.filter_by(is_active=True).count()
+    total_applications = JobApplication.query.count()
     paid_applications = JobApplication.query.filter(JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])).count()
-    total_applications = paid_applications
     new_applications = JobApplication.query.filter(
-        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt']),
         JobApplication.status.in_(['New', 'APPLIED', 'applied'])
     ).count()
     total_employees = Employee.query.count()
 
     recent_jobs = JobPosting.query.order_by(JobPosting.created_at.desc()).limit(5).all()
-    recent_applications = JobApplication.query.filter(
-        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
-    ).order_by(JobApplication.created_at.desc()).limit(8).all()
+    recent_applications = JobApplication.query.order_by(JobApplication.created_at.desc()).limit(8).all()
 
     return render_template(
         'admin/dashboard.html',
@@ -423,12 +420,11 @@ def applications():
     job_id_filter = request.args.get('job_id', type=int)
     duration_filter = request.args.get('duration', '').strip()
     status_filter = request.args.get('status', 'all').strip()
+    payment_filter = request.args.get('payment_status', 'all').strip()
     search_query = request.args.get('q', '').strip()
 
-    # Strictly filter for fully paid applications (or exempt/free)
-    query = JobApplication.query.join(JobPosting).filter(
-        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
-    )
+    # Query all applications (including new manual applications with pending payment)
+    query = JobApplication.query.join(JobPosting)
 
     if job_id_filter:
         query = query.filter(JobApplication.job_id == job_id_filter)
@@ -439,6 +435,16 @@ def applications():
     if status_filter and status_filter.lower() != 'all':
         query = query.filter(JobApplication.status.ilike(status_filter))
 
+    if payment_filter and payment_filter.lower() != 'all':
+        if payment_filter.lower() == 'paid':
+            query = query.filter(JobApplication.payment_status.in_(['paid', 'PAID', 'exempt']))
+        elif payment_filter.lower() == 'pending':
+            query = query.filter(JobApplication.payment_status.in_(['pending', 'PENDING']))
+        elif payment_filter.lower() == 'failed':
+            query = query.filter(JobApplication.payment_status.in_(['failed', 'FAILED']))
+        else:
+            query = query.filter(JobApplication.payment_status.ilike(payment_filter))
+
     if search_query:
         query = query.filter(
             (JobApplication.full_name.ilike(f'%{search_query}%')) |
@@ -447,14 +453,15 @@ def applications():
             (JobApplication.college.ilike(f'%{search_query}%')) |
             (JobApplication.skills.ilike(f'%{search_query}%')) |
             (JobApplication.application_code.ilike(f'%{search_query}%')) |
-            (JobPosting.title.ilike(f'%{search_query}%'))
+            (JobPosting.title.ilike(f'%{search_query}%')) |
+            (JobPosting.job_code.ilike(f'%{search_query}%')) |
+            (JobPosting.job_id.ilike(f'%{search_query}%')) |
+            (JobPosting.department.ilike(f'%{search_query}%'))
         )
 
     all_applications = query.order_by(JobApplication.created_at.desc()).all()
     all_jobs = JobPosting.query.order_by(JobPosting.title.asc()).all()
-    total_unfiltered_applications = JobApplication.query.filter(
-        JobApplication.payment_status.in_(['paid', 'PAID', 'exempt'])
-    ).count()
+    total_unfiltered_applications = JobApplication.query.count()
 
     return render_template(
         'admin/applications.html',
@@ -464,6 +471,7 @@ def applications():
         selected_job_id=job_id_filter,
         selected_duration=duration_filter,
         selected_status=status_filter,
+        selected_payment_status=payment_filter,
         search_query=search_query
     )
 
@@ -1292,12 +1300,123 @@ def employees():
     )
 
 
+@admin_bp.route('/applications/<int:app_id>/update-payment-status', methods=['POST'])
+@admin_required
+def update_application_payment_status(app_id):
+    """Admin action to update payment status for an application (e.g. after manual Google Form / QR verification)."""
+    application = db.session.get(JobApplication, app_id) or abort(404)
+    new_payment_status = (request.form.get('payment_status') or '').strip().lower()
+    valid_statuses = ['pending', 'paid', 'failed']
+    if new_payment_status in valid_statuses:
+        application.payment_status = new_payment_status
+        db.session.commit()
+        flash(f"Payment status for candidate {application.full_name} updated to '{new_payment_status.upper()}'.", 'success')
+    else:
+        flash('Invalid payment status provided.', 'danger')
+    return redirect(url_for('admin.application_detail', app_id=application.id))
+
+
 @admin_bp.route('/employees/create', methods=['GET', 'POST'])
 @admin_required
 def create_employee():
-    """Manual employee creation has been moved to the external employee management website."""
-    flash('Manual employee creation is managed through the external employee management portal.', 'info')
-    return redirect(url_for('admin.employees'))
+    """
+    Admin Manual Employee Creation Workflow:
+    - Select an existing Application ID from the database
+    - Displays candidate details (Application ID, Name, Email, Job, Job Code, Department, Duration, College)
+    - If employee already exists: shows existing Employee ID and prevents duplicate creation
+    - If new: generates unique Employee ID (AM####) and secure temporary password
+    - Encrypts and securely stores temporary credentials in EmployeeOnboardingCredential for Internship Portal activation
+    - Displays credentials strictly to authorized Admin
+    """
+    selected_app_id = request.args.get('app_id', type=int)
+    
+    # Retrieve all applications ordered by newest first
+    all_applications = JobApplication.query.order_by(JobApplication.created_at.desc()).all()
+    
+    selected_app = None
+    if selected_app_id:
+        selected_app = db.session.get(JobApplication, selected_app_id)
+    elif all_applications:
+        selected_app = all_applications[0]
+
+    existing_employee = None
+    if selected_app and selected_app.employee:
+        existing_employee = selected_app.employee
+
+    if request.method == 'POST':
+        app_id = request.form.get('application_id', type=int)
+        if not app_id:
+            flash('Please select an application record.', 'danger')
+            return redirect(url_for('admin.create_employee'))
+
+        application = db.session.get(JobApplication, app_id)
+        if not application:
+            flash('Selected application record not found.', 'danger')
+            return redirect(url_for('admin.create_employee'))
+
+        # Idempotency / Duplicate Employee Check
+        existing_emp = Employee.query.filter_by(application_id=application.id).first()
+        if existing_emp:
+            flash(f"Employee Already Exists for this application. Employee ID: {existing_emp.employee_id}.", 'info')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        try:
+            # Generate unique Employee ID in format AM####
+            emp_id = Employee.generate_unique_employee_id()
+            # Generate cryptographically secure temporary password
+            temp_password = Employee.generate_secure_password(12)
+
+            employee = Employee(
+                employee_id=emp_id,
+                application_id=application.id,
+                account_status='active'
+            )
+            employee.set_password(temp_password)
+            secret_key = current_app.config.get('SECRET_KEY', 'default-secret-key')
+            employee.set_temp_password(temp_password, secret_key)
+            db.session.add(employee)
+
+            # Sync with candidate user account if present
+            if application.user_id:
+                cand_user = db.session.get(User, application.user_id)
+                if cand_user:
+                    cand_user.set_password(temp_password)
+            elif application.email:
+                cand_user = User.query.filter(User.email.ilike(application.email)).first()
+                if cand_user:
+                    application.user_id = cand_user.id
+                    cand_user.set_password(temp_password)
+
+            db.session.commit()
+
+            # Store result in session strictly for authorized Admin one-time view
+            session['new_employee_result'] = {
+                'application_id': application.id,
+                'application_code': application.formatted_code,
+                'employee_id': emp_id,
+                'temp_password': temp_password,
+                'candidate_name': application.full_name,
+                'job_title': application.job.title if application.job else '',
+                'job_code': application.job_code or ''
+            }
+            flash(f"Employee {emp_id} created successfully for candidate {application.full_name}!", 'success')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating employee for application {app_id}: {str(e)}", exc_info=True)
+            flash(f"Failed to create employee: {str(e)}", 'danger')
+            return redirect(url_for('admin.create_employee', app_id=app_id))
+
+    new_cred_result = session.pop('new_employee_result', None)
+
+    return render_template(
+        'admin/create_employee.html',
+        all_applications=all_applications,
+        selected_app=selected_app,
+        existing_employee=existing_employee,
+        new_cred_result=new_cred_result
+    )
 
 
 @admin_bp.route('/employees/<string:employee_id>', methods=['GET'])

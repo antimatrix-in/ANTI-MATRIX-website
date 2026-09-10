@@ -213,8 +213,8 @@ class JobApplication(db.Model):
     pan_path = db.Column(db.String(255), nullable=True)
     college_id_filename = db.Column(db.String(255), nullable=True)
     college_id_path = db.Column(db.String(255), nullable=True)
-    resume_filename = db.Column(db.String(255), nullable=False)
-    resume_path = db.Column(db.String(255), nullable=False)
+    resume_filename = db.Column(db.String(255), nullable=False, default='NOT_PROVIDED')
+    resume_path = db.Column(db.String(255), nullable=False, default='')
     
     # Internship & Payment Info
     duration = db.Column(db.String(50), nullable=True)  # '1_month', '3_months', or None
@@ -244,11 +244,35 @@ class JobApplication(db.Model):
 
     payments = db.relationship('Payment', backref='application', lazy=True, cascade='all, delete-orphan', order_by='Payment.created_at.desc()')
 
+    @classmethod
+    def generate_unique_application_code(cls, app_id=None):
+        """
+        Generates a guaranteed unique Application ID in format AM-APP-000001.
+        If app_id is provided, tries f"AM-APP-{app_id:06d}".
+        Checks database to prevent duplicate collisions.
+        """
+        if app_id:
+            try:
+                candidate = f"AM-APP-{int(app_id):06d}"
+                existing = cls.query.filter_by(application_code=candidate).first()
+                if not existing:
+                    return candidate
+            except (ValueError, TypeError):
+                pass
+
+        max_app = cls.query.order_by(cls.id.desc()).first()
+        base_num = (max_app.id + 1) if max_app and max_app.id else 1
+        while True:
+            candidate = f"AM-APP-{base_num:06d}"
+            if not cls.query.filter_by(application_code=candidate).first():
+                return candidate
+            base_num += 1
+
     @property
     def formatted_code(self):
         if self.application_code:
             return self.application_code
-        if self.payment_status in ['paid', 'exempt']:
+        if self.id:
             return f"AM-APP-{self.id:06d}"
         return ""
 

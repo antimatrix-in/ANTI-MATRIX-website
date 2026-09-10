@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Create Employee Record | Anti-Matrix Admin{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: var(--color-bg); min-height: 85vh;">
+  <div class="container">
+    
+    <!-- Admin Header -->
+    <div class="admin-header" style="margin-bottom: var(--space-xl);">
+      <div class="admin-header-title">
+        <a href="{{ url_for('admin.employees') }}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-xs); display: inline-flex; align-items: center; gap: 6px;">
+          {{ icon('arrow-left', size=14) }} Back to Employees
+        </a>
+        <h1 style="margin: 0; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: var(--color-text);">
+          Create Employee Record
+        </h1>
+        <p style="margin-top: 0.35rem; color: var(--color-text-dim);">
+          Manually onboard an approved candidate from submitted applications, generate their Employee ID (<span style="font-family: var(--font-mono, monospace); color: var(--color-primary-light); font-weight: 700;">AM####</span>), and create their secure internship portal login credentials.
+        </p>
+      </div>
+      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.applications') }}" class="btn btn-outline btn-sm" style="gap: 6px;">
+          {{ icon('users', size=14) }} View Applications
+        </a>
+        <a href="{{ url_for('admin.employees') }}" class="btn btn-outline btn-sm" style="gap: 6px;">
+          {{ icon('user-check', size=14) }} View Employees
+        </a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Tabs -->
+    <div class="admin-nav-tabs" style="margin-bottom: var(--space-xl);">
+      <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-tab">
+        {{ icon('layout', size=15) }} Overview
+      </a>
+      <a href="{{ url_for('admin.jobs') }}" class="admin-nav-tab">
+        {{ icon('briefcase', size=15) }} Job Postings
+      </a>
+      <a href="{{ url_for('admin.applications') }}" class="admin-nav-tab">
+        {{ icon('users', size=15) }} Candidate Applications
+      </a>
+      <a href="{{ url_for('admin.employees') }}" class="admin-nav-tab active">
+        {{ icon('user-plus', size=15) }} Create Employee
+      </a>
+      <a href="{{ url_for('admin.templates') }}" class="admin-nav-tab">
+        {{ icon('file-text', size=15) }} Templates
+      </a>
+      <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab">
+        {{ icon('wallet', size=15) }} Money Management
+      </a>
+    </div>
+
+    <!-- Result Box: Newly Created Employee Credentials (shown only once upon creation) -->
+    {% if new_cred_result %}
+      <div class="card" style="margin-bottom: var(--space-2xl); border: 2px solid #10b981; background: rgba(16, 185, 129, 0.08); padding: var(--space-xl); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-md);">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #10b981; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; font-weight: 900; box-shadow: 0 4px 12px rgba(16,185,129,0.4);">
+            ✓
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: #ffffff;">
+              Employee Created Successfully!
+            </h2>
+            <p style="margin: 0; color: #a7f3d0; font-size: 0.9rem;">
+              The onboarding credentials have been generated and securely stored for candidate <strong>{{ new_cred_result.candidate_name }}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-top: var(--space-lg); margin-bottom: var(--space-lg);">
+          
+          <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: var(--space-md);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-dim); font-weight: 700; margin-bottom: 4px;">
+              Application ID
+            </div>
+            <div style="font-family: var(--font-mono, monospace); font-size: 1.15rem; font-weight: 800; color: #60a5fa;">
+              {{ new_cred_result.application_code }}
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: var(--space-md);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-dim); font-weight: 700; margin-bottom: 4px;">
+              Generated Employee ID
+            </div>
+            <div style="font-family: var(--font-mono, monospace); font-size: 1.45rem; font-weight: 900; color: #10b981; letter-spacing: 0.05em;">
+              {{ new_cred_result.employee_id }}
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: var(--space-md);">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-text-dim); font-weight: 700; margin-bottom: 4px;">
+              Temporary Password
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span id="temp-password-val" style="font-family: var(--font-mono, monospace); font-size: 1.25rem; font-weight: 800; color: #fbbf24; letter-spacing: 0.04em;">
+                {{ new_cred_result.temp_password }}
+              </span>
+              <button
+                type="button"
+                id="copy-temp-pw-btn"
+                class="btn btn-outline btn-sm"
+                onclick="navigator.clipboard.writeText('{{ new_cred_result.temp_password }}'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000);"
+                style="padding: 0.25rem 0.65rem; font-size: 0.75rem; font-weight: 700; color: #fbbf24; border-color: rgba(251,191,36,0.5);"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="background: rgba(0, 0, 0, 0.25); border-left: 4px solid #10b981; border-radius: var(--radius-sm); padding: var(--space-sm) var(--space-md); font-size: 0.85rem; color: #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm);">
+          <div>
+            ℹ️ <strong>Candidate Portal:</strong> Provide these credentials to the candidate or include them in their offer letter. They will log in at <a href="https://www.antimatrix.co.in/internship" target="_blank" style="color: #60a5fa; font-weight: 600;">antimatrix.co.in/internship</a> using their Employee ID and this temporary password.
+          </div>
+          <a href="{{ url_for('admin.application_detail', app_id=new_cred_result.application_id) }}" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            View Candidate Details &rarr;
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Main Creation Form Grid -->
+    <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-2xl); align-items: start;">
+      
+      <!-- Left Column: Application Selector & Candidate Dossier -->
+      <div>
+        <div class="card" style="padding: var(--space-xl); margin-bottom: var(--space-xl); border-color: var(--color-border);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-md);">
+            {{ icon('users', size=20, color='var(--color-primary-light)') }}
+            <h2 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--color-text);">
+              1. Select Application Record
+            </h2>
+          </div>
+          
+          <p style="font-size: 0.875rem; color: var(--color-text-dim); margin-bottom: var(--space-lg);">
+            Select an application from the candidate pipeline to review candidate credentials and initialize their employee profile.
+          </p>
+
+          <form method="GET" action="{{ url_for('admin.create_employee') }}" id="app-selector-form">
+            <label for="app-select-dropdown" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--color-text); margin-bottom: 0.4rem;">
+              Candidate Application:
+            </label>
+            <select
+              id="app-select-dropdown"
+              name="app_id"
+              class="form-input"
+              onchange="this.form.submit();"
+              style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.9rem; font-weight: 600; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text); cursor: pointer;"
+            >
+              {% if not all_applications %}
+                <option value="">No candidate applications found</option>
+              {% else %}
+                {% for a in all_applications %}
+                  {% set job_title = a.job.title if a.job else (a.job_title or 'Intern') %}
+                  <option value="{{ a.id }}" {{ 'selected' if selected_app and selected_app.id == a.id else '' }}>
+                    {{ a.application_code or a.formatted_code }} — {{ a.full_name }} — {{ job_title }}
+                  </option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </form>
+        </div>
+
+        {% if selected_app %}
+          <!-- Candidate Dossier Card -->
+          <div class="card" style="padding: var(--space-xl); border-color: rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-sm);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                {{ icon('user', size=18, color='#60a5fa') }}
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--color-text);">
+                  Candidate Application Dossier
+                </h3>
+              </div>
+              <span style="font-family: var(--font-mono, monospace); font-size: 0.85rem; font-weight: 800; color: #60a5fa; background: rgba(59, 130, 246, 0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.25);">
+                {{ selected_app.application_code or selected_app.formatted_code }}
+              </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); font-size: 0.875rem;">
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Candidate Full Name</span>
+                <span style="font-weight: 700; color: var(--color-text); font-size: 1rem;">{{ selected_app.full_name }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Email Address</span>
+                <span style="color: var(--color-primary-light); font-weight: 600;">{{ selected_app.email }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Phone Number</span>
+                <span style="color: var(--color-text); font-weight: 600;">{{ selected_app.phone }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">College / Institution</span>
+                <span style="color: var(--color-text); font-weight: 600;">{{ selected_app.college or 'Not specified' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Job Position</span>
+                <span style="font-weight: 700; color: var(--color-text);">{{ selected_app.job.title if selected_app.job else 'Intern' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Job Code</span>
+                {% set j_code = selected_app.job_code or (selected_app.job.job_code or selected_app.job.job_id if selected_app.job else None) %}
+                <span style="font-family: var(--font-mono, monospace); font-weight: 800; color: #60a5fa;">{{ j_code or 'N/A' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Department</span>
+                <span style="color: var(--color-text); font-weight: 600;">{{ selected_app.job.department if selected_app.job else (selected_app.department or 'Engineering') }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Internship Duration</span>
+                <span style="color: #60a5fa; font-weight: 700;">{{ selected_app.duration_display or '1 Month' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Payment Status</span>
+                <span>
+                  {% if selected_app.payment_status == 'paid' %}
+                    <span class="badge-status active">Paid</span>
+                  {% elif selected_app.payment_status == 'pending' %}
+                    <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3);">Pending</span>
+                  {% elif selected_app.payment_status == 'failed' %}
+                    <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Failed</span>
+                  {% else %}
+                    <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border-color: var(--color-border);">Exempt</span>
+                  {% endif %}
+                </span>
+              </div>
+              <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Submission Date</span>
+                <span style="color: var(--color-text-dim);">{{ selected_app.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+              </div>
+            </div>
+
+            <div style="margin-top: var(--space-lg); pt: var(--space-md); border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end;">
+              <a href="{{ url_for('admin.application_detail', app_id=selected_app.id) }}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem; gap: 4px;">
+                {{ icon('external-link', size=13) }} Open Full Application Record
+              </a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Right Column: Employee Creation Action or Existing Record Notice -->
+      <div>
+        {% if not selected_app %}
+          <div class="card" style="padding: var(--space-2xl); text-align: center;">
+            <div class="icon-box" style="margin: 0 auto var(--space-md);">{{ icon('users', size=24) }}</div>
+            <h3 style="color: var(--color-text); margin-bottom: 0.5rem;">No Application Selected</h3>
+            <p style="color: var(--color-text-dim);">Please select an application record from the dropdown on the left to proceed.</p>
+          </div>
+        {% elif existing_employee %}
+          <!-- Scenario: Employee Already Exists (Duplicate Prevention) -->
+          <div class="card" style="padding: var(--space-xl); border: 2px solid rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.03);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md);">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(234, 179, 8, 0.2); border: 1px solid #eab308; color: #eab308; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
+                ℹ
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fbbf24;">
+                  Employee Already Exists
+                </h3>
+                <span style="font-size: 0.825rem; color: var(--color-text-dim);">
+                  Duplicate creation prevented. An employee record is already active for this candidate.
+                </span>
+              </div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: var(--radius-md); padding: var(--space-lg); margin-top: var(--space-md); margin-bottom: var(--space-lg);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+                <span style="font-size: 0.775rem; text-transform: uppercase; color: var(--color-text-dim); font-weight: 700;">Existing Employee ID</span>
+                <span class="badge-status active">{{ existing_employee.account_status|capitalize }}</span>
+              </div>
+              <div style="font-family: var(--font-mono, monospace); font-size: 1.5rem; font-weight: 900; color: var(--color-primary-light); letter-spacing: 0.05em;">
+                {{ existing_employee.employee_id }}
+              </div>
+              <div style="font-size: 0.825rem; color: var(--color-text-dim); margin-top: 6px;">
+                Created: {{ existing_employee.created_at.strftime('%b %d, %Y') if existing_employee.created_at else 'Active' }}
+              </div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+              <a href="{{ url_for('admin.view_employee', employee_id=existing_employee.employee_id) }}" class="btn btn-primary" style="flex: 1; justify-content: center; gap: 6px; font-weight: 700;">
+                {{ icon('user-check', size=15) }} View Employee Profile
+              </a>
+              <button type="button" class="btn btn-outline" disabled style="opacity: 0.5; cursor: not-allowed; gap: 6px;" title="Employee record already exists">
+                {{ icon('check', size=15) }} Already Onboarded
+              </button>
+            </div>
+          </div>
+
+        {% else %}
+          <!-- Scenario: Candidate has NO employee record yet -> Ready to Create -->
+          <div class="card" style="padding: var(--space-xl); border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.02);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md);">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--color-primary-light); color: var(--color-primary-light); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
+                +
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--color-text);">
+                  2. Generate Employee &amp; Credentials
+                </h3>
+                <span style="font-size: 0.825rem; color: var(--color-text-dim);">
+                  Candidate is ready for manual employee onboarding.
+                </span>
+              </div>
+            </div>
+
+            <p style="font-size: 0.875rem; color: var(--color-text-dim); margin-bottom: var(--space-lg); line-height: 1.6;">
+              Clicking below will automatically execute the onboarding generation sequence:
+            </p>
+
+            <ul style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: var(--space-xl); padding-left: 1.25rem; line-height: 1.8;">
+              <li>Allocate next sequential <strong>Employee ID</strong> (<code style="color: var(--color-primary-light); font-family: var(--font-mono, monospace);">AM####</code> format, e.g. <code style="color: var(--color-primary-light);">AM0001</code>).</li>
+              <li>Generate a high-entropy <strong>temporary password</strong>.</li>
+              <li>Store encrypted temporary credentials in <code style="color: #60a5fa; font-family: var(--font-mono, monospace);">EmployeeOnboardingCredential</code> for authorized admin access.</li>
+              <li>Link the employee account to candidate application <strong style="color: #60a5fa;">{{ selected_app.application_code or selected_app.formatted_code }}</strong>.</li>
+            </ul>
+
+            <form method="POST" action="{{ url_for('admin.create_employee') }}" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerText = 'Generating Credentials...';">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="application_id" value="{{ selected_app.id }}" />
+
+              <button
+                type="submit"
+                id="submit-create-employee-btn"
+                class="btn btn-primary btn-lg"
+                style="width: 100%; justify-content: center; gap: 8px; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); padding: 0.85rem 1.5rem;"
+              >
+                {{ icon('user-plus', size=18) }} Create Employee Record &rarr;
+              </button>
+            </form>
+          </div>
+        {% endif %}
+
+        <!-- Quick Help & Documentation Card -->
+        <div class="card" style="margin-top: var(--space-xl); padding: var(--space-lg); background: rgba(0,0,0,0.2); border-color: var(--color-border); font-size: 0.825rem; color: var(--color-text-dim);">
+          <div style="font-weight: 700; color: var(--color-text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            {{ icon('shield', size=14, color='var(--color-primary-light)') }} Manual Workflow Security Protocol
+          </div>
+          <p style="margin: 0; line-height: 1.5;">
+            In the manual application workflow, automated emails and automated employee creation are bypassed upon candidate submission. An administrator reviews the candidate's payment and application details here, then generates their credentials with full auditability.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}

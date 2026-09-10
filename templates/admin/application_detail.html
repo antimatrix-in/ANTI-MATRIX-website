@@ -38,10 +38,21 @@
           &bull; {{ job.department }} &bull; {{ job.location }}
         </p>
       </div>
-      <div>
-        <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume', download=1) }}" class="btn btn-primary btn-sm" style="gap: 6px;">
-          {{ icon('download', size=14) }} Download Resume
-        </a>
+      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        {% if not employee %}
+          <a href="{{ url_for('admin.create_employee', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 6px; font-weight: 700;">
+            {{ icon('user-plus', size=14) }} Create Employee
+          </a>
+        {% else %}
+          <a href="{{ url_for('admin.view_employee', employee_id=employee.employee_id) }}" class="btn btn-outline btn-sm" style="gap: 6px; color: #34d399; border-color: #10b981; font-weight: 700;">
+            {{ icon('user-check', size=14) }} View Employee ({{ employee.employee_id }})
+          </a>
+        {% endif %}
+        {% if app.resume_path and app.resume_filename != 'NOT_PROVIDED' %}
+          <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume', download=1) }}" class="btn btn-outline btn-sm" style="gap: 6px;">
+            {{ icon('download', size=14) }} Download Resume
+          </a>
+        {% endif %}
       </div>
     </div>
 
@@ -876,14 +887,22 @@
           <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-sm);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
               <span style="font-weight: 700; color: var(--color-text); font-size: 0.875rem;">Resume / CV</span>
-              <span class="badge-status active" style="font-size: 0.7rem;">Required</span>
+              {% if app.resume_path and app.resume_filename != 'NOT_PROVIDED' %}
+                <span class="badge-status active" style="font-size: 0.7rem;">Attached</span>
+              {% else %}
+                <span class="badge-status" style="background: rgba(255,255,255,0.05); color: var(--color-text-dim); border-color: var(--color-border); font-size: 0.7rem;">Manual Flow (None)</span>
+              {% endif %}
             </div>
-            <div style="font-size: 0.775rem; color: var(--color-text-dim); margin-bottom: 0.6rem; word-break: break-all;">
-              {{ app.resume_filename }}
-            </div>
-            <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume', download=1) }}" class="btn btn-outline btn-sm" style="width: 100%; justify-content: center; font-size: 0.8rem; gap: 5px;">
-              {{ icon('download', size=13) }} Download Resume
-            </a>
+            {% if app.resume_path and app.resume_filename != 'NOT_PROVIDED' %}
+              <div style="font-size: 0.775rem; color: var(--color-text-dim); margin-bottom: 0.6rem; word-break: break-all;">
+                {{ app.resume_filename }}
+              </div>
+              <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume', download=1) }}" class="btn btn-outline btn-sm" style="width: 100%; justify-content: center; font-size: 0.8rem; gap: 5px;">
+                {{ icon('download', size=13) }} Download Resume
+              </a>
+            {% else %}
+              <div style="font-size: 0.775rem; color: var(--color-text-muted);">No resume upload required for this application.</div>
+            {% endif %}
           </div>
 
           <!-- Aadhaar Card -->
@@ -1024,6 +1043,27 @@
               </div>
             {% endif %}
           </div>
+        </div>
+
+        <!-- Manual Payment Status Verification Card -->
+        <div class="dossier-card" style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.02);">
+          <div class="dossier-title">
+            {{ icon('check-circle', size=18, color='var(--color-primary-light)') }} Manual Payment Verification
+          </div>
+          <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: var(--space-md); line-height: 1.5;">
+            Update payment verification state manually after reviewing candidate payment (e.g. UPI QR / Google Form verification).
+          </p>
+          <form method="POST" action="{{ url_for('admin.update_application_payment_status', app_id=app.id) }}" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <select name="payment_status" class="admin-select" style="flex: 1; min-width: 130px; padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+              <option value="pending" {{ 'selected' if app.payment_status == 'pending' else '' }}>Pending</option>
+              <option value="paid" {{ 'selected' if app.payment_status == 'paid' else '' }}>Paid (Verified)</option>
+              <option value="failed" {{ 'selected' if app.payment_status == 'failed' else '' }}>Failed</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.45rem 0.85rem; font-weight: 700;">
+              Update Status
+            </button>
+          </form>
         </div>
 
       </div>

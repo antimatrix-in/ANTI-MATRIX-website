@@ -3,17 +3,30 @@ import re
 import time
 import uuid
 import json
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, abort, send_from_directory
+from datetime import datetime, timezone, timedelta
+from flask import (
+    Blueprint, render_template, request, jsonify, flash,
+    redirect, url_for, current_app, abort, send_from_directory, session
+)
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
-from models import db, ContactInquiry, JobPosting, JobApplication, Payment
+from models import db, ContactInquiry, JobPosting, JobApplication, Payment, User
 from services.cashfree_service import CashfreeService
 from config import (
     INTERNSHIP_FEES, INTERNSHIP_PRICING,
-    INDIA_STATES_AND_CITIES, EDUCATION_LEVELS, COMMON_DEGREES, GRADUATION_YEARS
+    INDIA_STATES_AND_CITIES, EDUCATION_LEVELS, COMMON_DEGREES, GRADUATION_YEARS,
+    normalize_internship_duration, get_internship_fee_breakdown
 )
 
 main_bp = Blueprint('main', __name__)
+
+
+def is_manual_application_workflow():
+    """Returns True if the new manual application workflow is active."""
+    if current_app.config.get('APPLICATION_PAYMENT_MODE', '').upper() == 'AUTOMATED':
+        return False
+    return current_app.config.get('MANUAL_APPLICATION_WORKFLOW', True)
+
 
 EMAIL_REGEX = re.compile(r'^\S+@\S+\.\S+$')
 URL_REGEX = re.compile(r'^https?://\S+$', re.IGNORECASE)
@@ -96,14 +109,125 @@ def careers():
 
 @main_bp.route('/careers/apply/<int:job_id>', methods=['GET', 'POST'])
 def apply_job(job_id):
-    # Server-Side Authentication Enforcement
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=request.path))
-
     job = db.session.get(JobPosting, job_id) or abort(404)
     if not job.is_active:
         flash('This position is currently not accepting new applications.', 'warning')
         return redirect(url_for('main.careers'))
+
+    if is_manual_application_workflow():
+        # =====================================================================
+        # NEW SIMPLE MANUAL APPLICATION WORKFLOW (5 Required Fields)
+        # =====================================================================
+        if request.method == 'POST':
+            full_name = (request.form.get('full_name') or '').strip()
+            email = (request.form.get('email') or '').strip().lower()
+            phone = (request.form.get('phone') or request.form.get('phone_number') or '').strip()
+            raw_duration = (request.form.get('duration') or '').strip()
+            college = (request.form.get('college') or '').strip()
+
+            selected_duration = normalize_internship_duration(raw_duration)
+
+            errors = []
+            if not full_name:
+                errors.append('Full Name is required.')
+            if not email:
+                errors.append('Email is required.')
+            elif not EMAIL_REGEX.match(email):
+                errors.append('Please provide a valid email address.')
+            if not phone:
+                errors.append('Phone Number is required.')
+            elif not INDIAN_PHONE_REGEX.match(phone) and len(re.sub(r'\D', '', phone)) != 10:
+                errors.append('Please enter a valid 10-digit Indian phone number.')
+            if not selected_duration:
+                errors.append('Please select an Internship Duration (1 Month or 3 Months).')
+            if not college:
+                errors.append('College name is required.')
+
+            if errors:
+                for err in errors:
+                    flash(err, 'danger')
+                return render_template('pages/job_apply_manual.html', job=job, form_data=request.form)
+
+            # Duplicate / Repeated POST Protection within 10 minutes
+            recent_duplicate = JobApplication.query.filter(
+                JobApplication.job_id == job.id,
+                JobApplication.email == email,
+                JobApplication.created_at >= datetime.now(timezone.utc) - timedelta(minutes=10)
+            ).first()
+            if recent_duplicate:
+                session['last_submitted_app_id'] = recent_duplicate.id
+                flash(f"Application already submitted! Your Application ID is {recent_duplicate.formatted_code}.", 'info')
+                return redirect(url_for('main.job_apply_success', app_id=recent_duplicate.id))
+
+            # Server-side pricing strictly derived from selected duration
+            pricing = get_internship_fee_breakdown(selected_duration)
+            base_amount = pricing['base_amount']
+            gst_rate = pricing['gst_rate']
+            gst_amount = pricing['gst_amount']
+            fee_inr = int(pricing['base_amount'])
+
+            name_parts = full_name.split(' ', 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+            user_id = current_user.id if current_user.is_authenticated else None
+            if not user_id:
+                matched_user = User.query.filter(User.email.ilike(email)).first()
+                if matched_user:
+                    user_id = matched_user.id
+
+            application = JobApplication(
+                job_id=job.id,
+                user_id=user_id,
+                first_name=first_name,
+                last_name=last_name,
+                full_name=full_name,
+                email=email,
+                phone=phone,
+                college=college,
+                department=job.department,
+                duration=selected_duration,
+                degree='',
+                graduation_year='',
+                skills='',
+                cover_letter='',
+                resume_filename='NOT_PROVIDED',
+                resume_path='',
+                application_fee=fee_inr,
+                base_amount=base_amount,
+                gst_rate=gst_rate,
+                gst_amount=gst_amount,
+                payment_status='pending',
+                application_status='APPLIED',
+                status='APPLIED'
+            )
+            db.session.add(application)
+            db.session.flush()
+
+            # Concurrency-safe unique Application ID
+            application.application_code = JobApplication.generate_unique_application_code(app_id=application.id)
+            db.session.commit()
+
+            session['last_submitted_app_id'] = application.id
+            flash(f"Application submitted successfully! Your Application ID is {application.formatted_code}.", 'success')
+            return redirect(url_for('main.job_apply_success', app_id=application.id))
+
+        # GET Request for Manual Workflow
+        prefilled_form = {}
+        if current_user.is_authenticated:
+            prefilled_form['full_name'] = current_user.name or ''
+            prefilled_form['email'] = current_user.email or ''
+            if hasattr(current_user, 'phone') and current_user.phone:
+                prefilled_form['phone'] = current_user.phone
+
+        return render_template('pages/job_apply_manual.html', job=job, form_data=prefilled_form)
+
+    # =====================================================================
+    # LEGACY AUTOMATED FLOW (Preserved for future restoration)
+    # =====================================================================
+    # Server-Side Authentication Enforcement
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login', next=request.path))
 
     # Duplicate Application Protection for Authenticated User
     existing_paid = JobApplication.query.filter(
@@ -239,7 +363,6 @@ def apply_job(job_id):
             errors.append(f"Resume: {resume_err}")
 
         # Duration selection from candidate application form
-        from config import normalize_internship_duration, get_internship_fee_breakdown
         is_internship = job.is_internship
 
         raw_duration = (request.form.get('duration') or '').strip()
@@ -991,11 +1114,21 @@ def payment_pending_page(payment_id):
 
 @main_bp.route('/careers/apply/success/<int:app_id>')
 def job_apply_success(app_id):
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=request.path))
-
     application = db.session.get(JobApplication, app_id) or abort(404)
-    if application.user_id and application.user_id != current_user.id and getattr(current_user, 'role', '') != 'admin':
+
+    # Allow candidate who just submitted in this session or authenticated owner/admin
+    can_view = False
+    if session.get('last_submitted_app_id') == app_id:
+        can_view = True
+    elif current_user.is_authenticated:
+        if getattr(current_user, 'role', '') == 'admin':
+            can_view = True
+        elif application.user_id == current_user.id or (application.email and application.email.lower() == current_user.email.lower()):
+            can_view = True
+
+    if not can_view and not current_user.is_authenticated:
+        return redirect(url_for('auth.login', next=request.path))
+    elif not can_view:
         abort(404)
 
     return render_template('pages/job_apply_success.html', app=application, job=application.job)

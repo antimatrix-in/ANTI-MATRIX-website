@@ -13,6 +13,11 @@
         <h1>Employees & Credentials</h1>
         <p>Manage generated Employee IDs, credential statuses, and linked candidate internship applications.</p>
       </div>
+      <div>
+        <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary" style="gap: 6px; font-weight: 700;">
+          {{ icon('user-plus', size=15) }} Create Employee
+        </a>
+      </div>
     </div>
 
     <!-- Admin Nav Tabs -->

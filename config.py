@@ -356,6 +356,12 @@ class Config:
     # Payment Test Mode Switch (Defaults to false so real Cashfree Sandbox is used)
     PAYMENT_TEST_MODE = os.environ.get('PAYMENT_TEST_MODE', 'false').lower() in ('true', '1', 'yes')
 
+    # Manual Internship Application Workflow Switch
+    # When enabled (default True), new applications follow the simple 5-field manual workflow without automatic Cashfree redirects.
+    # The old automated payment/email workflow remains preserved in codebase and can be restored at any time.
+    MANUAL_APPLICATION_WORKFLOW = os.environ.get('MANUAL_APPLICATION_WORKFLOW', 'true').lower() in ('true', '1', 'yes')
+    APPLICATION_PAYMENT_MODE = os.environ.get('APPLICATION_PAYMENT_MODE', 'MANUAL').upper()  # 'MANUAL' or 'AUTOMATED'
+
     # Application Public URL (used for OAuth redirects & notifications)
     APP_URL = os.environ.get('APP_URL', 'http://localhost:5000').rstrip('/')
 

@@ -14,6 +14,9 @@
         <p>Review candidate profiles, evaluate credentials, check Cashfree payment stages, and manage recruitment pipeline stages.</p>
       </div>
       <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.create_employee') }}" class="btn btn-primary" style="gap: 6px; font-weight: 700;">
+          {{ icon('user-plus', size=15) }} Create Employee
+        </a>
         {% if total_unfiltered_applications > 0 %}
           <button type="button" class="btn btn-danger-outline" id="open-clear-all-modal-btn" style="gap: 6px;">
             {{ icon('trash-2', size=15) }} Clear All Applications
@@ -60,6 +63,9 @@
         {% if selected_status and selected_status != 'all' %}
           <input type="hidden" name="status" value="{{ selected_status }}" />
         {% endif %}
+        {% if selected_payment_status and selected_payment_status != 'all' %}
+          <input type="hidden" name="payment_status" value="{{ selected_payment_status }}" />
+        {% endif %}
 
         <input
           type="text"
@@ -93,6 +99,13 @@
             <option value="3_months" {{ 'selected' if selected_duration == '3_months' else '' }}>3 Months</option>
           </select>
 
+          <select name="payment_status" class="admin-select" onchange="this.form.submit();">
+            <option value="all" {{ 'selected' if not selected_payment_status or selected_payment_status == 'all' else '' }}>All Payments</option>
+            <option value="pending" {{ 'selected' if selected_payment_status == 'pending' else '' }}>Pending</option>
+            <option value="paid" {{ 'selected' if selected_payment_status == 'paid' else '' }}>Paid</option>
+            <option value="failed" {{ 'selected' if selected_payment_status == 'failed' else '' }}>Failed</option>
+          </select>
+
           <select name="status" class="admin-select" onchange="this.form.submit();">
             <option value="all" {{ 'selected' if selected_status == 'all' else '' }}>All Stages</option>
             <option value="APPLIED" {{ 'selected' if selected_status in ['APPLIED', 'New'] else '' }}>Applied</option>
@@ -102,7 +115,7 @@
             <option value="Hired" {{ 'selected' if selected_status == 'Hired' else '' }}>Hired</option>
           </select>
 
-          {% if selected_status != 'all' or selected_job_id or selected_duration or search_query %}
+          {% if (selected_status and selected_status != 'all') or (selected_payment_status and selected_payment_status != 'all') or selected_job_id or selected_duration or search_query %}
             <a href="{{ url_for('admin.applications') }}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">Reset</a>
           {% endif %}
         </form>
@@ -170,7 +183,13 @@
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge-status active">Paid</span>
+                  {% if app.payment_status == 'paid' %}
+                    <span class="badge-status active" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">Paid</span>
+                  {% elif app.payment_status == 'failed' %}
+                    <span class="badge-status" style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">Failed</span>
+                  {% else %}
+                    <span class="badge-status" style="background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3);">Pending</span>
+                  {% endif %}
                 </td>
                 <td>
                   <span class="badge-status {{ app.status_badge_class }}">{{ app.status_display }}</span>
@@ -179,10 +198,21 @@
                   {{ app.created_at.strftime('%b %d, %Y') }}
                 </td>
                 <td>
-                  <div class="action-buttons" style="justify-content: flex-end;">
-                    <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume') }}" class="btn-icon" title="View Resume" target="_blank">
-                      {{ icon('file-text', size=14) }}
-                    </a>
+                  <div class="action-buttons" style="justify-content: flex-end; gap: 4px;">
+                    {% if not app.employee %}
+                      <a href="{{ url_for('admin.create_employee', app_id=app.id) }}" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.725rem; border-color: rgba(16,185,129,0.4); color: #34d399;" title="Create Employee Record">
+                        {{ icon('user-plus', size=12) }} Create Emp
+                      </a>
+                    {% else %}
+                      <span style="font-size: 0.725rem; font-weight: 700; color: #a7f3d0; font-family: var(--font-mono, monospace); padding: 0.15rem 0.4rem; background: rgba(16,185,129,0.1); border-radius: 4px; border: 1px solid rgba(16,185,129,0.25);">
+                        {{ app.employee.employee_id }}
+                      </span>
+                    {% endif %}
+                    {% if app.resume_path and app.resume_filename != 'NOT_PROVIDED' %}
+                      <a href="{{ url_for('admin.download_document', app_id=app.id, doc_type='resume') }}" class="btn-icon" title="View Resume" target="_blank">
+                        {{ icon('file-text', size=14) }}
+                      </a>
+                    {% endif %}
                     <a href="{{ url_for('admin.application_detail', app_id=app.id) }}" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;">
                       Review Details
                     </a>

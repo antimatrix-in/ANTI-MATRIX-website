@@ -13,6 +13,7 @@ class DurationMovedToApplicationTestCase(unittest.TestCase):
         self.app = create_app('testing')
         self.app.config['TESTING'] = True
         self.app.config['WTF_CSRF_ENABLED'] = False
+        self.app.config['MANUAL_APPLICATION_WORKFLOW'] = False
         self.client = self.app.test_client()
 
         self.app_context = self.app.app_context()
