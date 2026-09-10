@@ -142,8 +142,8 @@
             </div>
             <div class="fgrp" style="margin-bottom:1rem"><label for="address" class="flbl">Residential Address <span class="freq">*</span></label><textarea id="address" name="address" rows="2" class="finp" placeholder="Door No., Street, Area / Locality..." required>{{ form_data.get('address','') }}</textarea><span class="ferr" id="err-address"></span></div>
             <div class="row3">
-              <div class="fgrp"><label for="state" class="flbl">State <span class="freq">*</span></label><select id="state" name="state" class="finp" required onchange="handleStateChange()"><option value="">Select State</option>{% for st_name in states_and_cities.keys() %}<option value="{{ st_name }}" {{ 'selected' if form_data.get('state') == st_name else '' }}>{{ st_name }}</option>{% endfor %}</select><span class="ferr" id="err-state"></span></div>
-              <div class="fgrp"><label for="city" class="flbl">City <span class="freq">*</span></label><select id="city" name="city" class="finp" required><option value="">Select City</option></select><span class="ferr" id="err-city"></span></div>
+              <div class="fgrp"><label for="state" class="flbl">State <span class="freq">*</span></label><select id="state" name="state" class="finp" required><option value="">Select State</option>{% for st_name in states_and_cities.keys() %}<option value="{{ st_name }}" {{ 'selected' if form_data.get('state') == st_name else '' }}>{{ st_name }}</option>{% endfor %}</select><span class="ferr" id="err-state"></span></div>
+              <div class="fgrp"><label for="city" class="flbl">City <span class="freq">*</span></label><input type="text" id="city" name="city" class="finp" placeholder="Enter your city" value="{{ form_data.get('city','') }}" required /><span class="ferr" id="err-city"></span></div>
               <div class="fgrp"><label for="pincode" class="flbl">Pincode <span class="freq">*</span></label><input type="text" id="pincode" name="pincode" class="finp" placeholder="6-digit code" maxlength="6" pattern="[1-9][0-9]{5}" value="{{ form_data.get('pincode','') }}" required /><span class="ferr" id="err-pincode"></span></div>
             </div>
           </div>
@@ -263,19 +263,6 @@
 
 {% block scripts %}
 <script>
-var stateCityMap = {{ states_and_cities|tojson }};
-var initState = "{{ form_data.get('state','') }}";
-var initCity  = "{{ form_data.get('city','') }}";
-function populateCities(sn, sc) {
-  sc = sc || '';
-  var cs = document.getElementById('city');
-  if (!cs) return;
-  cs.innerHTML = '<option value="">Select City</option>';
-  if (!sn || !stateCityMap[sn]) return;
-  stateCityMap[sn].forEach(function(c) { var o = document.createElement('option'); o.value = c; o.textContent = c; if (c === sc) o.selected = true; cs.appendChild(o); });
-}
-function handleStateChange() { populateCities(document.getElementById('state').value, ''); }
-document.addEventListener('DOMContentLoaded', function() { if (initState) populateCities(initState, initCity); });
 function handleFileSelected(inp, did, eid, exts) {
   var f = inp.files[0]; var d = document.getElementById(did); var e = document.getElementById(eid);
   if (e) e.style.display = 'none';
@@ -307,7 +294,6 @@ function handleDurationSelection(dur) {
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
-  if (initState) populateCities(initState, initCity);
   var checkedDur = document.querySelector('input[name="duration"]:checked');
   if (checkedDur) {
     handleDurationSelection(checkedDur.value);

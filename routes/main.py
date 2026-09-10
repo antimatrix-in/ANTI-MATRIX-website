@@ -178,10 +178,10 @@ def apply_job(job_id):
 
         if not city:
             errors.append('City is required.')
-        elif state in INDIA_STATES_AND_CITIES:
-            valid_cities = [c.lower() for c in INDIA_STATES_AND_CITIES[state]]
-            if city.lower() not in valid_cities:
-                errors.append(f'Selected city is not valid for state {state}.')
+        elif len(city) < 2 or len(city) > 100:
+            errors.append('Please enter a valid city name.')
+        elif not re.search(r'[a-zA-Z\u00C0-\u024F]', city) or not re.match(r"^[\w\s\.\-']+$", city, re.UNICODE):
+            errors.append('Please enter a valid city name.')
 
         if not pincode:
             errors.append('Pincode is required.')
