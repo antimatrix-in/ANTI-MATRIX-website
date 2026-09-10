@@ -139,15 +139,15 @@
               />
             </div>
             <div class="form-group">
-              <label for="job_id" class="form-label">
-                <span>Job ID (JB####) <span class="req">*</span></span>
+              <label for="job_code" class="form-label">
+                <span>Job Code (JB####) <span class="req">*</span></span>
               </label>
               <input
                 type="text"
-                id="job_id"
-                name="job_id"
+                id="job_code"
+                name="job_code"
                 class="form-input"
-                value="{{ job.job_id or '' }}"
+                value="{{ job.job_code or job.job_id or '' }}"
                 placeholder="e.g. JB1234"
                 pattern="^JB\d{4}$"
                 style="font-family: monospace; font-weight: 700; text-transform: uppercase;"

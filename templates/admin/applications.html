@@ -140,9 +140,9 @@
                 </td>
                 <td>
                   <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <span style="font-weight: 600; color: var(--color-text);">{{ app.job.title }}</span>
-                    {% if app.job and app.job.job_id %}
-                      <span style="font-family: var(--font-mono, monospace); font-size: 0.725rem; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.12); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.25);">{{ app.job.job_id }}</span>
+                    {% set app_job_code = (app.job.job_code or app.job.job_id or app.job_code) if app.job else app.job_code %}
+                    {% if app_job_code %}
+                      <span style="font-family: var(--font-mono, monospace); font-size: 0.725rem; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.12); padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(59, 130, 246, 0.25);">{{ app_job_code }}</span>
                     {% endif %}
                   </div>
                   <span class="admin-table-subtitle">{{ app.job.department }} &bull; CGPA: {{ app.current_cgpa or 'N/A' }}</span>

@@ -8,6 +8,7 @@ class JobPosting(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     job_id = db.Column(db.String(20), unique=True, nullable=True, index=True)
+    job_code = db.Column(db.String(20), unique=True, nullable=True, index=True)
     title = db.Column(db.String(150), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     location = db.Column(db.String(100), nullable=False)
@@ -29,22 +30,27 @@ class JobPosting(db.Model):
     applications = db.relationship('JobApplication', backref='job', lazy=True, cascade='all, delete-orphan')
 
     @classmethod
-    def generate_unique_job_id(cls, preferred_id=None):
+    def generate_unique_job_code(cls, preferred_code=None):
         """
-        Generate a unique Job ID in the format JB#### (e.g., JB1001, JB1002, JB1234).
-        If preferred_id is provided, matches format, and is not already assigned, it is returned.
+        Generate a unique Job Code in the format JB#### (e.g., JB1001, JB1002, JB1234).
+        If preferred_code is provided, matches format, and is not already assigned, it is returned.
         Otherwise finds the first available unique JB#### starting from JB1001.
         """
         import re
-        if preferred_id:
-            cand = str(preferred_id).strip().upper()
+        if preferred_code:
+            cand = str(preferred_code).strip().upper()
             if re.match(r'^JB\d{4}$', cand):
-                exists = cls.query.filter_by(job_id=cand).first()
+                exists = cls.query.filter((cls.job_id == cand) | (cls.job_code == cand)).first()
                 if not exists:
                     return cand
 
-        all_records = cls.query.with_entities(cls.job_id).all()
-        used = {r[0].upper() for r in all_records if r[0]}
+        all_records = cls.query.with_entities(cls.job_id, cls.job_code).all()
+        used = set()
+        for r in all_records:
+            if r[0]:
+                used.add(r[0].strip().upper())
+            if len(r) > 1 and r[1]:
+                used.add(r[1].strip().upper())
 
         num = 1001
         while True:
@@ -52,6 +58,18 @@ class JobPosting(db.Model):
             if candidate not in used:
                 return candidate
             num += 1
+
+    @classmethod
+    def generate_unique_job_id(cls, preferred_id=None):
+        """Backwards-compatible alias for generate_unique_job_code."""
+        return cls.generate_unique_job_code(preferred_code=preferred_id)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        code = kwargs.get('job_code') or kwargs.get('job_id')
+        if code:
+            self.job_code = code
+            self.job_id = code
 
     @property
     def is_updated(self):
@@ -231,6 +249,13 @@ class JobApplication(db.Model):
         if self.payment_status in ['paid', 'exempt']:
             return f"AM-APP-{self.id:06d}"
         return ""
+
+    @property
+    def job_code(self):
+        """Authoritatively derived Job Code from the linked Job Posting relationship."""
+        if self.job:
+            return getattr(self.job, 'job_code', None) or getattr(self.job, 'job_id', None)
+        return None
 
     @property
     def duration_display(self):

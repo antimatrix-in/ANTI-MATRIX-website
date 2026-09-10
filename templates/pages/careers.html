@@ -158,10 +158,11 @@
             </div>
 
             <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md);">
-              {% if featured_job.job_id %}
+              {% set feat_code = featured_job.job_code or featured_job.job_id %}
+              {% if feat_code %}
                 <div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job ID</div>
-                  <div style="font-family: monospace; font-weight: 700; color: #2563eb; font-size: 1rem;">{{ featured_job.job_id }}</div>
+                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job Code</div>
+                  <div style="font-family: monospace; font-weight: 700; color: #2563eb; font-size: 1rem;">{{ feat_code }}</div>
                 </div>
               {% endif %}
               <div>
@@ -238,9 +239,10 @@
                 </div>
 
                 <div class="job-meta" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                  {% if job.job_id %}
+                  {% set code = job.job_code or job.job_id %}
+                  {% if code %}
                     <span style="font-size: 0.75rem; font-weight: 700; font-family: monospace; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                      Job ID: {{ job.job_id }}
+                      Job Code: {{ code }}
                     </span>
                   {% endif %}
                   <span style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(16,185,129,0.1); color: var(--color-primary-light); border: 1px solid rgba(16,185,129,0.25);">{{ job.department }}</span>
@@ -306,10 +308,11 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: var(--space-md); background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg);">
-                  {% if job.job_id %}
+                  {% set pane_code = job.job_code or job.job_id %}
+                  {% if pane_code %}
                     <div>
-                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job ID</div>
-                      <div style="font-family: monospace; font-weight: 700; color: #60a5fa; font-size: 0.95rem;">{{ job.job_id }}</div>
+                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job Code</div>
+                      <div style="font-family: monospace; font-weight: 700; color: #60a5fa; font-size: 0.95rem;">{{ pane_code }}</div>
                     </div>
                   {% endif %}
                   <div>

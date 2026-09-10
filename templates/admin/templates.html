@@ -272,83 +272,71 @@
     </div>
 
     <!-- ================================================================= -->
-    <!-- SECTION 2: DOCUMENT TEMPLATES                                     -->
+    <!-- SECTION 2: TEMPLATE MANAGEMENT (JOB CODE BASED)              -->
     <!-- ================================================================= -->
     <div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border); flex-wrap: wrap; gap: 1rem;">
         <div>
           <h2 style="font-family: var(--font-admin-heading); font-size: 1.25rem; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0 0 0.2rem 0;">
-            {{ icon('file-text', size=18, color='var(--color-primary-light)') }} Document Templates
+            {{ icon('file-text', size=18, color='var(--color-primary-light)') }} Templates
           </h2>
-          <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">Dynamic Role/Job Based Offer Letter Master Files &amp; Master Documents</p>
+          <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">Configure Job Code–based Offer Letter (.docx) and Email templates with automatic candidate matching.</p>
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" onclick="toggleCreateTemplateCard()" style="gap: 8px; font-weight: 700; height: 42px; padding: 0 1.25rem;">
+            {{ icon('plus', size=16) }} Create Template
+          </button>
         </div>
       </div>
 
-      <!-- Subsection: Upload Offer Letter Template Form -->
-      <div class="card" style="padding: var(--space-xl); border-color: rgba(16, 185, 129, 0.35); margin-bottom: var(--space-xl); background: #ffffff;">
+      <!-- Create Template Form Card (Expandable & Direct) -->
+      <div class="card" id="create-template-card" style="display: block; padding: var(--space-xl); border-color: rgba(16, 185, 129, 0.35); margin-bottom: var(--space-xl); background: #ffffff;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-sm);">
           <div>
             <h3 style="font-family: var(--font-admin-heading); font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.2rem 0; display: flex; align-items: center; gap: 8px;">
-              {{ icon('upload-cloud', size=18, color='var(--color-primary-light)') }} Upload Offer Letter Template
+              {{ icon('plus-circle', size=18, color='var(--color-primary-light)') }} Create Template
             </h3>
             <p style="font-size: 0.825rem; color: var(--color-text-dim); margin: 0;">
-              Upload a DOCX template and assign it to an approved Job / Domain and Internship Duration.
+              Select Template Type, assign to an active Job Code, and upload the template file.
             </p>
           </div>
           <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; font-weight: 700;">
-            Role-Based Template Mapping
+            Job Code Mapping
           </span>
         </div>
 
-        <form method="POST" action="{{ url_for('admin.upload_document_template', template_type='offer_letter') }}" enctype="multipart/form-data" id="upload-template-form">
+        <form method="POST" action="{{ url_for('admin.create_template') }}" enctype="multipart/form-data" id="create-template-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);">
             
-            <!-- 1. Document Type -->
+            <!-- 1. Template Type Dropdown -->
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">DOCUMENT TYPE</label>
-              <select name="document_type" class="form-input" style="font-size: 0.85rem; background: #f8fafc; cursor: default;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                TEMPLATE TYPE <span style="color: #ef4444;">*</span>
+              </label>
+              <select name="template_type" id="create_template_type" class="form-input" required style="font-size: 0.85rem;" onchange="handleCreateTemplateTypeChange(this)">
                 <option value="offer_letter" selected>Offer Letter</option>
+                <option value="email">Email</option>
               </select>
             </div>
 
-            <!-- 2. Job / Domain (Dynamic) -->
+            <!-- 2. Job Code Dropdown -->
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
-                JOB / DOMAIN <span style="color: #ef4444;">*</span>
+                SELECT JOB CODE <span style="color: #ef4444;">*</span>
               </label>
-              <select name="job_domain" id="job_domain_select" class="form-input" required style="font-size: 0.85rem;" onchange="handleDomainChange(this)">
-                <option value="">-- Select Job / Domain --</option>
-                {% for domain in available_domains %}
-                <option value="{{ domain }}">{{ domain }}</option>
+              <select name="job_posting_id" id="create_job_posting_id" class="form-input" required style="font-size: 0.85rem;" onchange="handleJobSelectionChange(this)">
+                <option value="">-- Select Job Code --</option>
+                {% for job in active_jobs %}
+                <option value="{{ job.id }}" data-code="{{ job.job_code or job.job_id }}" data-title="{{ job.title }}">
+                  {{ job.job_code or job.job_id }} — {{ job.title }} ({{ job.department }})
+                </option>
                 {% endfor %}
-                <option value="__custom__">+ Add Custom / Other Domain...</option>
-              </select>
-              <input
-                type="text"
-                name="custom_job_domain"
-                id="custom_job_domain_input"
-                class="form-input"
-                placeholder="Type new domain name (e.g. Cyber Security)..."
-                style="display: none; margin-top: 6px; font-size: 0.85rem;"
-                oninput="handleCustomDomainInput(this)"
-              />
-            </div>
-
-            <!-- 3. Duration -->
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
-                DURATION <span style="color: #ef4444;">*</span>
-              </label>
-              <select name="duration" id="duration_select" class="form-input" required style="font-size: 0.85rem;" onchange="updateTemplateNameSuggestion()">
-                <option value="Both" selected>Both (1 Month &amp; 3 Months)</option>
-                <option value="1 Month">1 Month</option>
-                <option value="3 Months">3 Months</option>
               </select>
             </div>
 
-            <!-- 4. Template Name -->
+            <!-- 3. Template Name -->
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
                 TEMPLATE NAME <span style="color: #ef4444;">*</span>
@@ -356,7 +344,7 @@
               <input
                 type="text"
                 name="template_name"
-                id="template_name_input"
+                id="create_template_name"
                 class="form-input"
                 placeholder="e.g. AI & ML Offer Letter Template"
                 required
@@ -364,30 +352,60 @@
               />
             </div>
 
+            <!-- 4. Duration (For Offer Letters) -->
+            <div class="form-group" id="create_template_duration_group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                DURATION
+              </label>
+              <select name="duration" class="form-input" style="font-size: 0.85rem;">
+                <option value="Both" selected>Both (1 Month &amp; 3 Months)</option>
+                <option value="1 Month">1 Month</option>
+                <option value="3 Months">3 Months</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Optional Subject Row for Email Templates -->
+          <div id="create_template_subject_group" style="display: none; margin-bottom: var(--space-md);">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155;">
+                EMAIL SUBJECT
+              </label>
+              <input
+                type="text"
+                name="subject"
+                id="create_template_subject"
+                class="form-input"
+                placeholder="e.g. Congratulations! You Have Been Shortlisted — [Job Title] | Anti Matrix"
+                style="font-size: 0.85rem;"
+              />
+            </div>
           </div>
 
           <!-- Template File and Upload Button Row -->
           <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-md); align-items: flex-end; background: #f8fafc; padding: var(--space-md); border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 4px;">
-                TEMPLATE FILE <span style="color: #ef4444;">*</span>
+                UPLOAD TEMPLATE <span style="color: #ef4444;">*</span>
               </label>
               <input
                 type="file"
                 name="template_file"
+                id="create_template_file_input"
                 accept=".docx"
                 class="form-input"
                 required
                 style="font-size: 0.825rem; padding: 0.35rem 0.5rem; background: #ffffff;"
               />
-              <span style="font-size: 0.725rem; color: var(--color-text-muted); display: block; margin-top: 3px;">
-                Upload official Microsoft Word document (.docx) with letterhead, logo, and placeholders intact.
+              <span id="create_template_file_hint" style="font-size: 0.725rem; color: var(--color-text-muted); display: block; margin-top: 3px;">
+                Upload official Microsoft Word document (.docx) master template for Offer Letter.
               </span>
             </div>
 
             <div>
               <button type="submit" class="btn btn-primary" style="gap: 8px; font-weight: 700; white-space: nowrap; height: 42px; padding: 0 1.25rem;">
-                {{ icon('upload-cloud', size=16) }} UPLOAD TEMPLATE
+                {{ icon('upload-cloud', size=16) }} CREATE TEMPLATE
               </button>
             </div>
           </div>
@@ -402,31 +420,32 @@
               {{ icon('list', size=16, color='var(--color-primary-light)') }} Uploaded Templates
             </h3>
             <span style="font-size: 0.775rem; color: var(--color-text-muted);">
-              Active and historical Offer Letter templates in the system
+              Active and historical Offer Letter and Email templates linked to Job Codes
             </span>
           </div>
           <div>
             <span class="badge" style="background: rgba(56, 189, 248, 0.12); color: #0284c7; font-size: 0.75rem; font-weight: 700;">
-              {{ offer_templates|length }} Total Templates
+              {{ all_templates|length }} Total Templates
             </span>
           </div>
         </div>
 
-        {% if offer_templates %}
+        {% if all_templates %}
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
             <thead>
               <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; background: #f8fafc;">
                 <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Template Name</th>
-                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Job / Domain</th>
-                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Duration</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Type</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Job Code</th>
+                <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Job Title</th>
                 <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Status</th>
                 <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase;">Uploaded Date</th>
                 <th style="padding: 10px 12px; font-weight: 700; color: #475569; font-size: 0.775rem; text-transform: uppercase; text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% for tmpl in offer_templates %}
+              {% for tmpl in all_templates %}
               <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                 
                 <!-- Template Name & File -->
@@ -437,19 +456,40 @@
                   </div>
                 </td>
 
-                <!-- Job / Domain -->
+                <!-- Type -->
                 <td style="padding: 12px;">
-                  {% set domain_label = tmpl.job_domain or (tmpl.template_type|replace('offer_letter_', '')|replace('_', ' ')|title) %}
-                  <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border-color: rgba(16, 185, 129, 0.25); font-weight: 600; font-size: 0.75rem;">
-                    {{ domain_label if domain_label != 'Offer Letter' else 'General' }}
-                  </span>
+                  {% if tmpl.template_type == 'email' %}
+                    <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.25); font-weight: 700; font-size: 0.75rem;">Email</span>
+                  {% elif tmpl.template_type == 'offer_letter' or tmpl.template_type.startswith('offer_letter_') %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border-color: rgba(16, 185, 129, 0.25); font-weight: 700; font-size: 0.75rem;">Offer Letter</span>
+                  {% else %}
+                    <span class="badge" style="background: rgba(234, 179, 8, 0.12); color: #d97706; border-color: rgba(234, 179, 8, 0.25); font-weight: 700; font-size: 0.75rem;">{{ tmpl.template_type|replace('_', ' ')|title }}</span>
+                  {% endif %}
                 </td>
 
-                <!-- Duration -->
+                <!-- Job Code -->
                 <td style="padding: 12px;">
-                  <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; border-color: rgba(99, 102, 241, 0.25); font-weight: 600; font-size: 0.75rem;">
-                    {{ tmpl.duration or 'Both' }}
-                  </span>
+                  {% set code_display = tmpl.job_code or (tmpl.job_posting.job_code if tmpl.job_posting else (tmpl.job_posting.job_id if tmpl.job_posting else None)) %}
+                  {% if code_display %}
+                    <span style="font-family: var(--font-mono, monospace); font-weight: 800; color: #1d4ed8; background: rgba(59, 130, 246, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.25); font-size: 0.8rem;">
+                      {{ code_display }}
+                    </span>
+                  {% else %}
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="openAssignJobModal('{{ tmpl.id }}', '{{ tmpl.name }}')" style="font-size: 0.725rem; color: #d97706; padding: 2px 6px; background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.4);">
+                      {{ icon('link', size=11) }} Assign Job Code
+                    </button>
+                  {% endif %}
+                </td>
+
+                <!-- Job Title -->
+                <td style="padding: 12px;">
+                  {% if tmpl.job_posting %}
+                    <span style="font-weight: 600; color: #0f172a;">{{ tmpl.job_posting.title }}</span>
+                  {% elif tmpl.job_domain %}
+                    <span style="color: #64748b; font-size: 0.8rem;">{{ tmpl.job_domain }}</span>
+                  {% else %}
+                    <span style="color: #94a3b8; font-size: 0.8rem;">General</span>
+                  {% endif %}
                 </td>
 
                 <!-- Status -->
@@ -486,7 +526,7 @@
                       href="{{ url_for('admin.download_document_template_by_id', template_id=tmpl.id) }}"
                       class="btn btn-ghost btn-sm"
                       style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #0284c7;"
-                      title="Download DOCX File"
+                      title="Download File"
                     >
                       {{ icon('download', size=12) }} Download
                     </a>
@@ -495,7 +535,7 @@
                     {% if not tmpl.is_active %}
                     <form method="POST" action="{{ url_for('admin.activate_document_template', template_id=tmpl.id) }}" style="display: inline;">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #059669; border-color: rgba(5, 150, 105, 0.3);">
+                      <button type="submit" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 0.75rem; gap: 4px; color: #059669; border-color: rgba(5, 150, 105, 0.3);" title="Activate Template (Deactivates previous active template for this Job Code)">
                         {{ icon('check-circle', size=12) }} Activate
                       </button>
                     </form>
@@ -532,7 +572,7 @@
         {% else %}
         <div style="text-align: center; padding: var(--space-xl); color: #64748b; background: #f8fafc; border-radius: 8px;">
           {{ icon('inbox', size=32, color='#94a3b8') }}
-          <p style="margin-top: 8px; font-size: 0.875rem;">No Offer Letter templates uploaded yet. Use the form above to add your first template.</p>
+          <p style="margin-top: 8px; font-size: 0.875rem;">No templates uploaded yet. Use the Create Template form above to add your first template.</p>
         </div>
         {% endif %}
 
@@ -552,7 +592,7 @@
             <span class="badge" style="font-family: monospace; cursor: pointer;" onclick="copyVar(this)">[Application ID]</span>
           </div>
           <span style="font-size: 0.725rem; color: #64748b; margin-top: 4px; display: block;">
-            The uploaded DOCX template itself contains the approved position description, formatting, MSME and Anti-Matrix branding. Only matching placeholders are substituted dynamically.
+            The uploaded DOCX master template preserves all layout, logos, fonts, tables, and borders. Only supported placeholders are replaced dynamically.
           </span>
         </div>
       </div>
@@ -714,6 +754,66 @@
   </div>
 </div>
 
+<!-- Assign Job Code Modal -->
+<div id="assignJobModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #ffffff; width: 100%; max-width: 540px; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    
+    <!-- Modal Header -->
+    <div style="background: #070a12; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-primary-light);">
+      <div>
+        <h3 style="color: #ffffff; margin: 0; font-size: 1.1rem; font-weight: 800;">Assign Job Code to Template</h3>
+        <span style="font-size: 0.75rem; color: #94a3b8;">Link master template directly to a unique Job Code</span>
+      </div>
+      <button type="button" onclick="closeAssignJobModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form id="assignJobForm" method="POST" action="" style="margin: 0;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div style="padding: 20px 24px; background: #f8fafc;">
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; display: block; margin-bottom: 4px;">Template</label>
+          <div id="assignModalTemplateName" style="font-weight: 700; color: #0f172a; font-size: 0.95rem; background: #ffffff; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;"></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+            TARGET JOB CODE <span style="color: #ef4444;">*</span>
+          </label>
+          <select name="job_posting_id" id="assign_job_posting_id" class="form-input" required style="font-size: 0.85rem;">
+            <option value="">-- Select Job Code --</option>
+            {% for job in active_jobs %}
+            <option value="{{ job.id }}">
+              {{ job.job_code or job.job_id }} — {{ job.title }} ({{ job.department }})
+            </option>
+            {% endfor %}
+          </select>
+          <span style="font-size: 0.725rem; color: var(--color-text-muted); display: block; margin-top: 4px;">
+            The template will be strictly linked to this Job Code for candidate offer generation.
+          </span>
+        </div>
+
+        <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" name="make_active" id="assign_make_active" value="1" checked style="width: 16px; height: 16px; accent-color: #10b981;" />
+          <label for="assign_make_active" style="font-size: 0.825rem; color: #334155; font-weight: 600; cursor: pointer;">
+            Set as Active template for this Job Code (deactivates other active templates for this job)
+          </label>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding: 14px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeAssignJobModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="gap: 6px;">
+          {{ icon('check', size=14) }} Save &amp; Assign Job Code
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
 <script>
 function copyVar(el) {
   const text = el.innerText;
@@ -807,11 +907,113 @@ function updateTemplateNameSuggestion() {
   }
 }
 
+function toggleCreateTemplateCard() {
+  const card = document.getElementById('create-template-card');
+  if (card) {
+    if (card.style.display === 'none' || card.style.display === '') {
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      card.style.display = 'none';
+    }
+  }
+}
+
+function handleCreateTemplateTypeChange(selectEl) {
+  const type = selectEl ? selectEl.value : 'offer_letter';
+  const durationGroup = document.getElementById('create_template_duration_group');
+  const subjectGroup = document.getElementById('create_template_subject_group');
+  const fileInput = document.getElementById('create_template_file_input');
+  const fileHint = document.getElementById('create_template_file_hint');
+  const jobSelect = document.getElementById('create_job_posting_id');
+
+  if (type === 'email') {
+    if (durationGroup) durationGroup.style.display = 'none';
+    if (subjectGroup) subjectGroup.style.display = 'block';
+    if (fileInput) {
+      fileInput.accept = '.html,.htm,.md,.txt,.docx';
+    }
+    if (fileHint) {
+      fileHint.innerText = 'Upload email template content (.html, .md, .txt, or .docx).';
+    }
+  } else {
+    if (durationGroup) durationGroup.style.display = 'block';
+    if (subjectGroup) subjectGroup.style.display = 'none';
+    if (fileInput) {
+      fileInput.accept = '.docx';
+    }
+    if (fileHint) {
+      fileHint.innerText = 'Upload official Microsoft Word document (.docx) master template for Offer Letter.';
+    }
+  }
+  handleJobSelectionChange(jobSelect);
+}
+
+function handleJobSelectionChange(selectEl) {
+  if (!selectEl) return;
+  const selectedOption = selectEl.options[selectEl.selectedIndex];
+  if (!selectedOption || !selectedOption.value) return;
+
+  const jobCode = selectedOption.getAttribute('data-code') || '';
+  const jobTitle = selectedOption.getAttribute('data-title') || '';
+  const typeSelect = document.getElementById('create_template_type');
+  const isEmail = typeSelect && typeSelect.value === 'email';
+  const nameInput = document.getElementById('create_template_name');
+  const subjectInput = document.getElementById('create_template_subject');
+
+  const typeLabel = isEmail ? 'Email' : 'Offer Letter';
+  if (nameInput && (!nameInput.value || nameInput.dataset.autoFilled === 'true')) {
+    nameInput.value = `${jobCode} — ${jobTitle} ${typeLabel} Template`;
+    nameInput.dataset.autoFilled = 'true';
+  }
+
+  if (isEmail && subjectInput && (!subjectInput.value || subjectInput.dataset.autoFilled === 'true')) {
+    subjectInput.value = `Congratulations! You Have Been Shortlisted — ${jobTitle} | Anti Matrix`;
+    subjectInput.dataset.autoFilled = 'true';
+  }
+}
+
+function openAssignJobModal(templateId, templateName) {
+  const modal = document.getElementById('assignJobModal');
+  const form = document.getElementById('assignJobForm');
+  const nameEl = document.getElementById('assignModalTemplateName');
+  if (form) {
+    form.action = `/admin/templates/${templateId}/assign-job`;
+  }
+  if (nameEl) {
+    nameEl.innerText = templateName || `Template #${templateId}`;
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeAssignJobModal() {
+  const modal = document.getElementById('assignJobModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('template_name_input');
   if (nameInput) {
     nameInput.addEventListener('input', () => {
       nameInput.dataset.autoFilled = 'false';
+    });
+  }
+
+  const createNameInput = document.getElementById('create_template_name');
+  if (createNameInput) {
+    createNameInput.addEventListener('input', () => {
+      createNameInput.dataset.autoFilled = 'false';
+    });
+  }
+
+  const createSubjectInput = document.getElementById('create_template_subject');
+  if (createSubjectInput) {
+    createSubjectInput.addEventListener('input', () => {
+      createSubjectInput.dataset.autoFilled = 'false';
     });
   }
 });

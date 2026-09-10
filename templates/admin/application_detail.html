@@ -31,8 +31,9 @@
         </div>
         <p style="margin-top: 0.35rem; color: var(--color-text-dim);">
           Applied for: <strong style="color: var(--color-text);">{{ job.title }}</strong>
-          {% if job.job_id %}
-            (<span style="font-family: var(--font-mono, monospace); font-weight: 700; color: #60a5fa;">Job ID: {{ job.job_id }}</span>)
+          {% set display_job_code = job.job_code or job.job_id or app.job_code %}
+          {% if display_job_code %}
+            (<span style="font-family: var(--font-mono, monospace); font-weight: 700; color: #60a5fa;">Job Code: {{ display_job_code }}</span>)
           {% endif %}
           &bull; {{ job.department }} &bull; {{ job.location }}
         </p>
@@ -755,9 +756,9 @@
           </div>
           <div class="dossier-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
             <div class="dossier-item">
-              <span class="dossier-label">Job ID</span>
+              <span class="dossier-label">Job Code</span>
               <span class="dossier-value" style="font-family: var(--font-mono, monospace); color: #60a5fa; font-weight: 800;">
-                {{ job.job_id or 'N/A' }}
+                {{ job.job_code or job.job_id or app.job_code or 'N/A' }}
               </span>
             </div>
             <div class="dossier-item">

@@ -130,18 +130,18 @@
               />
             </div>
             <div class="form-group">
-              <label for="job_id" class="form-label">
-                <span>Job ID (JB####) <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Auto if blank)</span></span>
+              <label for="job_code" class="form-label">
+                <span>Job Code (JB####) <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Auto if blank)</span></span>
               </label>
               <input
                 type="text"
-                id="job_id"
-                name="job_id"
+                id="job_code"
+                name="job_code"
                 class="form-input"
-                placeholder="e.g. JB1003 (or auto)"
+                placeholder="e.g. JB1003 (or leave blank for auto)"
                 pattern="^JB\d{4}$"
                 style="font-family: monospace; font-weight: 700; text-transform: uppercase;"
-                value="{{ form_data.get('job_id', '') }}"
+                value="{{ form_data.get('job_code', form_data.get('job_id', '')) }}"
               />
             </div>
           </div>

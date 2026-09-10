@@ -174,31 +174,58 @@ def create_job():
                 flash(err, 'danger')
             return render_template('admin/create_job.html', form_data=request.form)
 
-        job_id_val = (request.form.get('job_id') or '').strip()
-        final_job_id = JobPosting.generate_unique_job_id(preferred_id=job_id_val if job_id_val else None)
+        # Auto-generate unique Job Code JB#### with concurrency retry or use manual if provided
+        from sqlalchemy.exc import IntegrityError
+        import re
 
-        job = JobPosting(
-            job_id=final_job_id,
-            title=title,
-            department=department,
-            location=location,
-            employment_type=employment_type,
-            duration=duration,
-            short_description=short_description,
-            description=description,
-            requirements=requirements,
-            qualifications=qualifications,
-            experience=experience,
-            responsibilities=responsibilities,
-            skills=skills,
-            salary=salary,
-            application_deadline=application_deadline,
-            is_active=is_active
-        )
-        db.session.add(job)
-        db.session.commit()
+        manual_code = (request.form.get('job_code') or request.form.get('job_id') or '').strip().upper()
+        if manual_code:
+            if not re.match(r'^JB\d{4}$', manual_code):
+                flash('Job Code must follow the format JB#### (e.g. JB1001, JB1234).', 'danger')
+                return render_template('admin/create_job.html', form_data=request.form)
+            existing = JobPosting.query.filter((JobPosting.job_code == manual_code) | (JobPosting.job_id == manual_code)).first()
+            if existing:
+                flash(f'Job Code {manual_code} is already in use by "{existing.title}".', 'danger')
+                return render_template('admin/create_job.html', form_data=request.form)
 
-        flash(f"Job posting '{job.title}' created successfully.", 'success')
+        saved = False
+        final_job_code = None
+        for attempt in range(5):
+            final_job_code = manual_code if manual_code else JobPosting.generate_unique_job_code()
+            job = JobPosting(
+                job_id=final_job_code,
+                job_code=final_job_code,
+                title=title,
+                department=department,
+                location=location,
+                employment_type=employment_type,
+                duration=duration,
+                short_description=short_description,
+                description=description,
+                requirements=requirements,
+                qualifications=qualifications,
+                experience=experience,
+                responsibilities=responsibilities,
+                skills=skills,
+                salary=salary,
+                application_deadline=application_deadline,
+                is_active=is_active
+            )
+            try:
+                db.session.add(job)
+                db.session.commit()
+                saved = True
+                break
+            except IntegrityError:
+                db.session.rollback()
+                if manual_code:
+                    flash(f'Job Code {manual_code} already exists in the database.', 'danger')
+                    return render_template('admin/create_job.html', form_data=request.form)
+                if attempt == 4:
+                    flash('Could not generate a unique Job Code due to concurrency conflict. Please try again.', 'danger')
+                    return render_template('admin/create_job.html', form_data=request.form)
+
+        flash(f"Job posting '{job.title}' ({final_job_code}) created successfully.", 'success')
         return redirect(url_for('admin.jobs'))
 
     return render_template('admin/create_job.html', form_data={})
@@ -243,15 +270,23 @@ def edit_job(job_id):
                 flash(err, 'danger')
             return render_template('admin/edit_job.html', job=job)
 
-        job_id_val = (request.form.get('job_id') or '').strip().upper()
-        if not job.job_id:
-            job.job_id = JobPosting.generate_unique_job_id(preferred_id=job_id_val if job_id_val else None)
-        elif job_id_val and job_id_val != job.job_id.upper():
+        job_code_val = (request.form.get('job_code') or request.form.get('job_id') or '').strip().upper()
+        if not job.job_code and not job.job_id:
+            generated = JobPosting.generate_unique_job_code()
+            job.job_code = generated
+            job.job_id = generated
+        elif job_code_val and job_code_val != (job.job_code or job.job_id or '').upper():
             import re
-            if re.match(r'^JB\d{4}$', job_id_val):
-                conflict = JobPosting.query.filter(JobPosting.job_id == job_id_val, JobPosting.id != job.id).first()
+            if re.match(r'^JB\d{4}$', job_code_val):
+                conflict = JobPosting.query.filter(
+                    ((JobPosting.job_code == job_code_val) | (JobPosting.job_id == job_code_val)),
+                    JobPosting.id != job.id
+                ).first()
                 if not conflict:
-                    job.job_id = job_id_val
+                    job.job_code = job_code_val
+                    job.job_id = job_code_val
+        elif not job.job_code and job.job_id:
+            job.job_code = job.job_id
 
         job.title = title
         job.department = department
@@ -625,7 +660,7 @@ def mark_application_shortlisted(app_id):
         db.session.commit()
     except (OfferLetterTemplateNotFoundError, OfferLetterTemplateFileMissingError) as tmpl_err:
         db.session.commit()
-        flash(f"Candidate marked as Shortlisted, but Offer Letter master template is missing: {str(tmpl_err)}", 'warning')
+        flash(str(tmpl_err), 'danger')
         return redirect(url_for('admin.application_detail', app_id=application.id))
     except Exception as e:
         db.session.commit()
@@ -1326,10 +1361,12 @@ def templates():
     offer_letter_email = EmailTemplate.query.filter_by(template_type='offer_letter').first()
     joining_email = EmailTemplate.query.filter_by(template_type='joining_credentials').first()
 
-    # Query all Offer Letter templates (both active and historical)
-    offer_templates = DocumentTemplate.query.filter(
-        (DocumentTemplate.template_type == 'offer_letter') | (DocumentTemplate.template_type.like('offer_letter_%'))
-    ).order_by(DocumentTemplate.is_active.desc(), DocumentTemplate.id.desc()).all()
+    # Active Job Postings for Job Code selection dropdown
+    active_jobs = JobPosting.query.filter_by(is_active=True).order_by(JobPosting.job_id.asc(), JobPosting.id.asc()).all()
+
+    # Query all templates (Offer Letter, Email, and master documents)
+    all_templates = DocumentTemplate.query.order_by(DocumentTemplate.is_active.desc(), DocumentTemplate.id.desc()).all()
+    offer_templates = [t for t in all_templates if t.template_type == 'offer_letter' or t.template_type.startswith('offer_letter_')]
 
     # Other master templates (Experience Letter, Certificate)
     exp_doc_template = DocumentTemplate.query.filter_by(template_type='experience_letter', is_active=True).order_by(DocumentTemplate.id.desc()).first()
@@ -1340,20 +1377,14 @@ def templates():
 
     # Dynamically compile available Job / Domain options from DB
     domain_set = set()
-    # 1. Standard expected domains
     for d in ['AI & ML', 'Application Development', 'Data Analytics', 'Full Stack Development']:
         domain_set.add(d)
-
-    # 2. Existing Job Postings departments and titles
     for jp in JobPosting.query.all():
         if jp.department and jp.department.strip():
             domain_set.add(jp.department.strip())
-
-    # 3. Existing uploaded templates job_domains
     for ot in offer_templates:
         if ot.job_domain and ot.job_domain.strip():
             domain_set.add(ot.job_domain.strip())
-
     available_domains = sorted(list(domain_set))
 
     return render_template(
@@ -1361,6 +1392,8 @@ def templates():
         app_success_email=app_success_email,
         offer_letter_email=offer_letter_email,
         joining_email=joining_email,
+        active_jobs=active_jobs,
+        all_templates=all_templates,
         offer_templates=offer_templates,
         available_domains=available_domains,
         exp_doc_template=exp_doc_template,
@@ -1561,13 +1594,183 @@ def upload_document_template(template_type='offer_letter'):
         return redirect(url_for('admin.templates'))
 
 
+@admin_bp.route('/templates/create', methods=['POST'])
+@admin_required
+def create_template():
+    """
+    Create a new Template assigned directly to a Job Code (JB####).
+    Supports:
+    - Template Type: 'offer_letter' (DOCX) or 'email' (HTML / Markdown / Text / DOCX)
+    - Job Code: Selected from dropdown of active jobs
+    - Template Name: descriptive name
+    - File upload: validated for extension and size (<= 16MB)
+    - Enforces single active template versioning rule per (job_code, template_type)
+    """
+    template_type = (request.form.get('template_type') or 'offer_letter').strip().lower()
+    if template_type not in ['offer_letter', 'email']:
+        flash("Invalid template type. Must be 'Offer Letter' or 'Email'.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    job_posting_id = request.form.get('job_posting_id')
+    if not job_posting_id:
+        flash("Please select a Job Code for the template.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    job = db.session.get(JobPosting, int(job_posting_id))
+    if not job:
+        flash("Selected Job Posting was not found.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    job_code = (getattr(job, 'job_code', None) or getattr(job, 'job_id', None) or f"JB{job.id}").strip().upper()
+
+    uploaded_file = request.files.get('template_file')
+    if not uploaded_file or not uploaded_file.filename:
+        flash("Please select a template file to upload.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    original_filename = secure_filename(uploaded_file.filename) or uploaded_file.filename
+    ext = os.path.splitext(original_filename)[1].lower()
+
+    if template_type == 'offer_letter':
+        if ext != '.docx':
+            flash("Offer Letter templates must be Microsoft Word (.docx) files.", 'danger')
+            return redirect(url_for('admin.templates'))
+    elif template_type == 'email':
+        if ext not in ['.html', '.htm', '.md', '.txt', '.docx']:
+            flash("Email templates must be .html, .md, .txt, or .docx files.", 'danger')
+            return redirect(url_for('admin.templates'))
+
+    template_name = (request.form.get('template_name') or '').strip()
+    if not template_name:
+        type_label = "Offer Letter" if template_type == 'offer_letter' else "Email"
+        template_name = f"{job_code} — {job.title} {type_label} Template"
+
+    duration = (request.form.get('duration') or 'Both').strip()
+    if duration not in ['Both', '1 Month', '3 Months']:
+        duration = 'Both'
+
+    templates_dir = os.path.join(current_app.root_path, 'uploads', 'templates')
+    os.makedirs(templates_dir, exist_ok=True)
+
+    unique_suffix = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+    target_filename = f"{template_type}_{job_code.lower()}_{unique_suffix}{ext}"
+    target_path = os.path.join(templates_dir, target_filename)
+
+    uploaded_file.save(target_path)
+
+    # Extract subject for email templates if provided or in file
+    subject_val = None
+    if template_type == 'email':
+        subject_val = (request.form.get('subject') or '').strip()
+        if not subject_val and ext in ['.html', '.htm', '.md', '.txt']:
+            try:
+                with open(target_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    first_line = f.readline().strip()
+                    if first_line.lower().startswith('subject:'):
+                        subject_val = first_line.split(':', 1)[1].strip()
+            except Exception:
+                pass
+        if not subject_val:
+            subject_val = f"Congratulations! You Have Been Shortlisted — {job.title} | Anti Matrix"
+
+    # VERSIONING RULE: Deactivate any existing active template for this same (job_code, template_type)
+    DocumentTemplate.query.filter_by(
+        template_type=template_type,
+        job_code=job_code,
+        is_active=True
+    ).update({'is_active': False})
+
+    # Also deactivate if matching by job_posting_id
+    DocumentTemplate.query.filter_by(
+        template_type=template_type,
+        job_posting_id=job.id,
+        is_active=True
+    ).update({'is_active': False})
+
+    new_tmpl = DocumentTemplate(
+        template_type=template_type,
+        job_posting_id=job.id,
+        job_code=job_code,
+        name=template_name,
+        filename=uploaded_file.filename,
+        file_path=target_path,
+        duration=duration,
+        job_domain=job.department or job.title,
+        subject=subject_val,
+        is_active=True,
+        created_by=getattr(current_user, 'username', 'Admin') if current_user and current_user.is_authenticated else 'Admin'
+    )
+    db.session.add(new_tmpl)
+    db.session.commit()
+
+    type_name = "Offer Letter" if template_type == 'offer_letter' else "Email"
+    flash(f"{type_name} template '{template_name}' successfully created and activated for Job Code {job_code} ({job.title}).", 'success')
+    return redirect(url_for('admin.templates'))
+
+
+@admin_bp.route('/templates/<int:template_id>/assign-job', methods=['POST'])
+@admin_required
+def assign_job_to_template(template_id):
+    """Assign or reassign an existing template to a specific Job Code."""
+    tmpl = DocumentTemplate.query.get_or_404(template_id)
+    job_posting_id = request.form.get('job_posting_id')
+    if not job_posting_id:
+        flash("Please select a Job Code to assign.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    job = db.session.get(JobPosting, int(job_posting_id))
+    if not job:
+        flash("Selected Job Posting was not found.", 'danger')
+        return redirect(url_for('admin.templates'))
+
+    job_code = (getattr(job, 'job_code', None) or getattr(job, 'job_id', None) or f"JB{job.id}").strip().upper()
+    tmpl.job_posting_id = job.id
+    tmpl.job_code = job_code
+    tmpl.job_domain = job.department or job.title
+    tmpl.updated_at = datetime.now(timezone.utc)
+
+    make_active = request.form.get('make_active') == '1'
+    if make_active:
+        DocumentTemplate.query.filter_by(
+            template_type=tmpl.template_type,
+            job_code=job_code,
+            is_active=True
+        ).update({'is_active': False})
+        DocumentTemplate.query.filter_by(
+            template_type=tmpl.template_type,
+            job_posting_id=job.id,
+            is_active=True
+        ).update({'is_active': False})
+        tmpl.is_active = True
+
+    db.session.commit()
+
+    flash(f"Template '{tmpl.name}' is now assigned to Job Code {job_code} ({job.title}).", 'success')
+    return redirect(url_for('admin.templates'))
+
+
 @admin_bp.route('/templates/document/<int:template_id>/activate', methods=['POST'])
 @admin_required
 def activate_document_template(template_id):
-    """Activates a template, enforcing duplicate protection for job_domain + duration."""
+    """Activates a template, enforcing single active template rule for (job_code, template_type)."""
     tmpl = DocumentTemplate.query.get_or_404(template_id)
 
-    if tmpl.template_type == 'offer_letter' and tmpl.job_domain:
+    if tmpl.job_code:
+        # Deactivate any other active template with the same (job_code, template_type)
+        DocumentTemplate.query.filter(
+            DocumentTemplate.id != tmpl.id,
+            DocumentTemplate.template_type == tmpl.template_type,
+            DocumentTemplate.job_code == tmpl.job_code,
+            DocumentTemplate.is_active == True
+        ).update({'is_active': False})
+        if tmpl.job_posting_id:
+            DocumentTemplate.query.filter(
+                DocumentTemplate.id != tmpl.id,
+                DocumentTemplate.template_type == tmpl.template_type,
+                DocumentTemplate.job_posting_id == tmpl.job_posting_id,
+                DocumentTemplate.is_active == True
+            ).update({'is_active': False})
+    elif tmpl.template_type == 'offer_letter' and tmpl.job_domain:
         # Deactivate conflicting active template for the same job_domain + duration
         DocumentTemplate.query.filter(
             DocumentTemplate.id != tmpl.id,

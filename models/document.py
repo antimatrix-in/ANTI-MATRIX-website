@@ -6,12 +6,15 @@ class DocumentTemplate(db.Model):
     __tablename__ = 'document_templates'
 
     id = db.Column(db.Integer, primary_key=True)
-    template_type = db.Column(db.String(50), nullable=False, index=True)  # 'offer_letter', 'experience_letter', 'certificate'
+    template_type = db.Column(db.String(50), nullable=False, index=True)  # 'offer_letter', 'email', 'experience_letter', 'certificate'
+    job_posting_id = db.Column(db.Integer, db.ForeignKey('job_postings.id', ondelete='SET NULL'), nullable=True, index=True)
+    job_code = db.Column(db.String(20), nullable=True, index=True)
     name = db.Column(db.String(100), nullable=False)
+    subject = db.Column(db.String(255), nullable=True)  # For email templates
     filename = db.Column(db.String(255), nullable=False)  # Original display filename
     file_path = db.Column(db.String(500), nullable=False)  # Stored absolute/relative filesystem path
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
-    job_domain = db.Column(db.String(100), nullable=True, index=True)  # e.g. 'AI & ML', 'Application Development', 'Data Analytics', 'Full Stack Development'
+    job_domain = db.Column(db.String(100), nullable=True, index=True)  # Legacy / display domain
     duration = db.Column(db.String(50), nullable=True, default='Both', index=True)  # 'Both', '1 Month', '3 Months'
     created_by = db.Column(db.String(100), nullable=True, default='Admin')
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -21,6 +24,8 @@ class DocumentTemplate(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False
     )
+
+    job_posting = db.relationship('JobPosting', backref=db.backref('document_templates', lazy=True))
 
     @property
     def template_name(self):

@@ -101,7 +101,7 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Job ID</th>
+              <th>Job Code</th>
               <th>Job Title & Location</th>
               <th>Department</th>
               <th>Type</th>
@@ -117,7 +117,7 @@
               <tr>
                 <td>
                   <span style="font-size: 0.8rem; font-weight: 800; font-family: var(--font-mono, monospace); color: #60a5fa; background: rgba(59, 130, 246, 0.12); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.25);">
-                    {{ job.job_id or '-' }}
+                    {{ job.job_code or job.job_id or '-' }}
                   </span>
                 </td>
                 <td>

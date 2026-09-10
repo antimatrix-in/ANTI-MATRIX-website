@@ -33,7 +33,8 @@
             {{ job.title if job else 'Internship Application' }}
           </h1>
           <p style="color: #64748b; font-size: 0.9rem; margin: 0.35rem 0 0 0;">
-            {% if job and job.job_id %}<strong style="color: #2563eb; font-family: monospace;">Job ID: {{ job.job_id }}</strong> &bull; {% endif %}{{ job.department if job else 'Engineering' }} &bull; Applied on {{ app.created_at.strftime('%d %B %Y') }}
+            {% set display_job_code = (job.job_code or job.job_id or app.job_code) if job else app.job_code %}
+            {% if display_job_code %}<strong style="color: #2563eb; font-family: monospace;">Job Code: {{ display_job_code }}</strong> &bull; {% endif %}{{ job.department if job else 'Engineering' }} &bull; Applied on {{ app.created_at.strftime('%d %B %Y') }}
           </p>
         </div>
 

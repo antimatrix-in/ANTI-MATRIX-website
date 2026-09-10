@@ -8,7 +8,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime, timezone
 from flask import current_app
-from models import db, JobApplication, Employee, EmployeeDocument, EmailTemplate, EmailLog
+from models import db, JobApplication, Employee, EmployeeDocument, DocumentTemplate, EmailTemplate, EmailLog
 
 
 # =====================================================================
@@ -686,11 +686,42 @@ def render_shortlisted_offer_email(application, custom_params=None):
     raw_subject = DEFAULT_OFFER_LETTER_SUBJECT
     raw_body = DEFAULT_OFFER_LETTER_BODY
     try:
-        tmpl = EmailTemplate.query.filter_by(template_type='offer_letter').first()
-        if tmpl and tmpl.subject:
-            raw_subject = tmpl.subject
-        if tmpl and tmpl.body:
-            raw_body = tmpl.body
+        # 1. Authoritative Job Code Email Template Check
+        target_job = (application.job if application else None) or custom_params.get('job')
+        job_code = (getattr(target_job, 'job_code', None) or getattr(target_job, 'job_id', None) or '').strip().upper() if target_job else None
+        job_email_tmpl = None
+        if target_job and job_code:
+            job_email_tmpl = DocumentTemplate.query.filter(
+                DocumentTemplate.is_active == True,
+                DocumentTemplate.template_type == 'email',
+                (DocumentTemplate.job_posting_id == target_job.id) | (DocumentTemplate.job_code == job_code)
+            ).first()
+
+        if job_email_tmpl:
+            if job_email_tmpl.subject:
+                raw_subject = job_email_tmpl.subject
+            if job_email_tmpl.file_path and os.path.exists(job_email_tmpl.file_path):
+                try:
+                    with open(job_email_tmpl.file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        file_content = f.read()
+                        if file_content.strip():
+                            # If file starts with Subject: ..., extract it
+                            lines = file_content.splitlines()
+                            if lines and lines[0].lower().startswith('subject:'):
+                                raw_subject = lines[0].split(':', 1)[1].strip()
+                                raw_body = "\n".join(lines[1:]).strip()
+                            else:
+                                raw_body = file_content
+                except Exception as read_err:
+                    if current_app:
+                        current_app.logger.warning(f"Error reading job email template file {job_email_tmpl.file_path}: {read_err}")
+        else:
+            # 2. Existing standard fallback policy (never another job's email template)
+            tmpl = EmailTemplate.query.filter_by(template_type='offer_letter').first()
+            if tmpl and tmpl.subject:
+                raw_subject = tmpl.subject
+            if tmpl and tmpl.body:
+                raw_body = tmpl.body
     except Exception as e:
         if current_app:
             current_app.logger.warning(f"Could not load custom EmailTemplate: {str(e)}")

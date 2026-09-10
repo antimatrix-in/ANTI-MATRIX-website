@@ -27,13 +27,15 @@
             <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-dim); font-weight: 700;">
               Matched Template Slot:
             </span>
-            {% if category_info %}
-            <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); border-color: rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700;">
-              {{ category_info.badge }}
+            {% set candidate_job_code = job.job_code or job.job_id if job else (active_template.job_code if active_template else '') %}
+            {% if active_template and template_exists %}
+            <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-primary-light); border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; font-weight: 800; font-family: var(--font-mono, monospace);">
+              {{ candidate_job_code }}
             </span>
+            <span style="font-size: 0.8rem; color: var(--color-text-dim);">— {{ job.title if job else '' }}</span>
             {% else %}
-            <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-size: 0.7rem; font-weight: 700;">
-              Unmatched Category
+            <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-size: 0.75rem; font-weight: 800; font-family: var(--font-mono, monospace);">
+              {{ candidate_job_code or 'No Job Code' }} (Missing Template)
             </span>
             {% endif %}
           </div>
@@ -47,14 +49,10 @@
           </div>
           {% else %}
           <div style="font-weight: 700; color: #ef4444; font-size: 0.9rem; margin-top: 2px;">
-            {% if category_info %}
-            No active template uploaded for {{ category_info.card_title }}
-            {% else %}
-            No job-specific offer letter template is available for this internship
-            {% endif %}
+            No active Offer Letter template configured for Job Code {{ candidate_job_code }} ({{ job.title if job else '' }}).
           </div>
           <div style="font-size: 0.75rem; color: var(--color-text-muted);">
-            Please upload the appropriate template before generating the offer letter.
+            Please upload or activate the template for this Job Code in Admin Templates before generating the offer letter.
           </div>
           {% endif %}
         </div>
@@ -99,9 +97,13 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; font-size: 0.875rem;">
         <div>
-          <span style="color: var(--color-text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Job Posting</span>
+          <span style="color: var(--color-text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Job Code</span>
+          <strong style="color: #60a5fa; font-family: var(--font-mono, monospace); font-size: 0.95rem;">{{ job.job_code or job.job_id }}</strong>
+        </div>
+        <div>
+          <span style="color: var(--color-text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Job Title</span>
           <strong style="color: var(--color-text);">{{ job.title }}</strong>
         </div>
         <div>
@@ -111,10 +113,6 @@
         <div>
           <span style="color: var(--color-text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Duration</span>
           <strong style="color: #60a5fa;">{{ app.duration_display or '1 Month' }}</strong>
-        </div>
-        <div>
-          <span style="color: var(--color-text-muted); display: block; font-size: 0.75rem; text-transform: uppercase;">Domain Category</span>
-          <strong style="color: var(--color-primary-light);">{{ category_info.card_title if category_info else 'Not Mapped' }}</strong>
         </div>
       </div>
     </div>
