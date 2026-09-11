@@ -139,14 +139,12 @@
                 <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
                   Choose the internship duration that fits your goals.
                 </p>
-              </div>
-
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; align-items: stretch;" class="ib-grid-resp">
+              </div>              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; width: 100%;" class="ib-grid-resp">
                 
                 <!-- 1-Month Card -->
                 {% set b1 = benefits_1m %}
-                <div style="background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #a7f3d0; border-radius: 14px; padding: 1.35rem 1.4rem; box-shadow: 0 2px 8px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between;">
-                  <div>
+                <div style="background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #a7f3d0; border-radius: 14px; padding: 1.5rem 1.6rem; box-shadow: 0 2px 8px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="flex: 1; display: flex; flex-direction: column;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 6px;">
                       <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 6px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 4px;">
                         {{ icon('calendar', size=11) }} 1-MONTH INTERNSHIP
@@ -163,26 +161,26 @@
                     </div>
 
                     {% if b1 and b1.subtitle %}
-                      <p style="font-size: 0.775rem; color: #64748b; margin: 0 0 0.65rem 0; line-height: 1.45;">{{ b1.subtitle }}</p>
+                      <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 0.75rem 0; line-height: 1.5;">{{ b1.subtitle }}</p>
                     {% endif %}
 
-                    <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.55rem;">
                       {% if b1 and b1.benefits %}
                         {% for item in b1.benefits %}
-                          <li style="display: flex; align-items: flex-start; gap: 7px; font-size: 0.825rem; color: #334155; line-height: 1.45;">
-                            <span style="color: #059669; flex-shrink: 0; margin-top: 2px;">{{ icon('check', size=13, stroke_width=3) }}</span>
-                            <span>{{ item }}</span>
+                          <li style="display: flex; align-items: flex-start; gap: 9px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+                            <span style="color: #059669; flex-shrink: 0; margin-top: 3px;">{{ icon('check', size=13, stroke_width=3) }}</span>
+                            <span style="flex: 1; min-width: 0; line-height: 1.5;">{{ item }}</span>
                           </li>
                         {% endfor %}
                       {% else %}
-                        <li style="display: flex; align-items: flex-start; gap: 7px; font-size: 0.825rem; color: #334155; line-height: 1.45;">
-                          <span style="color: #059669; flex-shrink: 0; margin-top: 2px;">{{ icon('check', size=13, stroke_width=3) }}</span>
-                          <span>Digital internship offer letter</span>
+                        <li style="display: flex; align-items: flex-start; gap: 9px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+                          <span style="color: #059669; flex-shrink: 0; margin-top: 3px;">{{ icon('check', size=13, stroke_width=3) }}</span>
+                          <span style="flex: 1; min-width: 0; line-height: 1.5;">Digital internship offer letter</span>
                         </li>
                       {% endif %}
                     </ul>
                   </div>
-                  <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed rgba(148, 163, 184, 0.3); display: flex; justify-content: space-between; align-items: center;">
+                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; justify-content: space-between; align-items: center;">
                     <span style="display: inline-flex; align-items: center; gap: 5px; color: #059669; font-weight: 700; font-size: 0.8rem;">
                       {{ icon('credit-card', size=12) }} Fee: ₹199 <span style="font-weight: 400; color: #64748b; font-size: 0.725rem;">(+ 18% GST)</span>
                     </span>
@@ -191,8 +189,8 @@
 
                 <!-- 3-Month Card -->
                 {% set b3 = benefits_3m %}
-                <div style="background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 1.35rem 1.4rem; box-shadow: 0 2px 8px rgba(15,23,42,0.04); display: flex; flex-direction: column; justify-content: space-between;">
-                  <div>
+                <div style="background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 1.5rem 1.6rem; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="flex: 1; display: flex; flex-direction: column;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 6px;">
                       <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 6px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 4px;">
                         {{ icon('calendar', size=11) }} 3-MONTH INTERNSHIP
@@ -209,26 +207,26 @@
                     </div>
 
                     {% if b3 and b3.subtitle %}
-                      <p style="font-size: 0.775rem; color: #64748b; margin: 0 0 0.65rem 0; line-height: 1.45;">{{ b3.subtitle }}</p>
+                      <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 0.75rem 0; line-height: 1.5;">{{ b3.subtitle }}</p>
                     {% endif %}
 
-                    <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.55rem;">
                       {% if b3 and b3.benefits %}
                         {% for item in b3.benefits %}
-                          <li style="display: flex; align-items: flex-start; gap: 7px; font-size: 0.825rem; color: #334155; line-height: 1.45;">
-                            <span style="color: #2563eb; flex-shrink: 0; margin-top: 2px;">{{ icon('check', size=13, stroke_width=3) }}</span>
-                            <span>{{ item }}</span>
+                          <li style="display: flex; align-items: flex-start; gap: 9px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+                            <span style="color: #2563eb; flex-shrink: 0; margin-top: 3px;">{{ icon('check', size=13, stroke_width=3) }}</span>
+                            <span style="flex: 1; min-width: 0; line-height: 1.5;">{{ item }}</span>
                           </li>
                         {% endfor %}
                       {% else %}
-                        <li style="display: flex; align-items: flex-start; gap: 7px; font-size: 0.825rem; color: #334155; line-height: 1.45;">
-                          <span style="color: #2563eb; flex-shrink: 0; margin-top: 2px;">{{ icon('check', size=13, stroke_width=3) }}</span>
-                          <span>Digital internship offer letter</span>
+                        <li style="display: flex; align-items: flex-start; gap: 9px; font-size: 0.85rem; color: #334155; line-height: 1.5;">
+                          <span style="color: #2563eb; flex-shrink: 0; margin-top: 3px;">{{ icon('check', size=13, stroke_width=3) }}</span>
+                          <span style="flex: 1; min-width: 0; line-height: 1.5;">Digital internship offer letter</span>
                         </li>
                       {% endif %}
                     </ul>
                   </div>
-                  <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed rgba(148, 163, 184, 0.3); display: flex; justify-content: space-between; align-items: center;">
+                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; justify-content: space-between; align-items: center;">
                     <span style="display: inline-flex; align-items: center; gap: 5px; color: #2563eb; font-weight: 700; font-size: 0.8rem;">
                       {{ icon('credit-card', size=12) }} Fee: ₹399 <span style="font-weight: 400; color: #64748b; font-size: 0.725rem;">(+ 18% GST)</span>
                     </span>
@@ -237,8 +235,8 @@
 
               </div>
               <style>
-                @media (max-width: 680px) {
-                  .ib-grid-resp { grid-template-columns: 1fr !important; }
+                @media (max-width: 768px) {
+                  .ib-grid-resp { grid-template-columns: 1fr !important; gap: 1.25rem !important; }
                 }
               </style>
             </div>

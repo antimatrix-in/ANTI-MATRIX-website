@@ -260,7 +260,14 @@ class TestInternshipBenefitsFeature(unittest.TestCase):
         self.assertIn(b'Digital internship offer letter', resp.data)
         self.assertIn(b'Intern employee ID', resp.data)
 
-        # 3. Application form card exists below benefits
+        # 3. Full-width responsive layout & two-column grid assertions
+        self.assertIn(b'max-width: 1040px', resp.data)
+        self.assertIn(b'grid-template-columns: repeat(2, minmax(0, 1fr))', resp.data)
+        self.assertIn(b'gap: 24px', resp.data)
+        self.assertIn(b'align-items: stretch', resp.data)
+        self.assertIn(b'benefit-item-text', resp.data)
+
+        # 4. Application form card exists below benefits
         self.assertIn(b'Internship Application Form', resp.data)
         self.assertIn(b'Full Name', resp.data)
 

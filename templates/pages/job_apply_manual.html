@@ -5,7 +5,7 @@
 
 {% block content %}
 <section style="padding-top: calc(var(--nav-height, 80px) + 2.5rem); min-height: 88vh; padding-bottom: 5rem; background: #f8fafc;">
-  <div class="container" style="max-width: 680px; margin: 0 auto; padding: 0 var(--space-md);">
+  <div class="container apply-manual-container" style="max-width: 1040px; margin: 0 auto; padding: 0 var(--space-lg);">
 
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
@@ -51,20 +51,30 @@
     <!-- ================================================================= -->
     {% if job.is_internship or benefits_1m or benefits_3m %}
       <style>
+        .internship-benefits-section {
+          width: 100%;
+          margin-bottom: 2rem;
+        }
+        .internship-benefits-heading {
+          margin-bottom: 1.5rem;
+          text-align: center;
+        }
         .internship-benefits-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.25rem;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 24px;
           align-items: stretch;
+          width: 100%;
         }
         .internship-benefit-card {
           background: #ffffff;
           border-radius: 14px;
-          padding: 1.35rem 1.4rem;
+          padding: 1.5rem 1.6rem;
           box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+          height: 100%;
           transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .internship-benefit-card:hover {
@@ -132,10 +142,10 @@
           line-height: 1.3;
         }
         .benefit-card-subtitle {
-          font-size: 0.775rem;
+          font-size: 0.8rem;
           color: #64748b;
-          margin: 0 0 0.65rem 0;
-          line-height: 1.45;
+          margin: 0 0 0.75rem 0;
+          line-height: 1.5;
         }
         .benefit-list {
           list-style: none;
@@ -143,51 +153,64 @@
           margin: 0.5rem 0 0 0;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.55rem;
         }
         .benefit-list-item {
           display: flex;
           align-items: flex-start;
-          gap: 7px;
-          font-size: 0.825rem;
+          gap: 9px;
+          font-size: 0.85rem;
           color: #334155;
-          line-height: 1.45;
+          line-height: 1.5;
         }
         .benefit-check-icon-1m {
           color: #059669;
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 3px;
         }
         .benefit-check-icon-3m {
           color: #2563eb;
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 3px;
+        }
+        .benefit-item-text {
+          flex: 1;
+          min-width: 0;
+          line-height: 1.5;
         }
         .benefit-card-footer {
-          margin-top: 1rem;
-          padding-top: 0.75rem;
-          border-top: 1px dashed rgba(148, 163, 184, 0.3);
+          margin-top: 1.25rem;
+          padding-top: 0.85rem;
+          border-top: 1px dashed rgba(148, 163, 184, 0.35);
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
-        @media (max-width: 680px) {
+        @media (max-width: 768px) {
+          .apply-manual-container {
+            padding: 0 var(--space-md) !important;
+          }
           .internship-benefits-grid {
             grid-template-columns: 1fr !important;
-            gap: 1rem !important;
+            gap: 1.25rem !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .apply-manual-container {
+            padding: 0 0.85rem !important;
           }
         }
       </style>
 
-      <div class="internship-benefits-section" style="margin-bottom: 1.75rem;">
-        <div style="margin-bottom: 1.15rem; text-align: center;">
-          <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px;">
+      <div class="internship-benefits-section">
+        <div class="internship-benefits-heading">
+          <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
             {{ icon('award', size=13, color='#059669') }} Program Offerings
           </div>
-          <h2 style="font-size: clamp(1.2rem, 2vw, 1.45rem); font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">
+          <h2 style="font-size: clamp(1.25rem, 2.2vw, 1.5rem); font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
             Internship Benefits
           </h2>
-          <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+          <p style="font-size: 0.875rem; color: #64748b; margin: 0;">
             Choose the internship duration that fits your goals.
           </p>
         </div>
@@ -197,7 +220,7 @@
           <!-- 1-MONTH INTERNSHIP CARD -->
           {% set b1 = benefits_1m %}
           <div class="internship-benefit-card benefit-card-1m">
-            <div>
+            <div style="flex: 1; display: flex; flex-direction: column;">
               <div class="benefit-card-header">
                 <span class="benefit-duration-badge badge-1m">
                   {{ icon('calendar', size=11) }} 1-MONTH INTERNSHIP
@@ -224,37 +247,37 @@
                       <span class="benefit-check-icon-1m">
                         {{ icon('check', size=13, stroke_width=3) }}
                       </span>
-                      <span>{{ item }}</span>
+                      <span class="benefit-item-text">{{ item }}</span>
                     </li>
                   {% endfor %}
                 {% else %}
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Digital internship offer letter</span>
+                    <span class="benefit-item-text">Digital internship offer letter</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Intern employee ID</span>
+                    <span class="benefit-item-text">Intern employee ID</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Intern working portal access</span>
+                    <span class="benefit-item-text">Intern working portal access</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Weekly assigned tasks</span>
+                    <span class="benefit-item-text">Weekly assigned tasks</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Practical hands-on experience</span>
+                    <span class="benefit-item-text">Practical hands-on experience</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Internship completion certificate</span>
+                    <span class="benefit-item-text">Internship completion certificate</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-1m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Performance-based stipend up to ₹5,000</span>
+                    <span class="benefit-item-text">Performance-based stipend up to ₹5,000</span>
                   </li>
                 {% endif %}
               </ul>
@@ -270,7 +293,7 @@
           <!-- 3-MONTH INTERNSHIP CARD -->
           {% set b3 = benefits_3m %}
           <div class="internship-benefit-card benefit-card-3m">
-            <div>
+            <div style="flex: 1; display: flex; flex-direction: column;">
               <div class="benefit-card-header">
                 <span class="benefit-duration-badge badge-3m">
                   {{ icon('calendar', size=11) }} 3-MONTH INTERNSHIP
@@ -297,41 +320,41 @@
                       <span class="benefit-check-icon-3m">
                         {{ icon('check', size=13, stroke_width=3) }}
                       </span>
-                      <span>{{ item }}</span>
+                      <span class="benefit-item-text">{{ item }}</span>
                     </li>
                   {% endfor %}
                 {% else %}
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Digital internship offer letter</span>
+                    <span class="benefit-item-text">Digital internship offer letter</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Intern employee ID</span>
+                    <span class="benefit-item-text">Intern employee ID</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Intern working portal access</span>
+                    <span class="benefit-item-text">Intern working portal access</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Structured project-based assignments</span>
+                    <span class="benefit-item-text">Structured project-based assignments</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Practical hands-on industry experience</span>
+                    <span class="benefit-item-text">Practical hands-on industry experience</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Regular task and performance evaluation</span>
+                    <span class="benefit-item-text">Regular task and performance evaluation</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Internship completion certificate</span>
+                    <span class="benefit-item-text">Internship completion certificate</span>
                   </li>
                   <li class="benefit-list-item">
                     <span class="benefit-check-icon-3m">{{ icon('check', size=13, stroke_width=3) }}</span>
-                    <span>Performance-based benefits/stipend as configured</span>
+                    <span class="benefit-item-text">Performance-based benefits/stipend as configured</span>
                   </li>
                 {% endif %}
               </ul>
