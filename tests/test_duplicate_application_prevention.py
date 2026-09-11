@@ -1,6 +1,8 @@
 import os
 import io
 import unittest
+from unittest.mock import patch
+from sqlalchemy.exc import IntegrityError
 from app import create_app
 from models import db, User, JobPosting, JobApplication, Payment
 
@@ -112,10 +114,10 @@ class DuplicateApplicationPreventionTestCase(unittest.TestCase):
         self.assertIn(b'An application has already been submitted using this email address or mobile number.', res.data)
 
     # -------------------------------------------------------------
-    # TEST 5: Formatting variations (+91, spaces, uppercase email)
+    # TEST 5: Same candidate attempts to submit the same application again
     # -------------------------------------------------------------
-    def test_05_formatting_differences_normalized_and_rejected(self):
-        # First submission with canonical 10-digit phone
+    def test_05_same_candidate_attempts_to_submit_again(self):
+        # First submission
         self.submit_application('Rohan Das', 'rohandas@example.com', '9988776655')
         initial_count = JobApplication.query.count()
 
@@ -132,7 +134,7 @@ class DuplicateApplicationPreventionTestCase(unittest.TestCase):
         self.submit_application('Praveen R', 'praveen@test.com', '9876543210')
         initial_count = JobApplication.query.count()
 
-        # Direct HTTP POST
+        # Direct HTTP POST without browser UI
         res = self.client.post(f'/careers/apply/{self.job.id}', data={
             'full_name': 'Praveen R',
             'email': 'praveen@test.com',
@@ -145,46 +147,104 @@ class DuplicateApplicationPreventionTestCase(unittest.TestCase):
         self.assertIn(b'An application has already been submitted', res.data)
 
     # -------------------------------------------------------------
-    # TEST 7: Database Unique Constraint / IntegrityError handling
+    # TEST 7: Race Condition / Concurrent submissions handled via DB constraint
     # -------------------------------------------------------------
-    def test_07_integrity_error_handled_gracefully(self):
-        from sqlalchemy.exc import IntegrityError
-        # Create initial record directly in DB
-        app1 = JobApplication(
+    def test_07_concurrent_submissions_race_condition_handled(self):
+        # Simulate simultaneous arrival where db.session.commit raises IntegrityError
+        with patch.object(db.session, 'commit', side_effect=IntegrityError("duplicate key", {}, None)):
+            res = self.submit_application('Concurrent User', 'concurrent@antimatrix.org', '9443322110')
+            self.assertEqual(res.status_code, 200)
+            self.assertIn(b'An application has already been submitted using this email address or mobile number.', res.data)
+
+    # -------------------------------------------------------------
+    # TEST 8: Existing candidate and application records remain intact
+    # -------------------------------------------------------------
+    def test_08_existing_records_remain_completely_intact(self):
+        # Seed an existing application record
+        existing_app = JobApplication(
             job_id=self.job.id,
-            full_name='Simulated User',
-            email='simulated@antimatrix.org',
-            phone='9112233445',
+            full_name='Praveen Production',
+            email='praveen_prod@antimatrix.com',
+            phone='8825418639',
             duration='1_month',
-            payment_status='pending',
-            application_status='APPLIED',
+            payment_status='paid',
+            application_status='submitted',
             status='APPLIED',
-            resume_filename='resume.pdf'
+            resume_filename='prod.pdf'
         )
-        db.session.add(app1)
+        db.session.add(existing_app)
+        db.session.commit()
+        original_id = existing_app.id
+        original_code = existing_app.formatted_code
+
+        # Attempt to apply with same email
+        res = self.submit_application('Praveen Hacker', 'praveen_prod@antimatrix.com', '9999900000')
+        self.assertIn(b'An application has already been submitted', res.data)
+
+        # Verify original record unchanged
+        refreshed = db.session.get(JobApplication, original_id)
+        self.assertIsNotNone(refreshed)
+        self.assertEqual(refreshed.full_name, 'Praveen Production')
+        self.assertEqual(refreshed.phone, '8825418639')
+        self.assertEqual(refreshed.formatted_code, original_code)
+        self.assertEqual(refreshed.payment_status, 'paid')
+
+    # -------------------------------------------------------------
+    # TEST 9: Existing payment records remain completely intact
+    # -------------------------------------------------------------
+    def test_09_existing_payment_records_remain_intact(self):
+        # Create an application and a linked payment
+        app = JobApplication(
+            job_id=self.job.id,
+            full_name='Paid Candidate',
+            email='paid_candidate@antimatrix.com',
+            phone='9551073031',
+            duration='1_month',
+            payment_status='paid',
+            application_status='submitted',
+            status='APPLIED',
+            resume_filename='paid.pdf'
+        )
+        db.session.add(app)
+        db.session.flush()
+
+        payment = Payment(
+            application_id=app.id,
+            cashfree_order_id='order_cf_123456',
+            amount=199.0,
+            base_amount=199.0,
+            currency='INR',
+            payment_status='paid',
+            gateway='CASHFREE',
+            cf_payment_id='cf_123456'
+        )
+        db.session.add(payment)
         db.session.commit()
 
-        # Verify find_existing_applicant detects it
-        existing = JobApplication.find_existing_applicant('SIMULATED@antimatrix.org', '+91 91122 33445')
-        self.assertIsNotNone(existing)
-        self.assertEqual(existing.id, app1.id)
+        initial_payments_count = Payment.query.count()
+        self.assertEqual(initial_payments_count, 1)
+
+        # Attempt duplicate submission
+        res = self.submit_application('Duplicate Candidate', 'paid_candidate@antimatrix.com', '9551073031')
+        self.assertIn(b'An application has already been submitted', res.data)
+
+        # Ensure no payment record was added, altered, or deleted
+        self.assertEqual(Payment.query.count(), initial_payments_count)
+        p = Payment.query.first()
+        self.assertEqual(p.cf_payment_id, 'cf_123456')
+        self.assertEqual(p.cashfree_order_id, 'order_cf_123456')
+        self.assertEqual(p.payment_status, 'paid')
 
     # -------------------------------------------------------------
-    # TEST 8: No new application ID or payment record generated on duplicate
+    # TEST 10: Application startup on Render with constraint verification
     # -------------------------------------------------------------
-    def test_08_no_side_effects_on_duplicate_rejection(self):
-        self.submit_application('Target Candidate', 'target@example.com', '9777788888')
-        first_app = JobApplication.query.filter_by(email='target@example.com').first()
-        first_code = first_app.formatted_code
-
-        # Attempt duplicate
-        self.submit_application('Target Candidate', 'target@example.com', '9777788888')
-
-        # Verify only one application exists and code didn't change
-        apps = JobApplication.query.filter_by(email='target@example.com').all()
-        self.assertEqual(len(apps), 1)
-        self.assertEqual(apps[0].formatted_code, first_code)
-        self.assertEqual(Payment.query.count(), 0)
+    def test_10_application_startup_and_connection(self):
+        from migrations.migrate_unique_applicant_constraints import run_migration
+        # Test that migration and startup checks run cleanly and idempotently
+        run_migration()
+        # Verify app initializes normally
+        app = create_app('testing')
+        self.assertIsNotNone(app)
 
 
 if __name__ == '__main__':

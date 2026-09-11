@@ -20,10 +20,10 @@ def normalize_phone(phone_str):
     if not phone_str:
         return ''
     digits = re.sub(r'\D', '', str(phone_str).strip())
-    if len(digits) == 12 and digits.startswith('91'):
-        return digits[2:]
-    if len(digits) == 11 and digits.startswith('0'):
-        return digits[1:]
+    if len(digits) > 10 and digits.startswith('91'):
+        digits = digits[2:]
+    while len(digits) > 10 and digits.startswith('0'):
+        digits = digits[1:]
     return digits
 
 

@@ -431,6 +431,27 @@ def apply_job(job_id):
         if github_url and not URL_REGEX.match(github_url):
             errors.append('GitHub URL must start with http:// or https://')
 
+        clean_email = normalize_email(email)
+        clean_phone = normalize_phone(phone)
+
+        # Backend Duplicate Candidate & Application Check (Strict Server-Side Prevention)
+        # FIRST check whether email exists, THEN check whether mobile exists
+        existing_applicant = JobApplication.find_existing_applicant(clean_email, clean_phone)
+        if existing_applicant:
+            current_app.logger.warning("Duplicate application blocked: existing candidate/application detected")
+            flash("An application has already been submitted using this email address or mobile number.", "danger")
+            return render_template(
+                'pages/job_apply.html',
+                job=job,
+                form_data=request.form,
+                states_and_cities=INDIA_STATES_AND_CITIES,
+                education_levels=EDUCATION_LEVELS,
+                common_degrees=COMMON_DEGREES,
+                graduation_years=GRADUATION_YEARS,
+                benefits_1m=benefits_1m,
+                benefits_3m=benefits_3m
+            )
+
         # Document Folders
         resumes_folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', os.path.join(current_app.root_path, 'uploads', 'resumes'))
         docs_folder = current_app.config.get('UPLOAD_FOLDER_DOCUMENTS', os.path.join(current_app.root_path, 'uploads', 'documents'))
@@ -513,26 +534,6 @@ def apply_job(job_id):
                 benefits_3m=benefits_3m
             )
 
-        clean_email = normalize_email(email)
-        clean_phone = normalize_phone(phone)
-
-        # Backend Duplicate Candidate & Application Check (Strict Server-Side Prevention)
-        existing_applicant = JobApplication.find_existing_applicant(clean_email, clean_phone)
-        if existing_applicant and (existing_applicant.payment_status == 'paid' or existing_applicant.application_status in ['submitted', 'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'HIRED']):
-            current_app.logger.warning("Duplicate application blocked: existing candidate/application detected")
-            flash("An application has already been submitted using this email address or mobile number.", "danger")
-            return render_template(
-                'pages/job_apply.html',
-                job=job,
-                form_data=request.form,
-                states_and_cities=INDIA_STATES_AND_CITIES,
-                education_levels=EDUCATION_LEVELS,
-                common_degrees=COMMON_DEGREES,
-                graduation_years=GRADUATION_YEARS,
-                benefits_1m=benefits_1m,
-                benefits_3m=benefits_3m
-            )
-
         # Check for existing unpaid draft application to reuse/update
         application = JobApplication.query.filter(
             JobApplication.job_id == job.id,
@@ -546,8 +547,8 @@ def apply_job(job_id):
                 first_name=first_name,
                 last_name=last_name,
                 full_name=full_name,
-                email=email,
-                phone=phone,
+                email=clean_email,
+                phone=clean_phone,
                 address=address,
                 state=state,
                 city=city,
@@ -596,7 +597,8 @@ def apply_job(job_id):
             application.first_name = first_name
             application.last_name = last_name
             application.full_name = full_name
-            application.phone = phone
+            application.email = clean_email
+            application.phone = clean_phone
             application.address = address
             application.state = state
             application.city = city
