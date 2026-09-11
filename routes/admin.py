@@ -1200,17 +1200,23 @@ def update_application_status(app_id):
     new_status = request.form.get('status', '').strip()
     valid_statuses = [
         'New', 'Reviewed', 'Shortlisted', 'Offer Completed', 'Hired', 'Rejected',
-        'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'OFFER_COMPLETED', 'HIRED', 'REJECTED'
+        'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'OFFER_COMPLETED', 'HIRED', 'REJECTED',
+        'Applied', 'applied', 'Under Review', 'under_review', 'shortlisted'
     ]
 
     if new_status in valid_statuses:
         status_map = {
             'New': 'APPLIED',
             'APPLIED': 'APPLIED',
+            'Applied': 'APPLIED',
+            'applied': 'APPLIED',
             'Reviewed': 'UNDER_REVIEW',
             'UNDER_REVIEW': 'UNDER_REVIEW',
+            'Under Review': 'UNDER_REVIEW',
+            'under_review': 'UNDER_REVIEW',
             'Shortlisted': 'SHORTLISTED',
             'SHORTLISTED': 'SHORTLISTED',
+            'shortlisted': 'SHORTLISTED',
             'Offer Completed': 'OFFER_COMPLETED',
             'OFFER_COMPLETED': 'OFFER_COMPLETED',
             'Hired': 'HIRED',
@@ -1226,6 +1232,9 @@ def update_application_status(app_id):
     else:
         flash('Invalid status provided.', 'danger')
 
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'create_employee' or 'employees/create' in (request.referrer or ''):
+        return redirect(url_for('admin.create_employee', app_id=application.id))
     return redirect(request.referrer or url_for('admin.application_detail', app_id=application.id))
 
 
@@ -1330,6 +1339,7 @@ def create_employee():
     Admin Manual Employee Creation Workflow:
     - Select an existing Application ID from the database
     - Displays candidate details (Application ID, Name, Email, Job, Job Code, Department, Duration, College)
+    - Admin Application Status: Applied, Under Review, Shortlisted
     - Admin payment verification gate: Payment must be 'verified' or 'paid' before employee creation
     - If employee already exists: shows existing Employee ID and prevents duplicate creation
     - If new: generates unique Employee ID (AM####) and secure temporary password
@@ -1378,6 +1388,7 @@ def create_employee():
             new_status = (data.get('payment_status') or '').strip().lower()
             if new_status in ['pending', 'verified', 'paid', 'failed']:
                 application.payment_status = new_status
+                application.updated_at = datetime.now(timezone.utc)
                 db.session.commit()
                 if request.is_json or request.headers.get('Accept') == 'application/json':
                     return jsonify({'success': True, 'payment_status': new_status}), 200
@@ -1386,6 +1397,33 @@ def create_employee():
                 if request.is_json or request.headers.get('Accept') == 'application/json':
                     return jsonify({'error': 'Invalid payment status provided.', 'success': False}), 400
                 flash('Invalid payment status provided.', 'danger')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        # Check if this request is updating the application status from the dropdown
+        if action == 'update_application_status':
+            status_val = (data.get('status') or data.get('application_status') or '').strip()
+            status_mapping = {
+                'applied': ('APPLIED', 'Applied'),
+                'new': ('APPLIED', 'Applied'),
+                'under_review': ('UNDER_REVIEW', 'Under Review'),
+                'reviewed': ('UNDER_REVIEW', 'Under Review'),
+                'under review': ('UNDER_REVIEW', 'Under Review'),
+                'shortlisted': ('SHORTLISTED', 'Shortlisted'),
+            }
+            mapped = status_mapping.get(status_val.lower().replace(' ', '_')) or status_mapping.get(status_val.lower())
+            if mapped:
+                db_val, display_val = mapped
+                application.status = db_val
+                application.application_status = db_val
+                application.updated_at = datetime.now(timezone.utc)
+                db.session.commit()
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'success': True, 'application_status': display_val, 'status': db_val}), 200
+                flash(f"Application status for candidate {application.full_name} updated to '{display_val}'.", 'success')
+            else:
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'error': 'Invalid application status provided.', 'success': False}), 400
+                flash('Invalid application status provided.', 'danger')
             return redirect(url_for('admin.create_employee', app_id=application.id))
 
         # Idempotency / Duplicate Employee Check

@@ -214,6 +214,35 @@
                 <span style="color: #60a5fa; font-weight: 700;">{{ selected_app.duration_display or '1 Month' }}</span>
               </div>
               <div>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Application Status *</span>
+                {% set cur_app_status = (selected_app.status or selected_app.application_status or 'APPLIED')|upper %}
+                <form method="POST" action="{{ url_for('admin.create_employee') }}" id="app-status-form" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <input type="hidden" name="action" value="update_application_status" />
+                  <input type="hidden" name="application_id" value="{{ selected_app.id }}" />
+                  <select
+                    id="application-status-select"
+                    name="status"
+                    class="form-input"
+                    onchange="document.getElementById('app-status-form').submit();"
+                    style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 700; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); cursor: pointer;"
+                  >
+                    <option value="APPLIED" {{ 'selected' if cur_app_status in ['APPLIED', 'NEW', 'SUBMITTED'] else '' }}>Applied</option>
+                    <option value="UNDER_REVIEW" {{ 'selected' if cur_app_status in ['UNDER_REVIEW', 'REVIEWED'] else '' }}>Under Review</option>
+                    <option value="SHORTLISTED" {{ 'selected' if cur_app_status in ['SHORTLISTED'] else '' }}>Shortlisted</option>
+                  </select>
+                  <button
+                    type="submit"
+                    id="save-application-status-btn"
+                    class="btn btn-outline btn-sm"
+                    style="padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 700; border-color: var(--color-border); color: var(--color-text);"
+                  >
+                    Save
+                  </button>
+                </form>
+              </div>
+
+              <div>
                 <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Payment Status *</span>
                 {% set is_verified = (selected_app.payment_status or '')|lower in ['verified', 'paid'] %}
                 <form method="POST" action="{{ url_for('admin.create_employee') }}" id="payment-status-form" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
