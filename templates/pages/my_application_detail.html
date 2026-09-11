@@ -38,13 +38,7 @@
           </p>
         </div>
 
-        <div>
-          {% if app.payment_status != 'paid' and app.duration %}
-            <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary" style="gap: 6px; font-weight: 700;">
-              {{ icon('credit-card', size=15) }} Complete Payment
-            </a>
-          {% endif %}
-        </div>
+        <div></div>
       </div>
     </div>
 
@@ -145,57 +139,13 @@
               <div style="color: #0f172a; font-size: 0.9rem;">{{ app.phone }}</div>
             </div>
             <div>
-              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Location</div>
-              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.city or '' }}{% if app.city and app.state %}, {% endif %}{{ app.state or '' }} {{ app.pincode or '' }}</div>
+              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">College / University</div>
+              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.college or '—' }}</div>
             </div>
-            {% if app.address %}
-              <div style="grid-column: 1 / -1; padding-top: 0.5rem; border-top: 1px dashed #f1f5f9;">
-                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Residential Address</div>
-                <div style="color: #334155; font-size: 0.875rem;">{{ app.address }}</div>
-              </div>
-            {% endif %}
           </div>
         </div>
 
-        <!-- 2. Academic & Education Details -->
-        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
-          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
-            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
-              {{ icon('award', size=15) }}
-            </div>
-            Academic Details
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem;">
-            <div>
-              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Education Level</div>
-              <div style="color: #0f172a; font-weight: 600; font-size: 0.9rem;">{{ app.education_level or 'Not specified' }}</div>
-            </div>
-            <div>
-              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Degree</div>
-              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.degree or 'Not specified' }}</div>
-            </div>
-            <div>
-              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Major / Specialization</div>
-              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.major or app.department or 'Not specified' }}</div>
-            </div>
-            <div>
-              <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Graduation Year</div>
-              <div style="color: #0f172a; font-size: 0.9rem;">{{ app.graduation_year or 'Not specified' }}</div>
-            </div>
-            {% if app.college %}
-              <div>
-                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Institution / College</div>
-                <div style="color: #0f172a; font-size: 0.9rem;">{{ app.college }}</div>
-              </div>
-            {% endif %}
-            {% if app.current_cgpa %}
-              <div>
-                <div style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">CGPA</div>
-                <div style="color: #059669; font-weight: 700; font-size: 0.9rem;">{{ app.current_cgpa }}</div>
-              </div>
-            {% endif %}
-          </div>
-        </div>
+
 
         <!-- 3. Professional Statements & Cover Letter -->
         {% if app.cover_letter or app.why_join %}
@@ -223,83 +173,8 @@
 
       </div>
 
-      <!-- Right Column: Documents & Payment Summary -->
+      <!-- Right Column: Documents -->
       <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        
-        <!-- Payment Record Card -->
-        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
-          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f1f5f9;">
-            <div style="width: 28px; height: 28px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #059669;">
-              {{ icon('credit-card', size=15) }}
-            </div>
-            Payment Record
-          </div>
-
-          {% set pay = app.latest_payment %}
-          {% if pay and pay.base_amount is not none %}
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.85rem; color: #64748b;">Base Fee</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.base_amount) }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.85rem; color: #64748b;">GST (18%)</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.gst_amount or 0) }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span style="font-size: 0.85rem; color: #0f172a; font-weight: 700;">Total Paid</span>
-              <span style="font-size: 1.15rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(pay.amount) }}</span>
-            </div>
-          {% elif app.base_amount is not none %}
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.85rem; color: #64748b;">Base Fee</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #0f172a; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.base_amount) }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.85rem; color: #64748b;">GST (18%)</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.gst_amount or 0) }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span style="font-size: 0.85rem; color: #0f172a; font-weight: 700;">Total Paid</span>
-              <span style="font-size: 1.15rem; font-weight: 800; color: #059669; font-family: var(--font-mono, monospace);">₹{{ "%.2f"|format(app.application_fee) }}</span>
-            </div>
-          {% else %}
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-              <span style="font-size: 0.85rem; color: #64748b;">Application Fee</span>
-              <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; font-family: var(--font-mono, monospace);">
-                {% if app.application_fee and app.application_fee > 0 %}
-                  ₹{{ app.application_fee }}
-                {% else %}
-                  Free
-                {% endif %}
-              </span>
-            </div>
-          {% endif %}
-
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <span style="font-size: 0.85rem; color: #64748b;">Payment Status</span>
-            {% if app.payment_status == 'paid' %}
-              <span class="badge-status active">Paid</span>
-            {% elif app.payment_status == 'pending' %}
-              <span class="badge-status" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Pending</span>
-            {% elif app.payment_status == 'failed' %}
-              <span class="badge-status" style="background: #fef2f2; color: #dc2626; border-color: #fecaca;">Failed</span>
-            {% else %}
-              <span class="badge-status" style="background: #f1f5f9; color: #64748b; border-color: #e2e8f0;">Exempt</span>
-            {% endif %}
-          </div>
-
-          {% if app.payments %}
-            {% set pay = app.latest_payment %}
-            {% if pay %}
-              <div style="padding-top: 0.75rem; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 0.725rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Order Reference:</span>
-                <span style="font-size: 0.8rem; font-family: var(--font-mono, monospace); color: #0f172a; word-break: break-all;">
-                  {{ pay.cashfree_order_id }}
-                </span>
-              </div>
-            {% endif %}
-          {% endif %}
-        </div>
 
         <!-- Secure Uploaded Documents Card -->
         <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">

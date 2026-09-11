@@ -1237,8 +1237,11 @@ def download_document(app_id, doc_type):
     as_attachment = request.args.get('download', '0') == '1'
 
     if doc_type == 'resume':
-        folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', current_app.config['UPLOAD_FOLDER'])
+        folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, 'uploads', 'resumes')))
         filename = application.resume_filename
+        if application.resume_path and os.path.exists(application.resume_path):
+            folder = os.path.dirname(application.resume_path)
+            filename = os.path.basename(application.resume_path)
     elif doc_type == 'aadhaar':
         folder = current_app.config.get('UPLOAD_FOLDER_DOCUMENTS', os.path.join(current_app.root_path, 'uploads', 'documents'))
         filename = application.aadhaar_filename

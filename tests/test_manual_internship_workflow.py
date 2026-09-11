@@ -1,4 +1,5 @@
 import os
+import io
 import re
 import unittest
 from datetime import datetime, timezone, timedelta
@@ -93,14 +94,15 @@ class TestManualInternshipWorkflow(unittest.TestCase):
     # Scenario 2: Candidate Submits 1 Month Application (5 inputs only)
     # -------------------------------------------------------------------------
     def test_02_candidate_submits_1_month_application(self):
-        """Candidate submits 5 required inputs for 1 Month duration; verifies derived values and receipt."""
+        """Candidate submits 6 required inputs for 1 Month duration; verifies derived values and receipt."""
         response = self.client.post(f'/careers/apply/{self.job.id}', data={
             'full_name': 'Praveen Kumar',
             'email': 'praveen.test@example.com',
             'phone': '9876543210',
             'duration': '1_month',
-            'college': 'Indian Institute of Technology Madras'
-        }, follow_redirects=False)
+            'college': 'Indian Institute of Technology Madras',
+            'resume': (io.BytesIO(b'%PDF-1.4 test resume content'), 'praveen_resume.pdf')
+        }, content_type='multipart/form-data', follow_redirects=False)
 
         # Must redirect directly to confirmation success page, NOT Cashfree
         self.assertEqual(response.status_code, 302)
@@ -129,8 +131,9 @@ class TestManualInternshipWorkflow(unittest.TestCase):
         self.assertTrue(app.formatted_code.startswith('AM-APP-'))
         self.assertRegex(app.formatted_code, r'^AM-APP-\d{6}$')
 
-        # Safe defaults for legacy constraints
-        self.assertEqual(app.resume_filename, 'NOT_PROVIDED')
+        # Resume saved
+        self.assertTrue(app.resume_filename.endswith('.pdf'))
+        self.assertTrue(os.path.exists(app.resume_path))
 
     # -------------------------------------------------------------------------
     # Scenario 3: Candidate Submits 3 Months Application
@@ -142,8 +145,9 @@ class TestManualInternshipWorkflow(unittest.TestCase):
             'email': 'sneha.patel@example.com',
             'phone': '9812345678',
             'duration': '3_months',
-            'college': 'National Institute of Technology Karnataka'
-        }, follow_redirects=False)
+            'college': 'National Institute of Technology Karnataka',
+            'resume': (io.BytesIO(b'PK\x03\x04 test docx resume'), 'sneha_resume.docx')
+        }, content_type='multipart/form-data', follow_redirects=False)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/careers/apply/success/', response.location)
@@ -155,10 +159,11 @@ class TestManualInternshipWorkflow(unittest.TestCase):
         self.assertEqual(app.gst_rate, 18.0)
         self.assertEqual(app.gst_amount, 71.82)
         self.assertEqual(app.application_fee, 399)
-        self.assertEqual(app.duration_display, '3 Months')
+        self.assertEqual(app.college, 'National Institute of Technology Karnataka')
+        self.assertTrue(app.resume_filename.endswith('.docx'))
 
     # -------------------------------------------------------------------------
-    # Scenario 4: Duplicate Submission Protection within 10 minutes
+    # Scenario 4: Duplicate Submission Protection within 10 Minutes
     # -------------------------------------------------------------------------
     def test_04_duplicate_submission_protection_within_10_minutes(self):
         """Submitting twice with same email & job within 10 minutes prevents duplicate rows."""
@@ -167,18 +172,20 @@ class TestManualInternshipWorkflow(unittest.TestCase):
             'email': 'arun.sharma@example.com',
             'phone': '9822334455',
             'duration': '1_month',
-            'college': 'BITS Pilani'
+            'college': 'BITS Pilani',
+            'resume': (io.BytesIO(b'%PDF-1.4 test resume'), 'arun.pdf')
         }
 
         # First Submission
-        res1 = self.client.post(f'/careers/apply/{self.job.id}', data=data, follow_redirects=False)
+        res1 = self.client.post(f'/careers/apply/{self.job.id}', data=data, content_type='multipart/form-data', follow_redirects=False)
         self.assertEqual(res1.status_code, 302)
 
         initial_count = JobApplication.query.filter_by(email='arun.sharma@example.com').count()
         self.assertEqual(initial_count, 1)
 
         # Immediate Second Submission
-        res2 = self.client.post(f'/careers/apply/{self.job.id}', data=data, follow_redirects=False)
+        data2 = dict(data, resume=(io.BytesIO(b'%PDF-1.4 test resume'), 'arun.pdf'))
+        res2 = self.client.post(f'/careers/apply/{self.job.id}', data=data2, content_type='multipart/form-data', follow_redirects=False)
         self.assertEqual(res2.status_code, 302)
 
         # Verify no second application created
@@ -208,8 +215,9 @@ class TestManualInternshipWorkflow(unittest.TestCase):
             'email': 'meera.nair@example.com',
             'phone': '9845012345',
             'duration': '1_month',
-            'college': 'College of Engineering Guindy'
-        }, follow_redirects=False)
+            'college': 'College of Engineering Guindy',
+            'resume': (io.BytesIO(b'%PDF-1.4 test resume'), 'meera.pdf')
+        }, content_type='multipart/form-data', follow_redirects=False)
 
         app = JobApplication.query.filter_by(email='meera.nair@example.com').first()
         self.assertIsNotNone(app)

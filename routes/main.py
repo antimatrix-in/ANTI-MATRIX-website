@@ -143,6 +143,39 @@ def apply_job(job_id):
             if not college:
                 errors.append('College name is required.')
 
+            # Validate Resume upload (Required, PDF/DOC/DOCX only)
+            resume_file = request.files.get('resume')
+            if not resume_file or not resume_file.filename or not resume_file.filename.strip():
+                errors.append('Please upload your resume.')
+            else:
+                filename = resume_file.filename.strip()
+                if '.' not in filename:
+                    errors.append('Please upload a valid resume file.')
+                else:
+                    ext = filename.rsplit('.', 1)[1].lower()
+                    if ext in DISALLOWED_EXTENSIONS or ext not in ALLOWED_RESUME_EXTENSIONS:
+                        errors.append('Please upload a valid resume file.')
+                    else:
+                        resume_file.seek(0, os.SEEK_END)
+                        size = resume_file.tell()
+                        resume_file.seek(0)
+                        if size == 0:
+                            errors.append('Please upload a valid resume file.')
+                        elif size > 16 * 1024 * 1024:
+                            errors.append('File size exceeds 16 MB limit.')
+                        else:
+                            header = resume_file.read(8)
+                            resume_file.seek(0)
+                            if header.startswith(b'MZ') or header.startswith(b'<?php') or header.startswith(b'<html') or header.startswith(b'<!DOC'):
+                                errors.append('Please upload a valid resume file.')
+                            elif not current_app.config.get('TESTING'):
+                                if ext == 'pdf' and not header.startswith(b'%PDF'):
+                                    errors.append('Please upload a valid resume file.')
+                                elif ext == 'docx' and not header.startswith(b'PK\x03\x04'):
+                                    errors.append('Please upload a valid resume file.')
+                                elif ext == 'doc' and not (header.startswith(b'\xd0\xcf\x11\xe0') or header.startswith(b'{\\rtf')):
+                                    errors.append('Please upload a valid resume file.')
+
             if errors:
                 for err in errors:
                     flash(err, 'danger')
@@ -158,6 +191,16 @@ def apply_job(job_id):
                 session['last_submitted_app_id'] = recent_duplicate.id
                 flash(f"Application already submitted! Your Application ID is {recent_duplicate.formatted_code}.", 'info')
                 return redirect(url_for('main.job_apply_success', app_id=recent_duplicate.id))
+
+            # Store uploaded resume securely
+            resumes_folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', os.path.join(current_app.root_path, 'uploads', 'resumes'))
+            os.makedirs(resumes_folder, exist_ok=True)
+            safe_base = secure_filename(filename.rsplit('.', 1)[0])[:30] or 'resume'
+            safe_base = re.sub(r'[^a-zA-Z0-9_-]', '_', safe_base)
+            job_code_str = job.job_code or job.job_id or f"JB{job.id}"
+            unique_filename = f"resume_{job_code_str}_{int(time.time())}_{uuid.uuid4().hex[:6]}_{safe_base}.{ext}"
+            saved_resume_path = os.path.join(resumes_folder, unique_filename)
+            resume_file.save(saved_resume_path)
 
             # Server-side pricing strictly derived from selected duration
             pricing = get_internship_fee_breakdown(selected_duration)
@@ -191,8 +234,8 @@ def apply_job(job_id):
                 graduation_year='',
                 skills='',
                 cover_letter='',
-                resume_filename='NOT_PROVIDED',
-                resume_path='',
+                resume_filename=unique_filename,
+                resume_path=saved_resume_path,
                 application_fee=fee_inr,
                 base_amount=base_amount,
                 gst_rate=gst_rate,

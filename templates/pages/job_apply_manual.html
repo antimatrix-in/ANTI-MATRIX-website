@@ -79,7 +79,7 @@
         {% endif %}
       {% endwith %}
 
-      <form method="POST" action="{{ url_for('main.apply_job', job_id=job.id) }}" id="internship-application-form" novalidate>
+      <form method="POST" action="{{ url_for('main.apply_job', job_id=job.id) }}" id="internship-application-form" enctype="multipart/form-data" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
         <!-- FIELD 1: FULL NAME -->
@@ -169,17 +169,11 @@
                 style="position: absolute; top: 1rem; right: 1rem; accent-color: #059669; width: 17px; height: 17px; cursor: pointer;"
                 onchange="updateDurationSelection()"
               />
-              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; margin-bottom: 2px;">
+              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; margin-bottom: 6px;">
                 1 Month
               </div>
-              <div style="font-size: 0.75rem; font-weight: 600; color: #059669; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">
-                Foundational Track
-              </div>
-              <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a; line-height: 1; margin-bottom: 2px;">
+              <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a; line-height: 1;">
                 ₹199
-              </div>
-              <div style="font-size: 0.725rem; color: #64748b;">
-                + 18% GST (Total ₹234.82)
               </div>
             </label>
 
@@ -194,17 +188,11 @@
                 style="position: absolute; top: 1rem; right: 1rem; accent-color: #059669; width: 17px; height: 17px; cursor: pointer;"
                 onchange="updateDurationSelection()"
               />
-              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; margin-bottom: 2px;">
+              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; margin-bottom: 6px;">
                 3 Months
               </div>
-              <div style="font-size: 0.75rem; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">
-                Comprehensive Track
-              </div>
-              <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a; line-height: 1; margin-bottom: 2px;">
+              <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a; line-height: 1;">
                 ₹399
-              </div>
-              <div style="font-size: 0.725rem; color: #64748b;">
-                + 18% GST (Total ₹470.82)
               </div>
             </label>
 
@@ -230,6 +218,47 @@
           <span style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block;">
             Type your full college or university name
           </span>
+        </div>
+
+        <!-- FIELD 6: RESUME -->
+        <div style="margin-bottom: 2rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            Resume <span style="color: #ef4444;">*</span>
+          </label>
+
+          <input
+            type="file"
+            id="resume"
+            name="resume"
+            required
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            style="display: none;"
+            onchange="handleResumeSelected(this)"
+          />
+
+          <div
+            id="resume-dropzone"
+            onclick="document.getElementById('resume').click()"
+            role="button"
+            tabindex="0"
+            style="border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 1rem 1.25rem; background: #fafafa; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box;"
+            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('resume').click();}"
+            onmouseover="if(!this.dataset.selected){this.style.borderColor='#059669';this.style.backgroundColor='#f0fdf4';}"
+            onmouseout="if(!this.dataset.selected){this.style.borderColor='#cbd5e1';this.style.backgroundColor='#fafafa';}"
+          >
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <span id="resume-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: #f1f5f9; color: #64748b; flex-shrink: 0; transition: all 0.2s;">
+                {{ icon('file-text', size=18) }}
+              </span>
+              <span id="resume-text" style="font-size: 0.925rem; font-weight: 600; color: #334155; word-break: break-all;">
+                Upload Resume
+              </span>
+            </div>
+            <div id="resume-check" style="display: none; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #dcfce7; color: #059669; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;">
+              ✓
+            </div>
+          </div>
+          <div id="resume-error" style="display: none; font-size: 0.775rem; color: #ef4444; margin-top: 6px; font-weight: 600;"></div>
         </div>
 
         <!-- SUBMIT BUTTON -->
@@ -274,6 +303,73 @@
     }
   }
 
+  function handleResumeSelected(input) {
+    var dropzone = document.getElementById('resume-dropzone');
+    var textSpan = document.getElementById('resume-text');
+    var iconSpan = document.getElementById('resume-icon');
+    var checkMark = document.getElementById('resume-check');
+    var errorDiv = document.getElementById('resume-error');
+
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+
+    if (!input.files || !input.files[0]) {
+      dropzone.dataset.selected = '';
+      dropzone.style.borderColor = '#cbd5e1';
+      dropzone.style.backgroundColor = '#fafafa';
+      iconSpan.style.background = '#f1f5f9';
+      iconSpan.style.color = '#64748b';
+      textSpan.textContent = 'Upload Resume';
+      textSpan.style.color = '#334155';
+      checkMark.style.display = 'none';
+      return;
+    }
+
+    var file = input.files[0];
+    var fileName = file.name;
+    var ext = fileName.split('.').pop().toLowerCase();
+    var allowed = ['pdf', 'doc', 'docx'];
+
+    if (allowed.indexOf(ext) === -1) {
+      input.value = '';
+      dropzone.dataset.selected = '';
+      dropzone.style.borderColor = '#ef4444';
+      dropzone.style.backgroundColor = '#fef2f2';
+      iconSpan.style.background = '#fee2e2';
+      iconSpan.style.color = '#ef4444';
+      textSpan.textContent = 'Upload Resume';
+      textSpan.style.color = '#334155';
+      checkMark.style.display = 'none';
+      errorDiv.textContent = 'Please upload a valid resume file.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (file.size > 16 * 1024 * 1024) {
+      input.value = '';
+      dropzone.dataset.selected = '';
+      dropzone.style.borderColor = '#ef4444';
+      dropzone.style.backgroundColor = '#fef2f2';
+      iconSpan.style.background = '#fee2e2';
+      iconSpan.style.color = '#ef4444';
+      textSpan.textContent = 'Upload Resume';
+      textSpan.style.color = '#334155';
+      checkMark.style.display = 'none';
+      errorDiv.textContent = 'File size exceeds 16 MB limit.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    dropzone.dataset.selected = 'true';
+    dropzone.style.borderColor = '#059669';
+    dropzone.style.backgroundColor = '#f0fdf4';
+    iconSpan.style.background = '#dcfce7';
+    iconSpan.style.color = '#059669';
+    textSpan.textContent = fileName;
+    textSpan.style.color = '#0f172a';
+    checkMark.style.display = 'flex';
+  }
+
   // Prevent double-clicks / repeated submissions
   var form = document.getElementById('internship-application-form');
   var submitBtn = document.getElementById('submit-application-btn');
@@ -286,8 +382,19 @@
       var email = document.getElementById('email').value.trim();
       var phone = document.getElementById('phone').value.trim();
       var college = document.getElementById('college').value.trim();
+      var resumeInput = document.getElementById('resume');
 
-      if (!name || !email || !phone || !college) {
+      var hasResume = resumeInput && resumeInput.files && resumeInput.files.length > 0;
+
+      if (!name || !email || !phone || !college || !hasResume) {
+        if (!hasResume) {
+          var dropzone = document.getElementById('resume-dropzone');
+          var errorDiv = document.getElementById('resume-error');
+          dropzone.style.borderColor = '#ef4444';
+          dropzone.style.backgroundColor = '#fef2f2';
+          errorDiv.textContent = 'Please upload a valid resume file.';
+          errorDiv.style.display = 'block';
+        }
         return; // allow HTML5 validation to highlight missing fields
       }
 
