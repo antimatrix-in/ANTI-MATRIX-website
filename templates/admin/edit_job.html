@@ -84,7 +84,7 @@
             <span id="preview-type-badge" style="font-size: 0.75rem; color: #64748b;">{{ job.employment_type }}</span>
           </div>
           <span id="preview-duration-badge" style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #e2e8f0; color: #334155; font-weight: 600; {{ 'display: none;' if not job.duration else '' }}">
-            {% if job.duration == '1_month' %}1 Month Internship (₹199 + 18% GST){% elif job.duration == '3_months' %}3 Months Internship (₹399 + 18% GST){% endif %}
+            {% if job.duration == '1_month' %}1 Month Internship (₹199){% elif job.duration == '3_months' %}3 Months Internship (₹399){% endif %}
           </span>
         </div>
 

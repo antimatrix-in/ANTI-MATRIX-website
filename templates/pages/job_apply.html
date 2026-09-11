@@ -287,18 +287,18 @@
               <div class="fcard-i g">{{ icon('clock',size=17) }}</div>
               <div>
                 <p class="fcard-t">3. Internship Duration <span class="freq">*</span></p>
-                <p class="fcard-s">Select your program commitment duration (determines application base fee)</p>
+                <p class="fcard-s">Select your program commitment duration</p>
               </div>
             </div>
             <div class="fgrp">
               <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; padding: 0.5rem 0;">
                 <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
                   <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if form_data.get('duration') == '1_month' %}checked{% endif %} required onchange="handleDurationSelection('1_month')" />
-                  <span>1 Month <span style="font-size: 0.8rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹199 Base Fee</span></span>
+                  <span>1 Month <span style="font-size: 0.8rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹199</span></span>
                 </label>
                 <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
                   <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if form_data.get('duration') == '3_months' %}checked{% endif %} required onchange="handleDurationSelection('3_months')" />
-                  <span>3 Months <span style="font-size: 0.8rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹399 Base Fee</span></span>
+                  <span>3 Months <span style="font-size: 0.8rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹399</span></span>
                 </label>
               </div>
               <span class="ferr" id="err-duration"></span>

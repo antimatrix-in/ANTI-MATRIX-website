@@ -70,14 +70,15 @@ class GSTPaymentSystemTestCase(unittest.TestCase):
         return self.client.post('/login', data={'email': self.candidate.email, 'password': 'Candidate@2026!'})
 
     def _create_app(self, job_id, duration='1_month', fee=199):
+        idx = JobApplication.query.count() + 1
         app = JobApplication(
             job_id=job_id,
             user_id=self.candidate.id,
             first_name='Test',
             last_name='Candidate',
             full_name='Test Candidate',
-            email=self.candidate.email,
-            phone='9876543210',
+            email=f"candidate_{idx}@antimatrix.ai" if idx > 1 else self.candidate.email,
+            phone=f"98765{idx:05d}",
             duration=duration,
             application_fee=fee,
             resume_filename='resume.pdf',
