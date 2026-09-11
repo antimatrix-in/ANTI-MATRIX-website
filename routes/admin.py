@@ -13,7 +13,8 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 from models import (
     db, JobPosting, JobApplication, Payment, User, Employee,
-    DocumentTemplate, EmailTemplate, EmployeeDocument, MoneyTransaction
+    DocumentTemplate, EmailTemplate, EmployeeDocument, MoneyTransaction,
+    InternshipBenefit
 )
 
 from services.offer_letter_service import (
@@ -2707,5 +2708,227 @@ def clear_all_money_transactions():
     return redirect(url_for('admin.money_management'))
 
 
+# =============================================================================
+# ADMIN INTERNSHIP BENEFITS MANAGEMENT ROUTES
+# =============================================================================
+
+@admin_bp.route('/internship-benefits', methods=['GET'])
+@admin_required
+def internship_benefits():
+    """Admin view: List all configured internship benefits / descriptions."""
+    from services.internship_benefit_service import ensure_default_internship_benefits
+    ensure_default_internship_benefits()
+
+    benefits_list = InternshipBenefit.query.order_by(
+        InternshipBenefit.display_order.asc(),
+        InternshipBenefit.id.asc()
+    ).all()
+
+    total_configs = len(benefits_list)
+    active_configs = sum(1 for b in benefits_list if b.is_active)
+
+    return render_template(
+        'admin/internship_benefits.html',
+        benefits=benefits_list,
+        total_configs=total_configs,
+        active_configs=active_configs
+    )
 
 
+@admin_bp.route('/internship-benefits/add', methods=['GET', 'POST'])
+@admin_required
+def add_internship_benefit():
+    """Admin view: Add/configure internship benefits with real-time live preview."""
+    from services.internship_benefit_service import save_or_update_internship_benefit
+
+    # Get already configured durations to inform admin
+    existing_records = InternshipBenefit.query.all()
+    configured_durations = {b.duration_clean for b in existing_records}
+
+    if request.method == 'POST':
+        duration = (request.form.get('duration') or '').strip()
+        title = (request.form.get('title') or '').strip()
+        subtitle = (request.form.get('subtitle') or '').strip()
+        badge_text = (request.form.get('badge_text') or '').strip()
+        is_active = request.form.get('is_active') == 'on' or request.form.get('is_active') == 'true'
+
+        # Collect items: from dynamic inputs 'benefit_items[]' or textarea 'benefits_text'
+        benefit_items = request.form.getlist('benefit_items[]')
+        benefits_text = request.form.get('benefits_text') or ''
+
+        items = []
+        if benefit_items:
+            items = [item.strip() for item in benefit_items if item.strip()]
+        elif benefits_text:
+            items = [line.strip() for line in benefits_text.split('\n') if line.strip()]
+
+        if not duration:
+            flash("Please select an Internship Duration (1 Month or 3 Months).", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='add',
+                benefit=None,
+                form_data=request.form,
+                configured_durations=configured_durations
+            )
+
+        if not items:
+            flash("Please enter at least one benefit point.", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='add',
+                benefit=None,
+                form_data=request.form,
+                configured_durations=configured_durations
+            )
+
+        try:
+            saved_benefit, is_new = save_or_update_internship_benefit(
+                duration=duration,
+                title=title,
+                benefits_items=items,
+                subtitle=subtitle,
+                badge_text=badge_text,
+                is_active=is_active
+            )
+            if is_new:
+                flash(f"New {saved_benefit.duration_label} benefits configured successfully!", "success")
+            else:
+                flash(f"Existing {saved_benefit.duration_label} benefits updated successfully (duplicates prevented)!", "success")
+
+            return redirect(url_for('admin.internship_benefits'))
+        except Exception as e:
+            flash(f"Error saving internship benefits: {str(e)}", "danger")
+
+    return render_template(
+        'admin/internship_benefit_form.html',
+        mode='add',
+        benefit=None,
+        form_data={},
+        configured_durations=configured_durations
+    )
+
+
+@admin_bp.route('/internship-benefits/<int:benefit_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_internship_benefit(benefit_id):
+    """Admin view: Edit existing internship benefits with real-time live preview."""
+    from services.internship_benefit_service import save_or_update_internship_benefit
+
+    benefit = db.session.get(InternshipBenefit, benefit_id) or abort(404)
+
+    if request.method == 'POST':
+        duration = (request.form.get('duration') or benefit.duration).strip()
+        title = (request.form.get('title') or '').strip()
+        subtitle = (request.form.get('subtitle') or '').strip()
+        badge_text = (request.form.get('badge_text') or '').strip()
+        is_active = request.form.get('is_active') == 'on' or request.form.get('is_active') == 'true'
+
+        benefit_items = request.form.getlist('benefit_items[]')
+        benefits_text = request.form.get('benefits_text') or ''
+
+        items = []
+        if benefit_items:
+            items = [item.strip() for item in benefit_items if item.strip()]
+        elif benefits_text:
+            items = [line.strip() for line in benefits_text.split('\n') if line.strip()]
+
+        if not items:
+            flash("Please enter at least one benefit point.", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='edit',
+                benefit=benefit,
+                form_data=request.form
+            )
+
+        try:
+            saved_benefit, _ = save_or_update_internship_benefit(
+                duration=duration,
+                title=title,
+                benefits_items=items,
+                subtitle=subtitle,
+                badge_text=badge_text,
+                is_active=is_active,
+                benefit_id=benefit.id
+            )
+            flash(f"{saved_benefit.duration_label} benefits updated successfully!", "success")
+            return redirect(url_for('admin.internship_benefits'))
+        except Exception as e:
+            flash(f"Error updating internship benefits: {str(e)}", "danger")
+
+    return render_template(
+        'admin/internship_benefit_form.html',
+        mode='edit',
+        benefit=benefit,
+        form_data={
+            'duration': benefit.duration,
+            'title': benefit.title,
+            'subtitle': benefit.subtitle or '',
+            'badge_text': benefit.badge_text or '',
+            'is_active': benefit.is_active
+        }
+    )
+
+
+@admin_bp.route('/internship-benefits/<int:benefit_id>/delete', methods=['POST'])
+@admin_required
+def delete_internship_benefit(benefit_id):
+    """Admin action: Delete an internship benefit configuration."""
+    benefit = db.session.get(InternshipBenefit, benefit_id) or abort(404)
+    label = benefit.duration_label
+    try:
+        db.session.delete(benefit)
+        db.session.commit()
+        flash(f"{label} benefits configuration has been deleted.", "info")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting benefit configuration: {str(e)}", "danger")
+
+    return redirect(url_for('admin.internship_benefits'))
+
+
+@admin_bp.route('/internship-benefits/reset-defaults', methods=['POST'])
+@admin_required
+def reset_default_internship_benefits():
+    """Admin action: Safe utility to initialize standard default benefits if table is empty or missing defaults."""
+    from services.internship_benefit_service import ensure_default_internship_benefits, DEFAULT_1_MONTH_BENEFITS, DEFAULT_3_MONTH_BENEFITS
+
+    # If already exists, notify admin without destructive reset
+    existing_1m = InternshipBenefit.query.filter_by(duration='1_month').first()
+    existing_3m = InternshipBenefit.query.filter_by(duration='3_months').first()
+
+    added = 0
+    if not existing_1m:
+        b1 = InternshipBenefit(
+            duration='1_month',
+            title='1-Month Internship',
+            subtitle='Accelerated hands-on program with core industry deliverables.',
+            badge_text='Fast-Track',
+            is_active=True,
+            display_order=1
+        )
+        b1.set_benefits_list(DEFAULT_1_MONTH_BENEFITS)
+        db.session.add(b1)
+        added += 1
+
+    if not existing_3m:
+        b3 = InternshipBenefit(
+            duration='3_months',
+            title='3-Month Internship',
+            subtitle='In-depth project development with structured evaluation and mentorship.',
+            badge_text='Comprehensive',
+            is_active=True,
+            display_order=2
+        )
+        b3.set_benefits_list(DEFAULT_3_MONTH_BENEFITS)
+        db.session.add(b3)
+        added += 1
+
+    if added > 0:
+        db.session.commit()
+        flash(f"Created {added} standard default internship benefit configuration(s).", "success")
+    else:
+        flash("Both 1-Month and 3-Month configurations already exist. Existing records were preserved safely.", "info")
+
+    return redirect(url_for('admin.internship_benefits'))

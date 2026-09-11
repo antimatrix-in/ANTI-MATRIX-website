@@ -103,6 +103,13 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
         
+        # Ensure default internship benefits exist (seeds only if empty)
+        try:
+            from services.internship_benefit_service import ensure_default_internship_benefits
+            ensure_default_internship_benefits()
+        except Exception as e:
+            logger.warning(f"Internship benefits initialization note: {e}")
+
         # Log database backend safely without exposing credentials or hosts
         backend_name = db.engine.dialect.name.upper()
         logger.info(f"DATABASE CONFIGURATION DETECTED: {backend_name}")

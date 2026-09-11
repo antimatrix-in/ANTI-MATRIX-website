@@ -1,0 +1,567 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}
+  {{ 'Edit Internship Benefits' if mode == 'edit' else 'Add Internship Description & Benefits' }} | Anti-Matrix Admin
+{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: var(--color-bg); min-height: 88vh; padding-bottom: 5rem;">
+  <div class="container" style="max-width: 1200px;">
+
+    <!-- Breadcrumb & Header -->
+    <div style="margin-bottom: 1.75rem;">
+      <a href="{{ url_for('admin.internship_benefits') }}" class="btn btn-ghost btn-sm" style="margin-bottom: 0.5rem; display: inline-flex; align-items: center; gap: 6px;">
+        {{ icon('arrow-left', size=14) }} Back to Benefits List
+      </a>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: clamp(1.6rem, 2.5vw, 2rem); font-weight: 800; color: var(--color-text); margin: 0 0 0.35rem 0;">
+            {{ 'Edit ' ~ benefit.duration_label ~ ' Benefits' if mode == 'edit' else 'Add Internship Description & Benefits' }}
+          </h1>
+          <p style="color: var(--color-text-dim); margin: 0; font-size: 0.925rem;">
+            Configure duration-based offerings, perks, and deliverables shown to candidates above the application form.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flashed Alert Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }}" style="display: flex; align-items: center; gap: 8px; padding: 0.85rem 1.25rem; border-radius: 8px; background: {% if category == 'success' %}#f0fdf4{% elif category == 'danger' or category == 'error' %}#fef2f2{% else %}#eff6ff{% endif %}; border: 1px solid {% if category == 'success' %}#bbf7d0{% elif category == 'danger' or category == 'error' %}#fecaca{% else %}#bfdbfe{% endif %}; color: {% if category == 'success' %}#166534{% elif category == 'danger' or category == 'error' %}#991b1b{% else %}#1e40af{% endif %};">
+              {{ icon('check-circle' if category == 'success' else 'alert-circle', size=16) }}
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Duplicate Notice Banner if Adding for Already Configured Duration -->
+    {% if mode == 'add' and configured_durations %}
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 0.9rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+        <span style="color: #2563eb;">{{ icon('shield', size=18) }}</span>
+        <div style="font-size: 0.85rem; color: #1e40af;">
+          <strong>Duplicate-Safe Editing:</strong>
+          If you select a duration that already has benefits saved (e.g. 
+          {% for cd in configured_durations %}
+            <span style="font-weight: 700; text-transform: capitalize;">{{ '1 Month' if cd == '1_month' else '3 Months' }}</span>{% if not loop.last %}, {% endif %}
+          {% endfor %}),
+          saving will safely <strong>update</strong> the existing configuration rather than creating redundant duplicates.
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Editor & Live Preview Grid -->
+    <div style="display: grid; grid-template-columns: 1.2fr 0.9fr; gap: 2rem; align-items: start;" id="editor-layout">
+      
+      <!-- ================================================================= -->
+      <!-- LEFT COLUMN: FORM EDITOR                                          -->
+      <!-- ================================================================= -->
+      <div class="card" style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 14px; padding: 2rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);">
+        <form method="POST" id="benefit-editor-form" action="{{ url_for('admin.edit_internship_benefit', benefit_id=benefit.id) if mode == 'edit' else url_for('admin.add_internship_benefit') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <!-- Duration Selector -->
+          <div style="margin-bottom: 1.5rem;">
+            <label for="duration" style="display: block; font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+              Internship Duration <span style="color: #ef4444;">*</span>
+            </label>
+            {% set current_duration = form_data.get('duration') or (benefit.duration if benefit else '1_month') %}
+            <select id="duration" name="duration" required style="width: 100%; padding: 0.75rem 0.95rem; font-size: 0.95rem; font-weight: 600; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; background: #fff; color: #0f172a; transition: border-color 0.15s;" onchange="handleDurationChange(this.value)">
+              <option value="1_month" {% if current_duration == '1_month' or current_duration == '1 Month' or current_duration == '1' %}selected{% endif %}>
+                1 Month Internship
+              </option>
+              <option value="3_months" {% if current_duration == '3_months' or current_duration == '3 Months' or current_duration == '3' %}selected{% endif %}>
+                3 Months Internship
+              </option>
+            </select>
+            <p style="font-size: 0.775rem; color: #64748b; margin: 5px 0 0 0;">
+              This configuration will appear in the corresponding card on all internship application pages.
+            </p>
+          </div>
+
+          <!-- Title -->
+          <div style="margin-bottom: 1.5rem;">
+            <label for="title" style="display: block; font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+              Card Title <span style="color: #ef4444;">*</span>
+            </label>
+            {% set current_title = form_data.get('title') or (benefit.title if benefit else '1-Month Internship') %}
+            <input
+              type="text"
+              id="title"
+              name="title"
+              required
+              value="{{ current_title }}"
+              placeholder="e.g. 1-Month Internship"
+              style="width: 100%; padding: 0.75rem 0.95rem; font-size: 0.925rem; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box;"
+              oninput="updateLivePreview()"
+            />
+          </div>
+
+          <!-- Subtitle / Short Description -->
+          <div style="margin-bottom: 1.5rem;">
+            <label for="subtitle" style="display: block; font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+              Subtitle / Overview <span style="font-size: 0.775rem; font-weight: 400; color: #94a3b8;">(Optional)</span>
+            </label>
+            {% set current_subtitle = form_data.get('subtitle') or (benefit.subtitle if benefit else '') %}
+            <input
+              type="text"
+              id="subtitle"
+              name="subtitle"
+              value="{{ current_subtitle }}"
+              placeholder="e.g. Accelerated hands-on program with core deliverables."
+              style="width: 100%; padding: 0.75rem 0.95rem; font-size: 0.925rem; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box;"
+              oninput="updateLivePreview()"
+            />
+          </div>
+
+          <!-- Badge Text -->
+          <div style="margin-bottom: 1.5rem;">
+            <label for="badge_text" style="display: block; font-size: 0.875rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+              Highlight Badge <span style="font-size: 0.775rem; font-weight: 400; color: #94a3b8;">(Optional, e.g. 'Popular', 'Fast-Track', 'Comprehensive')</span>
+            </label>
+            {% set current_badge = form_data.get('badge_text') or (benefit.badge_text if benefit else '') %}
+            <input
+              type="text"
+              id="badge_text"
+              name="badge_text"
+              value="{{ current_badge }}"
+              placeholder="e.g. Fast-Track"
+              style="width: 100%; padding: 0.75rem 0.95rem; font-size: 0.925rem; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box;"
+              oninput="updateLivePreview()"
+            />
+          </div>
+
+          <!-- Status Active Checkbox -->
+          <div style="margin-bottom: 1.75rem; padding: 0.85rem 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <label for="is_active" style="font-size: 0.875rem; font-weight: 700; color: #1e293b; cursor: pointer; display: block;">
+                Active on Public Website
+              </label>
+              <span style="font-size: 0.775rem; color: #64748b;">
+                When checked, these benefits are visible to candidates on the application page.
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              id="is_active"
+              name="is_active"
+              {% if benefit is none or benefit.is_active %}checked{% endif %}
+              style="width: 18px; height: 18px; cursor: pointer; accent-color: #059669;"
+            />
+          </div>
+
+          <!-- ============================================================= -->
+          <!-- BENEFITS ITEMS LIST SECTION                                   -->
+          <!-- ============================================================= -->
+          <div style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <label style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0;">
+                  Benefit Points <span style="color: #ef4444;">*</span>
+                </label>
+                <span style="font-size: 0.775rem; color: #64748b; display: block;">
+                  Enter each deliverable, certificate, stipend perk, or access benefit.
+                </span>
+              </div>
+
+              <!-- Mode Switcher (Point-by-point vs Bulk Textarea) -->
+              <div style="display: inline-flex; background: #f1f5f9; border-radius: 6px; padding: 2px;">
+                <button type="button" id="btn-mode-points" onclick="switchInputMode('points')" style="padding: 4px 10px; font-size: 0.775rem; font-weight: 700; border: none; border-radius: 5px; cursor: pointer; background: #fff; color: #059669; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+                  Point-by-Point
+                </button>
+                <button type="button" id="btn-mode-text" onclick="switchInputMode('text')" style="padding: 4px 10px; font-size: 0.775rem; font-weight: 600; border: none; border-radius: 5px; cursor: pointer; background: transparent; color: #64748b;">
+                  Bulk Textarea
+                </button>
+              </div>
+            </div>
+
+            <!-- Pre-populated initial items -->
+            {% if benefit %}
+              {% set initial_items = benefit.get_benefits_list() %}
+            {% elif form_data.get('duration') == '3_months' %}
+              {% set initial_items = [
+                'Digital internship offer letter',
+                'Intern employee ID',
+                'Intern working portal access',
+                'Structured project-based assignments',
+                'Practical hands-on industry experience',
+                'Regular task and performance evaluation',
+                'Internship completion certificate',
+                'Performance-based benefits/stipend as configured'
+              ] %}
+            {% else %}
+              {% set initial_items = [
+                'Digital internship offer letter',
+                'Intern employee ID',
+                'Intern working portal access',
+                'Weekly assigned tasks',
+                'Practical hands-on experience',
+                'Internship completion certificate',
+                'Performance-based stipend up to ₹5,000'
+              ] %}
+            {% endif %}
+
+            <!-- CONTAINER 1: Dynamic Point-by-Point Inputs (Preferred) -->
+            <div id="points-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <div id="benefit-rows-wrapper" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for item in initial_items %}
+                  <div class="benefit-item-row" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="row-number-label" style="font-size: 0.775rem; font-weight: 700; color: #64748b; min-width: 65px; text-align: right; flex-shrink: 0;">
+                      Benefit {{ loop.index }}:
+                    </span>
+                    <input
+                      type="text"
+                      name="benefit_items[]"
+                      value="{{ item }}"
+                      placeholder="e.g. Digital internship offer letter"
+                      required
+                      style="flex: 1; padding: 0.65rem 0.85rem; font-size: 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 7px; outline: none; transition: border-color 0.15s;"
+                      oninput="updateLivePreview()"
+                    />
+                    <button type="button" onclick="removeBenefitRow(this)" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; padding: 0.65rem 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remove this benefit">
+                      {{ icon('trash', size=14) }}
+                    </button>
+                  </div>
+                {% endfor %}
+              </div>
+
+              <!-- Add Benefit Button -->
+              <div style="margin-top: 0.5rem;">
+                <button type="button" onclick="addBenefitRow()" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #059669; border-color: #a7f3d0; background: #ecfdf5;">
+                  {{ icon('plus', size=14) }} Add Benefit
+                </button>
+              </div>
+            </div>
+
+            <!-- CONTAINER 2: Alternative Bulk Multiline Textarea -->
+            <div id="textarea-container" style="display: none;">
+              <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 6px 0;">
+                Enter one benefit per line. Individual lines will be stored and validated safely as separate items.
+              </p>
+              <textarea
+                id="benefits_text"
+                name="benefits_text"
+                rows="8"
+                placeholder="Digital offer letter&#10;Intern employee ID&#10;Working portal access&#10;Weekly assigned tasks"
+                style="width: 100%; padding: 0.75rem; font-size: 0.9rem; font-family: var(--font-body); border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; line-height: 1.6; box-sizing: border-box;"
+                oninput="syncFromTextarea()"
+              >{{ initial_items|join('\n') }}</textarea>
+            </div>
+
+          </div>
+
+          <!-- Submit Actions -->
+          <div style="display: flex; gap: 1rem; align-items: center; padding-top: 1.5rem; border-top: 1px solid #f1f5f9;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 0.95rem; font-weight: 700; gap: 8px; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);">
+              {{ icon('check', size=16) }} {{ 'Save Changes' if mode == 'edit' else 'Save Configuration' }}
+            </button>
+            <a href="{{ url_for('admin.internship_benefits') }}" class="btn btn-outline" style="padding: 0.85rem 1.25rem; font-size: 0.95rem;">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- RIGHT COLUMN: REAL-TIME FRONTEND LIVE PREVIEW                     -->
+      <!-- ================================================================= -->
+      <div style="position: sticky; top: calc(var(--nav-height, 80px) + 2rem);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #475569;">
+              Live Public Preview
+            </span>
+          </div>
+          <span style="font-size: 0.75rem; font-weight: 600; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 5px; height: 5px; border-radius: 50%; background: #059669;"></span> Frontend Preview
+          </span>
+        </div>
+
+        <p style="font-size: 0.775rem; color: #64748b; margin: 0 0 1rem 0;">
+          This is exactly how candidates will view this card above the application form on the website.
+        </p>
+
+        <!-- Preview Card Container -->
+        <div id="preview-card" style="background: #ffffff; border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 1.75rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); transition: border-color 0.2s;">
+          
+          <!-- Card Header & Badge -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div id="preview-duration-badge" style="font-size: 0.775rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.25rem 0.65rem; border-radius: 6px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 5px;">
+              {{ icon('calendar', size=12) }} <span id="preview-duration-text">1-MONTH INTERNSHIP</span>
+            </div>
+            <span id="preview-highlight-badge" style="font-size: 0.725rem; font-weight: 700; background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; padding: 0.2rem 0.5rem; border-radius: 5px;">
+              Fast-Track
+            </span>
+          </div>
+
+          <!-- Title -->
+          <h2 id="preview-title" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.35rem 0; line-height: 1.3;">
+            1-Month Internship
+          </h2>
+
+          <!-- Subtitle -->
+          <p id="preview-subtitle" style="font-size: 0.85rem; color: #64748b; margin: 0 0 1.25rem 0; line-height: 1.5;">
+            Accelerated hands-on program with core deliverables.
+          </p>
+
+          <!-- Benefits List -->
+          <div style="border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+            <div style="font-size: 0.775rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+              Key Program Benefits:
+            </div>
+            <ul id="preview-benefits-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.55rem;">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+
+          <!-- Bottom Footer Callout in Card -->
+          <div id="preview-footer-note" style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed #e2e8f0; font-size: 0.775rem; color: #64748b; display: flex; align-items: center; gap: 6px;">
+            <span style="color: #059669;">{{ icon('check-circle', size=13) }}</span>
+            <span id="preview-footer-text">Official Anti-Matrix Offer & Completion Credentials</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ======================================================================= -->
+<!-- JAVASCRIPT: DYNAMIC POINT ROWS, TEXTAREA SYNC, & REAL-TIME PREVIEW      -->
+<!-- ======================================================================= -->
+<script>
+  let currentMode = 'points';
+
+  function switchInputMode(mode) {
+    currentMode = mode;
+    const btnPoints = document.getElementById('btn-mode-points');
+    const btnText = document.getElementById('btn-mode-text');
+    const pointsContainer = document.getElementById('points-container');
+    const textContainer = document.getElementById('textarea-container');
+
+    if (mode === 'points') {
+      btnPoints.style.background = '#fff';
+      btnPoints.style.color = '#059669';
+      btnPoints.style.boxShadow = '0 1px 2px rgba(0,0,0,0.06)';
+      btnText.style.background = 'transparent';
+      btnText.style.color = '#64748b';
+      btnText.style.boxShadow = 'none';
+
+      pointsContainer.style.display = 'flex';
+      textContainer.style.display = 'none';
+      syncToPointRows();
+    } else {
+      btnText.style.background = '#fff';
+      btnText.style.color = '#059669';
+      btnText.style.boxShadow = '0 1px 2px rgba(0,0,0,0.06)';
+      btnPoints.style.background = 'transparent';
+      btnPoints.style.color = '#64748b';
+      btnPoints.style.boxShadow = 'none';
+
+      textContainer.style.display = 'block';
+      pointsContainer.style.display = 'none';
+      syncToTextarea();
+    }
+  }
+
+  function addBenefitRow(value = '') {
+    const wrapper = document.getElementById('benefit-rows-wrapper');
+    const rowCount = wrapper.children.length + 1;
+
+    const row = document.createElement('div');
+    row.className = 'benefit-item-row';
+    row.style = 'display: flex; align-items: center; gap: 8px;';
+    row.innerHTML = `
+      <span class="row-number-label" style="font-size: 0.775rem; font-weight: 700; color: #64748b; min-width: 65px; text-align: right; flex-shrink: 0;">
+        Benefit ${rowCount}:
+      </span>
+      <input
+        type="text"
+        name="benefit_items[]"
+        value="${escapeHtml(value)}"
+        placeholder="Enter benefit description..."
+        required
+        style="flex: 1; padding: 0.65rem 0.85rem; font-size: 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 7px; outline: none; transition: border-color 0.15s;"
+        oninput="updateLivePreview()"
+      />
+      <button type="button" onclick="removeBenefitRow(this)" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; padding: 0.65rem 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remove this benefit">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>
+    `;
+    wrapper.appendChild(row);
+    renumberRows();
+    updateLivePreview();
+  }
+
+  function removeBenefitRow(button) {
+    const row = button.closest('.benefit-item-row');
+    const wrapper = document.getElementById('benefit-rows-wrapper');
+    if (wrapper.children.length <= 1) {
+      alert("At least one benefit point is required.");
+      return;
+    }
+    row.remove();
+    renumberRows();
+    updateLivePreview();
+  }
+
+  function renumberRows() {
+    const rows = document.querySelectorAll('.benefit-item-row');
+    rows.forEach((r, idx) => {
+      const lbl = r.querySelector('.row-number-label');
+      if (lbl) lbl.textContent = `Benefit ${idx + 1}:`;
+    });
+  }
+
+  function syncToTextarea() {
+    const inputs = document.querySelectorAll('input[name="benefit_items[]"]');
+    const lines = [];
+    inputs.forEach(inp => {
+      const v = inp.value.trim();
+      if (v) lines.push(v);
+    });
+    document.getElementById('benefits_text').value = lines.join('\n');
+    updateLivePreview();
+  }
+
+  function syncFromTextarea() {
+    const text = document.getElementById('benefits_text').value;
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const wrapper = document.getElementById('benefit-rows-wrapper');
+    wrapper.innerHTML = '';
+    lines.forEach(l => addBenefitRow(l));
+    if (lines.length === 0) addBenefitRow('');
+    updateLivePreview();
+  }
+
+  function syncToPointRows() {
+    syncFromTextarea();
+  }
+
+  function handleDurationChange(val) {
+    const titleInp = document.getElementById('title');
+    const badgeInp = document.getElementById('badge_text');
+    const subtitleInp = document.getElementById('subtitle');
+
+    if (val === '3_months') {
+      if (!titleInp.value || titleInp.value.includes('1-Month')) {
+        titleInp.value = '3-Month Internship';
+      }
+      if (!badgeInp.value || badgeInp.value === 'Fast-Track') {
+        badgeInp.value = 'Comprehensive';
+      }
+      if (!subtitleInp.value || subtitleInp.value.includes('Accelerated')) {
+        subtitleInp.value = 'In-depth project development with structured evaluation and mentorship.';
+      }
+    } else {
+      if (!titleInp.value || titleInp.value.includes('3-Month')) {
+        titleInp.value = '1-Month Internship';
+      }
+      if (!badgeInp.value || badgeInp.value === 'Comprehensive') {
+        badgeInp.value = 'Fast-Track';
+      }
+      if (!subtitleInp.value || subtitleInp.value.includes('In-depth')) {
+        subtitleInp.value = 'Accelerated hands-on program with core deliverables.';
+      }
+    }
+    updateLivePreview();
+  }
+
+  function updateLivePreview() {
+    const duration = document.getElementById('duration').value;
+    const title = document.getElementById('title').value || (duration === '3_months' ? '3-Month Internship' : '1-Month Internship');
+    const subtitle = document.getElementById('subtitle').value;
+    const badge = document.getElementById('badge_text').value;
+
+    const card = document.getElementById('preview-card');
+    const durationBadge = document.getElementById('preview-duration-badge');
+    const durationText = document.getElementById('preview-duration-text');
+    const highlightBadge = document.getElementById('preview-highlight-badge');
+    const previewTitle = document.getElementById('preview-title');
+    const previewSubtitle = document.getElementById('preview-subtitle');
+    const benefitsList = document.getElementById('preview-benefits-list');
+
+    // Accent colors based on duration
+    const is3m = (duration === '3_months');
+    const accentColor = is3m ? '#2563eb' : '#059669';
+    const borderColor = is3m ? '#bfdbfe' : '#bbf7d0';
+    const bgBadge = is3m ? '#eff6ff' : '#ecfdf5';
+
+    card.style.borderColor = borderColor;
+    durationBadge.style.background = bgBadge;
+    durationBadge.style.color = accentColor;
+    durationBadge.style.borderColor = borderColor;
+    durationText.textContent = is3m ? '3-MONTH INTERNSHIP' : '1-MONTH INTERNSHIP';
+
+    previewTitle.textContent = title;
+    
+    if (subtitle.trim()) {
+      previewSubtitle.textContent = subtitle;
+      previewSubtitle.style.display = 'block';
+    } else {
+      previewSubtitle.style.display = 'none';
+    }
+
+    if (badge.trim()) {
+      highlightBadge.textContent = badge;
+      highlightBadge.style.display = 'inline-block';
+    } else {
+      highlightBadge.style.display = 'none';
+    }
+
+    // Populate benefits list from inputs
+    let items = [];
+    if (currentMode === 'points') {
+      const inputs = document.querySelectorAll('input[name="benefit_items[]"]');
+      inputs.forEach(inp => {
+        if (inp.value.trim()) items.push(inp.value.trim());
+      });
+    } else {
+      const text = document.getElementById('benefits_text').value;
+      items = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    }
+
+    if (items.length === 0) {
+      items = ['Sample benefit point preview'];
+    }
+
+    benefitsList.innerHTML = items.map(it => `
+      <li style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.85rem; color: #334155; line-height: 1.45;">
+        <span style="color: ${accentColor}; flex-shrink: 0; margin-top: 1px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span>${escapeHtml(it)}</span>
+      </li>
+    `).join('');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+  }
+
+  // Initialize preview on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    updateLivePreview();
+  });
+</script>
+
+<style>
+  @media (max-width: 900px) {
+    #editor-layout {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+{% endblock %}

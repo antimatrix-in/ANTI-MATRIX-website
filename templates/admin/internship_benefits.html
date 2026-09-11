@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}Internship Benefits | Anti-Matrix Admin{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top: calc(var(--nav-height, 80px) + 2rem); background: var(--color-bg); min-height: 85vh; padding-bottom: 4rem;">
+  <div class="container" style="max-width: 1140px;">
+
+    <!-- Admin Header -->
+    <div class="admin-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xl);">
+      <div class="admin-header-title">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-xs); display: inline-flex; align-items: center; gap: 6px;">
+          {{ icon('arrow-left', size=14) }} Back to Dashboard
+        </a>
+        <h1 style="font-size: clamp(1.6rem, 2.5vw, 2.1rem); font-weight: 800; color: var(--color-text); margin: 0 0 0.4rem 0;">
+          Internship Benefits Management
+        </h1>
+        <p style="color: var(--color-text-dim); margin: 0; font-size: 0.95rem;">
+          Configure duration-based internship offerings and feature points displayed on the public career application page.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.add_internship_benefit') }}" class="btn btn-primary" style="gap: 7px; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);">
+          {{ icon('plus', size=16) }} Add Description
+        </a>
+      </div>
+    </div>
+
+    <!-- Admin Nav Tabs -->
+    <div class="admin-nav-tabs" style="margin-bottom: var(--space-xl);">
+      <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-tab">
+        {{ icon('layout', size=15) }} Overview
+      </a>
+      <a href="{{ url_for('admin.jobs') }}" class="admin-nav-tab">
+        {{ icon('briefcase', size=15) }} Job Postings
+      </a>
+      <a href="{{ url_for('admin.applications') }}" class="admin-nav-tab">
+        {{ icon('users', size=15) }} Candidate Applications
+      </a>
+      <a href="{{ url_for('admin.employees') }}" class="admin-nav-tab">
+        {{ icon('user-check', size=15) }} Employees
+      </a>
+      <a href="{{ url_for('admin.templates') }}" class="admin-nav-tab">
+        {{ icon('file-text', size=15) }} Templates
+      </a>
+      <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab">
+        {{ icon('wallet', size=15) }} Money Management
+      </a>
+      <a href="{{ url_for('admin.internship_benefits') }}" class="admin-nav-tab active">
+        {{ icon('award', size=15) }} Internship Benefits
+      </a>
+    </div>
+
+    <!-- Flashed Alert Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom: var(--space-xl);">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }}" style="display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-sm); padding: 0.85rem 1.25rem; border-radius: 8px; background: {% if category == 'success' %}#f0fdf4{% elif category == 'danger' or category == 'error' %}#fef2f2{% else %}#eff6ff{% endif %}; border: 1px solid {% if category == 'success' %}#bbf7d0{% elif category == 'danger' or category == 'error' %}#fecaca{% else %}#bfdbfe{% endif %}; color: {% if category == 'success' %}#166534{% elif category == 'danger' or category == 'error' %}#991b1b{% else %}#1e40af{% endif %};">
+              {{ icon('check-circle' if category == 'success' else 'alert-circle', size=16) }}
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Benefits Cards Grid -->
+    {% if benefits %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for b in benefits %}
+          <div class="card" style="background: #ffffff; border: 1.5px solid {% if b.duration_clean == '1_month' %}#bbf7d0{% else %}#bfdbfe{% endif %}; border-radius: 14px; padding: 1.75rem; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            
+            <div>
+              <!-- Header Row with Badge & Status -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 0.775rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.25rem 0.65rem; border-radius: 6px; 
+                    {% if b.duration_clean == '1_month' %}
+                      background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;
+                    {% else %}
+                      background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+                    {% endif %}">
+                    {{ icon('calendar', size=12) }} {{ b.duration_label }}
+                  </span>
+                  {% if b.badge_text %}
+                    <span style="font-size: 0.725rem; font-weight: 700; background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; padding: 0.2rem 0.5rem; border-radius: 5px;">
+                      {{ b.badge_text }}
+                    </span>
+                  {% endif %}
+                </div>
+
+                <div>
+                  {% if b.is_active %}
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.2rem 0.55rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                      <span style="width: 6px; height: 6px; border-radius: 50%; background: #059669;"></span> Active on Public Page
+                    </span>
+                  {% else %}
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 0.2rem 0.55rem; border-radius: 6px;">
+                      Inactive / Draft
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Title & Summary -->
+              <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0 0 0.4rem 0;">
+                {{ b.title }}
+              </h2>
+              {% if b.subtitle %}
+                <p style="color: #64748b; font-size: 0.875rem; line-height: 1.5; margin: 0 0 1.25rem 0;">
+                  {{ b.subtitle }}
+                </p>
+              {% endif %}
+
+              <!-- Benefits List Count Bar -->
+              <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                {{ icon('check-circle', size=14, color='#059669') }}
+                <span>{{ b.items_count }} Benefit{{ 's' if b.items_count != 1 else '' }} Included:</span>
+              </div>
+
+              <!-- List of Points -->
+              <ul style="list-style: none; padding: 0; margin: 0 0 1.5rem 0; display: flex; flex-direction: column; gap: 0.6rem;">
+                {% for item in b.get_benefits_list() %}
+                  <li style="display: flex; align-items: flex-start; gap: 9px; font-size: 0.875rem; color: #334155; line-height: 1.45;">
+                    <span style="color: {% if b.duration_clean == '1_month' %}#059669{% else %}#2563eb{% endif %}; flex-shrink: 0; margin-top: 1px;">
+                      {{ icon('check', size=14, stroke_width=3) }}
+                    </span>
+                    <span>{{ item }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <!-- Card Footer / Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.25rem; border-top: 1px solid #f1f5f9; margin-top: 0.5rem;">
+              <span style="font-size: 0.775rem; color: #94a3b8;">
+                Last updated: {{ b.updated_at.strftime('%b %d, %Y') if b.updated_at else 'N/A' }}
+              </span>
+              <div style="display: flex; gap: 8px;">
+                <a href="{{ url_for('admin.edit_internship_benefit', benefit_id=b.id) }}" class="btn btn-outline btn-sm" style="gap: 5px; font-size: 0.825rem; font-weight: 600;">
+                  {{ icon('edit', size=13) }} Edit
+                </a>
+                <form method="POST" action="{{ url_for('admin.delete_internship_benefit', benefit_id=b.id) }}" onsubmit="return confirm('Are you sure you want to delete this {{ b.duration_label }} benefit configuration?');" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color: #dc2626; gap: 5px; font-size: 0.825rem;" title="Delete this benefit configuration">
+                    {{ icon('trash', size=13) }} Delete
+                  </button>
+                </form>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Empty State -->
+      <div class="card" style="text-align: center; padding: 3.5rem 2rem; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 14px; margin-bottom: 2rem;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #f0fdf4; color: #059669; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+          {{ icon('award', size=28) }}
+        </div>
+        <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">No Internship Benefits Configured</h2>
+        <p style="color: #64748b; font-size: 0.9rem; max-width: 520px; margin: 0 auto 1.5rem; line-height: 1.6;">
+          Configure benefits for 1-Month and 3-Month internships to be displayed above the public application form.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <a href="{{ url_for('admin.add_internship_benefit') }}" class="btn btn-primary" style="gap: 7px;">
+            {{ icon('plus', size=15) }} Add Description
+          </a>
+          <form method="POST" action="{{ url_for('admin.reset_default_internship_benefits') }}" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-outline" style="gap: 7px;">
+              {{ icon('sparkles', size=15) }} Initialize Safe Defaults
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Architecture & Preview Notice Box -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem 1.5rem; display: flex; align-items: flex-start; gap: 12px;">
+      <div style="color: #059669; flex-shrink: 0; margin-top: 2px;">
+        {{ icon('shield', size=18) }}
+      </div>
+      <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
+        <strong style="color: #0f172a;">Live Public Reflection:</strong>
+        Changes saved here are instantly reflected on the public career application page (above the application form).
+        The layout displays side-by-side on desktop and gracefully stacks on mobile devices.
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

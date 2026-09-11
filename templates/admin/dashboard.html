@@ -14,6 +14,9 @@
         <p>Manage job postings, candidate submissions, and talent acquisition pipelines.</p>
       </div>
       <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+        <a href="{{ url_for('admin.internship_benefits') }}" class="btn btn-outline" style="gap: 6px;">
+          {{ icon('award', size=15) }} Internship Benefits
+        </a>
         <a href="{{ url_for('admin.money_management') }}" class="btn btn-outline" style="gap: 6px;">
           {{ icon('wallet', size=15) }} Money Management
         </a>
@@ -48,6 +51,9 @@
       </a>
       <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab">
         {{ icon('wallet', size=15) }} Money Management
+      </a>
+      <a href="{{ url_for('admin.internship_benefits') }}" class="admin-nav-tab">
+        {{ icon('award', size=15) }} Internship Benefits
       </a>
     </div>
 

@@ -12,6 +12,7 @@ from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 from models import db, ContactInquiry, JobPosting, JobApplication, Payment, User
 from services.cashfree_service import CashfreeService
+from services.internship_benefit_service import get_active_internship_benefits
 from config import (
     INTERNSHIP_FEES, INTERNSHIP_PRICING,
     INDIA_STATES_AND_CITIES, EDUCATION_LEVELS, COMMON_DEGREES, GRADUATION_YEARS,
@@ -114,6 +115,10 @@ def apply_job(job_id):
         flash('This position is currently not accepting new applications.', 'warning')
         return redirect(url_for('main.careers'))
 
+    benefits_map = get_active_internship_benefits(job.id)
+    benefits_1m = benefits_map.get('1_month')
+    benefits_3m = benefits_map.get('3_months')
+
     if is_manual_application_workflow():
         # =====================================================================
         # NEW SIMPLE MANUAL APPLICATION WORKFLOW (5 Required Fields)
@@ -179,7 +184,13 @@ def apply_job(job_id):
             if errors:
                 for err in errors:
                     flash(err, 'danger')
-                return render_template('pages/job_apply_manual.html', job=job, form_data=request.form)
+                return render_template(
+                    'pages/job_apply_manual.html',
+                    job=job,
+                    form_data=request.form,
+                    benefits_1m=benefits_1m,
+                    benefits_3m=benefits_3m
+                )
 
             # Duplicate / Repeated POST Protection within 10 minutes
             recent_duplicate = JobApplication.query.filter(
@@ -263,7 +274,13 @@ def apply_job(job_id):
             if hasattr(current_user, 'phone') and current_user.phone:
                 prefilled_form['phone'] = current_user.phone
 
-        return render_template('pages/job_apply_manual.html', job=job, form_data=prefilled_form)
+        return render_template(
+            'pages/job_apply_manual.html',
+            job=job,
+            form_data=prefilled_form,
+            benefits_1m=benefits_1m,
+            benefits_3m=benefits_3m
+        )
 
     # =====================================================================
     # LEGACY AUTOMATED FLOW (Preserved for future restoration)
@@ -470,7 +487,9 @@ def apply_job(job_id):
                 states_and_cities=INDIA_STATES_AND_CITIES,
                 education_levels=EDUCATION_LEVELS,
                 common_degrees=COMMON_DEGREES,
-                graduation_years=GRADUATION_YEARS
+                graduation_years=GRADUATION_YEARS,
+                benefits_1m=benefits_1m,
+                benefits_3m=benefits_3m
             )
 
         # Check for existing unpaid draft application to reuse/update
@@ -605,7 +624,9 @@ def apply_job(job_id):
         states_and_cities=INDIA_STATES_AND_CITIES,
         education_levels=EDUCATION_LEVELS,
         common_degrees=COMMON_DEGREES,
-        graduation_years=GRADUATION_YEARS
+        graduation_years=GRADUATION_YEARS,
+        benefits_1m=benefits_1m,
+        benefits_3m=benefits_3m
     )
 
 

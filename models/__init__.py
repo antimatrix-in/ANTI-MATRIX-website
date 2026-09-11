@@ -9,6 +9,7 @@ from .employee import Employee
 from .employee_onboarding_credential import EmployeeOnboardingCredential
 from .document import DocumentTemplate, EmailTemplate, EmployeeDocument, EmailLog
 from .money_transaction import MoneyTransaction
+from .internship_benefit import InternshipBenefit
 
 # Alias for Offer Letter template management
 OfferLetterTemplate = DocumentTemplate
@@ -16,7 +17,7 @@ OfferLetterTemplate = DocumentTemplate
 __all__ = [
     'db', 'User', 'ContactInquiry', 'JobPosting', 'JobApplication',
     'Payment', 'Employee', 'EmployeeOnboardingCredential', 'DocumentTemplate', 'OfferLetterTemplate', 'EmailTemplate', 'EmployeeDocument', 'EmailLog',
-    'MoneyTransaction'
+    'MoneyTransaction', 'InternshipBenefit'
 ]
 
 
