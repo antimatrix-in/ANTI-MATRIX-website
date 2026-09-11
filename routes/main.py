@@ -10,7 +10,9 @@ from flask import (
 )
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
+from sqlalchemy.exc import IntegrityError
 from models import db, ContactInquiry, JobPosting, JobApplication, Payment, User
+from models.job import normalize_email, normalize_phone
 from services.cashfree_service import CashfreeService
 from services.internship_benefit_service import get_active_internship_benefits
 from config import (
@@ -125,23 +127,40 @@ def apply_job(job_id):
         # =====================================================================
         if request.method == 'POST':
             full_name = (request.form.get('full_name') or '').strip()
-            email = (request.form.get('email') or '').strip().lower()
+            email = (request.form.get('email') or '').strip()
             phone = (request.form.get('phone') or request.form.get('phone_number') or '').strip()
             raw_duration = (request.form.get('duration') or '').strip()
             college = (request.form.get('college') or '').strip()
+
+            clean_email = normalize_email(email)
+            clean_phone = normalize_phone(phone)
+
+            # Backend Duplicate Candidate & Application Check (Strict Server-Side Prevention)
+            # FIRST check whether email exists, THEN check whether mobile exists
+            existing_applicant = JobApplication.find_existing_applicant(clean_email, clean_phone)
+            if existing_applicant:
+                current_app.logger.warning("Duplicate application blocked: existing candidate/application detected")
+                flash("An application has already been submitted using this email address or mobile number.", "danger")
+                return render_template(
+                    'pages/job_apply_manual.html',
+                    job=job,
+                    form_data=request.form,
+                    benefits_1m=benefits_1m,
+                    benefits_3m=benefits_3m
+                )
 
             selected_duration = normalize_internship_duration(raw_duration)
 
             errors = []
             if not full_name:
                 errors.append('Full Name is required.')
-            if not email:
+            if not clean_email:
                 errors.append('Email is required.')
-            elif not EMAIL_REGEX.match(email):
+            elif not EMAIL_REGEX.match(clean_email):
                 errors.append('Please provide a valid email address.')
-            if not phone:
+            if not clean_phone:
                 errors.append('Phone Number is required.')
-            elif not INDIAN_PHONE_REGEX.match(phone) and len(re.sub(r'\D', '', phone)) != 10:
+            elif len(clean_phone) != 10 or clean_phone[0] not in '6789':
                 errors.append('Please enter a valid 10-digit Indian phone number.')
             if not selected_duration:
                 errors.append('Please select an Internship Duration (1 Month or 3 Months).')
@@ -192,17 +211,6 @@ def apply_job(job_id):
                     benefits_3m=benefits_3m
                 )
 
-            # Duplicate / Repeated POST Protection within 10 minutes
-            recent_duplicate = JobApplication.query.filter(
-                JobApplication.job_id == job.id,
-                JobApplication.email == email,
-                JobApplication.created_at >= datetime.now(timezone.utc) - timedelta(minutes=10)
-            ).first()
-            if recent_duplicate:
-                session['last_submitted_app_id'] = recent_duplicate.id
-                flash(f"Application already submitted! Your Application ID is {recent_duplicate.formatted_code}.", 'info')
-                return redirect(url_for('main.job_apply_success', app_id=recent_duplicate.id))
-
             # Store uploaded resume securely
             resumes_folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', os.path.join(current_app.root_path, 'uploads', 'resumes'))
             os.makedirs(resumes_folder, exist_ok=True)
@@ -226,7 +234,7 @@ def apply_job(job_id):
 
             user_id = current_user.id if current_user.is_authenticated else None
             if not user_id:
-                matched_user = User.query.filter(User.email.ilike(email)).first()
+                matched_user = User.query.filter(User.email.ilike(clean_email)).first()
                 if matched_user:
                     user_id = matched_user.id
 
@@ -236,8 +244,8 @@ def apply_job(job_id):
                 first_name=first_name,
                 last_name=last_name,
                 full_name=full_name,
-                email=email,
-                phone=phone,
+                email=clean_email,
+                phone=clean_phone,
                 college=college,
                 department=job.department,
                 duration=selected_duration,
@@ -260,7 +268,20 @@ def apply_job(job_id):
 
             # Concurrency-safe unique Application ID
             application.application_code = JobApplication.generate_unique_application_code(app_id=application.id)
-            db.session.commit()
+            try:
+                db.session.commit()
+                current_app.logger.info("Candidate application created successfully")
+            except IntegrityError as ie:
+                db.session.rollback()
+                current_app.logger.warning(f"Duplicate applicant prevented by database constraint: {ie}")
+                flash("An application has already been submitted using this email address or mobile number.", "danger")
+                return render_template(
+                    'pages/job_apply_manual.html',
+                    job=job,
+                    form_data=request.form,
+                    benefits_1m=benefits_1m,
+                    benefits_3m=benefits_3m
+                )
 
             session['last_submitted_app_id'] = application.id
             flash(f"Application submitted successfully! Your Application ID is {application.formatted_code}.", 'success')
@@ -492,10 +513,30 @@ def apply_job(job_id):
                 benefits_3m=benefits_3m
             )
 
+        clean_email = normalize_email(email)
+        clean_phone = normalize_phone(phone)
+
+        # Backend Duplicate Candidate & Application Check (Strict Server-Side Prevention)
+        existing_applicant = JobApplication.find_existing_applicant(clean_email, clean_phone)
+        if existing_applicant and (existing_applicant.payment_status == 'paid' or existing_applicant.application_status in ['submitted', 'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'HIRED']):
+            current_app.logger.warning("Duplicate application blocked: existing candidate/application detected")
+            flash("An application has already been submitted using this email address or mobile number.", "danger")
+            return render_template(
+                'pages/job_apply.html',
+                job=job,
+                form_data=request.form,
+                states_and_cities=INDIA_STATES_AND_CITIES,
+                education_levels=EDUCATION_LEVELS,
+                common_degrees=COMMON_DEGREES,
+                graduation_years=GRADUATION_YEARS,
+                benefits_1m=benefits_1m,
+                benefits_3m=benefits_3m
+            )
+
         # Check for existing unpaid draft application to reuse/update
         application = JobApplication.query.filter(
             JobApplication.job_id == job.id,
-            ((JobApplication.user_id == current_user.id) | (JobApplication.email == email))
+            ((JobApplication.user_id == current_user.id) | (JobApplication.email == clean_email))
         ).filter(JobApplication.payment_status != 'paid').first()
 
         if not application:
@@ -599,7 +640,24 @@ def apply_job(job_id):
                 if not application.application_code:
                     application.application_code = f"AM-APP-{application.id:06d}"
 
-        db.session.commit()
+        try:
+            db.session.commit()
+            current_app.logger.info("Candidate application created successfully")
+        except IntegrityError as ie:
+            db.session.rollback()
+            current_app.logger.warning(f"Duplicate applicant prevented by database constraint: {ie}")
+            flash("An application has already been submitted using this email address or mobile number.", "danger")
+            return render_template(
+                'pages/job_apply.html',
+                job=job,
+                form_data=request.form,
+                states_and_cities=INDIA_STATES_AND_CITIES,
+                education_levels=EDUCATION_LEVELS,
+                common_degrees=COMMON_DEGREES,
+                graduation_years=GRADUATION_YEARS,
+                benefits_1m=benefits_1m,
+                benefits_3m=benefits_3m
+            )
 
         if is_internship and fee_inr > 0:
             # Redirect candidate to Review & Payment step
@@ -1238,6 +1296,7 @@ def profile():
 @login_required
 def my_applications():
     """Display all submitted and in-progress applications for the authenticated candidate."""
+    db.session.expire_all()
     user_applications = JobApplication.query.filter(
         (JobApplication.user_id == current_user.id) |
         ((JobApplication.user_id.is_(None)) & (JobApplication.email == current_user.email.lower()))
@@ -1260,6 +1319,7 @@ def my_applications():
 def my_application_detail(app_id):
     """View detailed candidate application status, submission dossier, and documents."""
     application = db.session.get(JobApplication, app_id) or abort(404)
+    db.session.refresh(application)
     
     # Strictly enforce candidate authorization
     if application.user_id != current_user.id and application.email.lower() != current_user.email.lower() and getattr(current_user, 'role', '') != 'admin':

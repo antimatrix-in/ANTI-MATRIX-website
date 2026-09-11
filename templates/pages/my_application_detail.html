@@ -48,38 +48,52 @@
         Recruitment Pipeline Status
       </div>
 
-      {% set cur_st = (app.status or 'New')|lower %}
+      {% set cur_stage = app.stage %}
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; position: relative;">
         
         <!-- Step 1: Application Submitted -->
+        {% set is_step1_current = cur_stage == 'APPLIED' %}
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 26px; height: 26px; border-radius: 50%; background: #ecfdf5; border: 2px solid #059669; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: #ecfdf5; border: 2px solid #059669; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; {{ 'box-shadow: 0 0 0 4px rgba(5,150,105,0.18);' if is_step1_current else '' }}">
               ✓
             </div>
             <span style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">Submitted</span>
+            {% if is_step1_current %}
+              <span style="font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 1px 6px; text-transform: uppercase; letter-spacing: 0.04em;">Current</span>
+            {% endif %}
           </div>
           <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
-            {{ app.created_at.strftime('%d %b %Y') }}
+            {{ app.created_at.strftime('%d %b %Y') }}{% if is_step1_current %} &bull; Current Stage{% endif %}
           </span>
         </div>
 
         <!-- Step 2: Under Review -->
-        {% set is_reviewed = cur_st in ['reviewed', 'under_review', 'shortlisted', 'rejected', 'hired'] %}
+        {% set is_step2_current = cur_stage == 'UNDER_REVIEW' %}
+        {% set is_step2_completed = cur_stage in ['SHORTLISTED', 'OFFER_COMPLETED', 'HIRED', 'REJECTED'] %}
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if is_reviewed else '#f8fafc' }}; border: 2px solid {{ '#059669' if is_reviewed else '#cbd5e1' }}; color: {{ '#059669' if is_reviewed else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
-              {{ '✓' if is_reviewed else '2' }}
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if (is_step2_current or is_step2_completed) else '#f8fafc' }}; border: 2px solid {{ '#059669' if (is_step2_current or is_step2_completed) else '#cbd5e1' }}; color: {{ '#059669' if (is_step2_current or is_step2_completed) else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; {{ 'box-shadow: 0 0 0 4px rgba(5,150,105,0.18);' if is_step2_current else '' }}">
+              {{ '✓' if (is_step2_current or is_step2_completed) else '2' }}
             </div>
-            <span style="font-weight: 700; color: {{ '#0f172a' if is_reviewed else '#64748b' }}; font-size: 0.9rem;">Under Review</span>
+            <span style="font-weight: 700; color: {{ '#0f172a' if (is_step2_current or is_step2_completed) else '#64748b' }}; font-size: 0.9rem;">Under Review</span>
+            {% if is_step2_current %}
+              <span style="font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 1px 6px; text-transform: uppercase; letter-spacing: 0.04em;">Current</span>
+            {% endif %}
           </div>
           <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
-            {{ 'In Evaluation' if is_reviewed else 'Pending Evaluation' }}
+            {% if is_step2_current %}
+              In Evaluation &bull; Current Stage
+            {% elif is_step2_completed %}
+              Evaluation Completed
+            {% else %}
+              Pending Evaluation
+            {% endif %}
           </span>
         </div>
 
-        <!-- Step 3: Final Decision -->
-        {% if cur_st in ['rejected', 'not selected'] %}
+        <!-- Step 3: Final Decision / Shortlisted -->
+        {% if cur_stage == 'REJECTED' %}
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <div style="width: 26px; height: 26px; border-radius: 50%; background: #fef2f2; border: 2px solid #dc2626; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
@@ -91,19 +105,46 @@
               Application Concluded
             </span>
           </div>
-        {% else %}
-          {% set is_shortlisted = cur_st in ['shortlisted', 'hired'] %}
+        {% elif cur_stage == 'HIRED' %}
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if is_shortlisted else '#f8fafc' }}; border: 2px solid {{ '#059669' if is_shortlisted else '#cbd5e1' }}; color: {{ '#059669' if is_shortlisted else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
-                {{ '★' if is_shortlisted else '3' }}
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: #ecfdf5; border: 2px solid #059669; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
+                ✓
               </div>
-              <span style="font-weight: 700; color: {{ '#059669' if is_shortlisted else '#64748b' }}; font-size: 0.9rem;">
-                {{ 'Hired' if cur_st == 'hired' else 'Shortlisted' }}
-              </span>
+              <span style="font-weight: 700; color: #059669; font-size: 0.9rem;">Hired</span>
+              <span style="font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 1px 6px; text-transform: uppercase;">Selected</span>
             </div>
             <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
-              {{ 'Offer Process' if is_shortlisted else 'Awaiting Decision' }}
+              Hired as Intern
+            </span>
+          </div>
+        {% elif cur_stage == 'OFFER_COMPLETED' %}
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: #ecfdf5; border: 2px solid #059669; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">
+                ✓
+              </div>
+              <span style="font-weight: 700; color: #059669; font-size: 0.9rem;">Offer Completed</span>
+              <span style="font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 1px 6px; text-transform: uppercase;">Offer Sent</span>
+            </div>
+            <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
+              Offer Formalized
+            </span>
+          </div>
+        {% else %}
+          {% set is_step3_current = cur_stage == 'SHORTLISTED' %}
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ '#ecfdf5' if is_step3_current else '#f8fafc' }}; border: 2px solid {{ '#059669' if is_step3_current else '#cbd5e1' }}; color: {{ '#059669' if is_step3_current else '#64748b' }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; {{ 'box-shadow: 0 0 0 4px rgba(5,150,105,0.18);' if is_step3_current else '' }}">
+                {{ '★' if is_step3_current else '3' }}
+              </div>
+              <span style="font-weight: 700; color: {{ '#059669' if is_step3_current else '#64748b' }}; font-size: 0.9rem;">Shortlisted</span>
+              {% if is_step3_current %}
+                <span style="font-size: 0.65rem; font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 1px 6px; text-transform: uppercase; letter-spacing: 0.04em;">Current</span>
+              {% endif %}
+            </div>
+            <span style="font-size: 0.775rem; color: #64748b; padding-left: 34px;">
+              {% if is_step3_current %}Offer Process &bull; Current Stage{% else %}Awaiting Decision{% endif %}
             </span>
           </div>
         {% endif %}

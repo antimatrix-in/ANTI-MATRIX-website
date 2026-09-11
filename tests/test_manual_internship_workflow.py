@@ -1,6 +1,7 @@
 import os
 import io
 import re
+import html as html_lib
 import unittest
 from datetime import datetime, timezone, timedelta
 from app import create_app, db
@@ -185,8 +186,9 @@ class TestManualInternshipWorkflow(unittest.TestCase):
 
         # Immediate Second Submission
         data2 = dict(data, resume=(io.BytesIO(b'%PDF-1.4 test resume'), 'arun.pdf'))
-        res2 = self.client.post(f'/careers/apply/{self.job.id}', data=data2, content_type='multipart/form-data', follow_redirects=False)
-        self.assertEqual(res2.status_code, 302)
+        res2 = self.client.post(f'/careers/apply/{self.job.id}', data=data2, content_type='multipart/form-data', follow_redirects=True)
+        self.assertEqual(res2.status_code, 200)
+        self.assertIn(b'An application has already been submitted using this email address or mobile number.', res2.data)
 
         # Verify no second application created
         final_count = JobApplication.query.filter_by(email='arun.sharma@example.com').count()
@@ -395,7 +397,7 @@ class TestManualInternshipWorkflow(unittest.TestCase):
         # Verify display box on page
         self.assertIn('Employee Created Successfully!', html)
         self.assertIn(emp.employee_id, html)
-        self.assertIn(temp_pw, html)
+        self.assertTrue(temp_pw in html or html_lib.escape(temp_pw) in html)
 
     # -------------------------------------------------------------------------
     # Scenario 11: Duplicate Employee Creation Prevention (Idempotent)

@@ -53,22 +53,9 @@
 
               <!-- Badges & Action -->
               <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <!-- Payment Status -->
                 {% if app.payment_status == 'paid' %}
                   <span class="badge-status active" style="font-size: 0.775rem; padding: 3px 8px;">
                     {{ icon('check', size=11) }} Paid
-                  </span>
-                {% elif app.payment_status == 'pending' %}
-                  <span class="badge-status" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.775rem; padding: 3px 8px;">
-                    {{ icon('clock', size=11) }} Payment Pending
-                  </span>
-                {% elif app.payment_status == 'failed' %}
-                  <span class="badge-status" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.775rem; padding: 3px 8px;">
-                    Payment Failed
-                  </span>
-                {% else %}
-                  <span class="badge-status" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.775rem; padding: 3px 8px;">
-                    Exempt / Free
                   </span>
                 {% endif %}
 
@@ -99,11 +86,6 @@
               </div>
 
               <div style="display: flex; gap: 0.5rem; align-items: center;">
-                {% if app.payment_status != 'paid' and app.duration %}
-                  <a href="{{ url_for('main.job_apply_review', app_id=app.id) }}" class="btn btn-primary btn-sm" style="gap: 5px; font-weight: 700;">
-                    {{ icon('credit-card', size=13) }} Complete Payment
-                  </a>
-                {% endif %}
                 <a href="{{ url_for('main.my_application_detail', app_id=app.id) }}" class="btn btn-outline btn-sm" style="gap: 5px; font-weight: 600;">
                   View Dossier {{ icon('arrow-right', size=13) }}
                 </a>

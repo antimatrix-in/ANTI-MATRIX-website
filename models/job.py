@@ -1,6 +1,31 @@
+import re
 from datetime import datetime, timezone, timedelta
 from . import db
 from config import INTERNSHIP_FEES, INTERNSHIP_PRICING
+
+
+def normalize_email(email_str):
+    """Normalize candidate email: trimmed and lowercase."""
+    if not email_str:
+        return ''
+    return str(email_str).strip().lower()
+
+
+def normalize_phone(phone_str):
+    """
+    Normalize candidate phone/mobile number.
+    Extracts all digits and strips common Indian prefixes (+91, 91, 0)
+    so formatting differences (spaces, dashes, parentheses) resolve to a canonical number.
+    """
+    if not phone_str:
+        return ''
+    digits = re.sub(r'\D', '', str(phone_str).strip())
+    if len(digits) == 12 and digits.startswith('91'):
+        return digits[2:]
+    if len(digits) == 11 and digits.startswith('0'):
+        return digits[1:]
+    return digits
+
 
 
 class JobPosting(db.Model):
@@ -268,7 +293,53 @@ class JobApplication(db.Model):
                 return candidate
             base_num += 1
 
+    @classmethod
+    def find_existing_applicant(cls, email, phone):
+        """
+        Server-side lookup to prevent duplicate candidates and duplicate applications.
+        1. Checks email case-insensitively.
+        2. Checks phone number normalized against standard formats.
+        Returns the existing JobApplication record if found, else None.
+        """
+        clean_email = normalize_email(email)
+        clean_phone = normalize_phone(phone)
+
+        # 1. Check email
+        if clean_email:
+            match = cls.query.filter(
+                db.func.lower(db.func.trim(cls.email)) == clean_email
+            ).first()
+            if match:
+                return match
+
+        # 2. Check mobile/phone
+        if clean_phone:
+            # Exact match
+            match = cls.query.filter(
+                db.func.trim(cls.phone) == clean_phone
+            ).first()
+            if match:
+                return match
+
+            # Match 10-digit suffix if length >= 10
+            if len(clean_phone) >= 10:
+                phone_10 = clean_phone[-10:]
+                match = cls.query.filter(
+                    cls.phone.like(f"%{phone_10}")
+                ).first()
+                if match:
+                    return match
+
+            # Full scan normalized phone check fallback for legacy formats
+            all_records = cls.query.with_entities(cls.id, cls.phone).all()
+            for app_id, raw_ph in all_records:
+                if normalize_phone(raw_ph) == clean_phone:
+                    return cls.query.get(app_id)
+
+        return None
+
     @property
+
     def formatted_code(self):
         if self.application_code:
             return self.application_code
@@ -341,6 +412,22 @@ class JobApplication(db.Model):
         return None
 
     @property
+    def stage(self):
+        """Authoritative normalized recruitment pipeline stage."""
+        st = (self.status or self.application_status or 'APPLIED').strip().upper()
+        if st in ['HIRED']:
+            return 'HIRED'
+        if st in ['OFFER_COMPLETED', 'OFFER_COMPLETE', 'COMPLETED', 'COMPLETE']:
+            return 'OFFER_COMPLETED'
+        if st in ['SHORTLISTED']:
+            return 'SHORTLISTED'
+        if st in ['UNDER_REVIEW', 'REVIEWED']:
+            return 'UNDER_REVIEW'
+        if st in ['REJECTED', 'NOT SELECTED', 'NOT_SELECTED']:
+            return 'REJECTED'
+        return 'APPLIED'
+
+    @property
     def status_display(self):
         """Map internal database recruitment status to clean human-friendly label (Applied, Under Review, Shortlisted, Offer Completed, Hired)."""
         st = (self.status or self.application_status or 'APPLIED').strip()
@@ -367,8 +454,8 @@ class JobApplication(db.Model):
             'Hired': 'Hired',
             'HIRED': 'Hired',
             'hired': 'Hired',
-            'pending_payment': 'Pending Payment',
-            'PENDING_PAYMENT': 'Pending Payment'
+            'pending_payment': 'Applied',
+            'PENDING_PAYMENT': 'Applied'
         }
         return mapping.get(st, st)
 

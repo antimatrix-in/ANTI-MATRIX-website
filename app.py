@@ -194,6 +194,34 @@ def create_app(config_name=None):
                     '''))
                     conn.commit()
 
+                # Safe database-level uniqueness index check for candidate email and phone
+                try:
+                    with db.engine.connect() as conn:
+                        dup_email_res = conn.execute(text('''
+                            SELECT LOWER(TRIM(email)) FROM job_applications
+                            GROUP BY LOWER(TRIM(email)) HAVING count(*) > 1
+                        ''')).fetchall()
+                        dup_phone_res = conn.execute(text('''
+                            SELECT TRIM(phone) FROM job_applications
+                            GROUP BY TRIM(phone) HAVING count(*) > 1
+                        ''')).fetchall()
+
+                        if dup_email_res:
+                            logger.warning(f"Existing duplicate emails detected in database: {[r[0] for r in dup_email_res]}. Preserving all records and skipping unique email index.")
+                        else:
+                            if dialect_is_sqlite:
+                                conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_email ON job_applications (email)'))
+                            else:
+                                conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_email ON job_applications (LOWER(TRIM(email)))'))
+
+                        if dup_phone_res:
+                            logger.warning(f"Existing duplicate phones detected in database: {[r[0] for r in dup_phone_res]}. Preserving all records and skipping unique phone index.")
+                        else:
+                            conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_phone ON job_applications (phone)'))
+                        conn.commit()
+                except Exception as uq_err:
+                    logger.warning(f"Notice on candidate uniqueness index: {uq_err}")
+
             if 'employee_documents' in inspector.get_table_names():
                 emp_doc_col_objs = inspector.get_columns('employee_documents')
                 emp_doc_cols = [c['name'] for c in emp_doc_col_objs]
