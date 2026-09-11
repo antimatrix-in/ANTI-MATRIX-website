@@ -1309,13 +1309,17 @@ def update_application_payment_status(app_id):
     """Admin action to update payment status for an application (e.g. after manual Google Form / QR verification)."""
     application = db.session.get(JobApplication, app_id) or abort(404)
     new_payment_status = (request.form.get('payment_status') or '').strip().lower()
-    valid_statuses = ['pending', 'paid', 'failed']
+    valid_statuses = ['pending', 'verified', 'paid', 'failed']
     if new_payment_status in valid_statuses:
         application.payment_status = new_payment_status
         db.session.commit()
         flash(f"Payment status for candidate {application.full_name} updated to '{new_payment_status.upper()}'.", 'success')
     else:
         flash('Invalid payment status provided.', 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'create_employee' or 'employees/create' in (request.referrer or ''):
+        return redirect(url_for('admin.create_employee', app_id=application.id))
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
 
@@ -1326,6 +1330,7 @@ def create_employee():
     Admin Manual Employee Creation Workflow:
     - Select an existing Application ID from the database
     - Displays candidate details (Application ID, Name, Email, Job, Job Code, Department, Duration, College)
+    - Admin payment verification gate: Payment must be 'verified' or 'paid' before employee creation
     - If employee already exists: shows existing Employee ID and prevents duplicate creation
     - If new: generates unique Employee ID (AM####) and secure temporary password
     - Encrypts and securely stores temporary credentials in EmployeeOnboardingCredential for Internship Portal activation
@@ -1347,20 +1352,57 @@ def create_employee():
         existing_employee = selected_app.employee
 
     if request.method == 'POST':
-        app_id = request.form.get('application_id', type=int)
+        data = request.get_json() if request.is_json else request.form
+        app_id_raw = data.get('application_id') if data else None
+        try:
+            app_id = int(app_id_raw) if app_id_raw is not None else None
+        except (ValueError, TypeError):
+            app_id = None
+
         if not app_id:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({'error': 'Please select an application record.', 'success': False}), 400
             flash('Please select an application record.', 'danger')
             return redirect(url_for('admin.create_employee'))
 
         application = db.session.get(JobApplication, app_id)
         if not application:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({'error': 'Selected application record not found.', 'success': False}), 404
             flash('Selected application record not found.', 'danger')
             return redirect(url_for('admin.create_employee'))
+
+        # Check if this request is updating the payment status from the dropdown
+        action = data.get('action') if data else None
+        if action == 'update_payment_status':
+            new_status = (data.get('payment_status') or '').strip().lower()
+            if new_status in ['pending', 'verified', 'paid', 'failed']:
+                application.payment_status = new_status
+                db.session.commit()
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'success': True, 'payment_status': new_status}), 200
+                flash(f"Payment status for candidate {application.full_name} updated to '{new_status.capitalize()}'.", 'success')
+            else:
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'error': 'Invalid payment status provided.', 'success': False}), 400
+                flash('Invalid payment status provided.', 'danger')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
 
         # Idempotency / Duplicate Employee Check
         existing_emp = Employee.query.filter_by(application_id=application.id).first()
         if existing_emp:
             flash(f"Employee Already Exists for this application. Employee ID: {existing_emp.employee_id}.", 'info')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        # Verified Payment Gate - Critical backend enforcement
+        payment_st = (application.payment_status or '').strip().lower()
+        if payment_st not in ['verified', 'paid']:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({
+                    'error': 'Payment must be verified before creating employee credentials.',
+                    'success': False
+                }), 400
+            flash('Payment must be verified before creating employee credentials.', 'danger')
             return redirect(url_for('admin.create_employee', app_id=application.id))
 
         try:

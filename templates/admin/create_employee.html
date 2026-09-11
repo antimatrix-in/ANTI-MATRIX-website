@@ -214,18 +214,31 @@
                 <span style="color: #60a5fa; font-weight: 700;">{{ selected_app.duration_display or '1 Month' }}</span>
               </div>
               <div>
-                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Payment Status</span>
-                <span>
-                  {% if selected_app.payment_status == 'paid' %}
-                    <span class="badge-status active">Paid</span>
-                  {% elif selected_app.payment_status == 'pending' %}
-                    <span class="badge-status" style="background: rgba(234, 179, 8, 0.12); color: #eab308; border-color: rgba(234, 179, 8, 0.3);">Pending</span>
-                  {% elif selected_app.payment_status == 'failed' %}
-                    <span class="badge-status" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Failed</span>
-                  {% else %}
-                    <span class="badge-status" style="background: rgba(255, 255, 255, 0.05); color: var(--color-text-dim); border-color: var(--color-border);">Exempt</span>
-                  {% endif %}
-                </span>
+                <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Payment Status *</span>
+                {% set is_verified = (selected_app.payment_status or '')|lower in ['verified', 'paid'] %}
+                <form method="POST" action="{{ url_for('admin.create_employee') }}" id="payment-status-form" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <input type="hidden" name="action" value="update_payment_status" />
+                  <input type="hidden" name="application_id" value="{{ selected_app.id }}" />
+                  <select
+                    id="payment-status-select"
+                    name="payment_status"
+                    class="form-input"
+                    onchange="document.getElementById('payment-status-form').submit();"
+                    style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 700; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); cursor: pointer;"
+                  >
+                    <option value="pending" {{ 'selected' if not is_verified else '' }}>Pending</option>
+                    <option value="verified" {{ 'selected' if is_verified else '' }}>Verified</option>
+                  </select>
+                  <button
+                    type="submit"
+                    id="save-payment-status-btn"
+                    class="btn btn-outline btn-sm"
+                    style="padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 700; border-color: var(--color-border); color: var(--color-text);"
+                  >
+                    Save
+                  </button>
+                </form>
               </div>
               <div>
                 <span style="color: var(--color-text-dim); display: block; font-size: 0.775rem; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Submission Date</span>
@@ -322,11 +335,20 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <input type="hidden" name="application_id" value="{{ selected_app.id }}" />
 
+              {% set is_verified = (selected_app.payment_status or '')|lower in ['verified', 'paid'] %}
+
+              {% if not is_verified %}
+                <div style="margin-bottom: var(--space-md); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); color: #fbbf24; font-size: 0.825rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                  {{ icon('alert-circle', size=16, color='#fbbf24') }}
+                  <span>Verify payment before creating employee credentials.</span>
+                </div>
+              {% endif %}
+
               <button
                 type="submit"
                 id="submit-create-employee-btn"
                 class="btn btn-primary btn-lg"
-                style="width: 100%; justify-content: center; gap: 8px; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); padding: 0.85rem 1.5rem;"
+                {% if not is_verified %}disabled style="width: 100%; justify-content: center; gap: 8px; font-weight: 800; font-size: 1rem; padding: 0.85rem 1.5rem; opacity: 0.5; cursor: not-allowed;" title="Verify payment before creating employee credentials."{% else %}style="width: 100%; justify-content: center; gap: 8px; font-weight: 800; font-size: 1rem; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); padding: 0.85rem 1.5rem;"{% endif %}
               >
                 {{ icon('user-plus', size=18) }} Create Employee Record &rarr;
               </button>
