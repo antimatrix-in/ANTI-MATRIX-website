@@ -1,92 +1,122 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}Anti-Matrix | Enterprise Digital Transformation{% endblock %}
+{% block title %}Anti-Matrix | Building What Truly Matters • We Create Our Own Path{% endblock %}
 
 {% block content %}
-<!-- ── HERO ────────────────────────────────────── -->
-<section class="hero" aria-label="Hero">
-  <div class="hero-bg">
-    <div class="hero-grid"></div>
+<!-- ── HERO: REAL-TIME MATRIX & CRYSTAL INTERACTIVE CANVAS ── -->
+<section class="hero-enterprise" id="heroEnterpriseSection" aria-label="Hero">
+  {# Real-Time Matrix & Crystal Canvas Background #}
+  <div class="hero-matrix-canvas-container">
+    <canvas id="heroCrystalMatrixCanvas" class="hero-matrix-canvas-fullbleed"></canvas>
+    <div class="hero-canvas-vignette"></div>
+    <div class="hero-canvas-glow"></div>
   </div>
-  <div class="container">
-    <div class="hero-content animate-fade-up">
-      <h1>
-        Build. Scale.<br />
-        <span>Transform Your Digital Future</span>
+  
+  <div class="container" style="position: relative; z-index: 2;">
+    {# Centered Executive Narrative #}
+    <div class="hero-center-content animate-fade-up">
+      <div class="hero-kicker-clean">
+        <span class="hero-kicker-accent">//</span> BESPOKE ARCHITECTURE &amp; INTELLIGENT SYSTEMS
+      </div>
+      
+      <h1 class="hero-headline-crystal">
+        Break The Matrix.<br />
+        <span class="gradient-accent-crystal">Create What Comes Next.</span>
       </h1>
-      <p class="hero-subtitle">
-        Anti-Matrix is a full-service technology company delivering world-class web, mobile, AI, and cloud solutions. We turn ambitious ideas into scalable digital products.
+      
+      <p class="hero-lead-crystal">
+        Anti-Matrix engineers bespoke digital platforms, resilient cloud architectures, and intelligent systems for forward-thinking organizations that demand original craftsmanship over conventional formulas.
       </p>
-      <div class="hero-actions">
-        <a href="{{ url_for('main.services') }}" class="btn btn-primary btn-lg">
-          Explore Services {{ icon('arrow-right', size=17) }}
+
+      {# Executive Action CTAs #}
+      <div class="hero-actions-clean">
+        <a href="{{ url_for('main.services') }}" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: rgba(166, 253, 58, 0.45); box-shadow: 0 0 25px rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 9px;">
+          Explore Our Services {{ icon('arrow-right', size=16) }}
         </a>
-        <a href="{{ url_for('main.contact') }}" class="btn btn-outline btn-lg">
-          Get a Free Consultation
+        
+        <a href="{{ url_for('main.contact') }}" class="btn btn-outline btn-lg" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.06); display: inline-flex; align-items: center; gap: 8px;">
+          Schedule Consultation
         </a>
       </div>
     </div>
 
-    <div class="hero-stats animate-fade-up delay-3">
-      <div>
-        <div class="hero-stat-value"><span>200+</span></div>
-        <div class="hero-stat-label">Projects Delivered</div>
+    {# Enterprise Value Drivers Strip #}
+    <div class="hero-value-strip-dark animate-fade-up delay-2">
+      <div class="value-strip-item">
+        <div class="value-strip-kicker">// STRATEGIC PURPOSE</div>
+        <div class="value-strip-num">360°<span> Impact</span></div>
+        <div class="value-strip-desc">From initial architectural blueprint to enterprise scale, we deliver platforms that drive measurable competitive advantage.</div>
       </div>
-      <div>
-        <div class="hero-stat-value"><span>98%</span></div>
-        <div class="hero-stat-label">Client Satisfaction</div>
+
+      <div class="value-strip-item">
+        <div class="value-strip-kicker">// PURE CRAFTSMANSHIP</div>
+        <div class="value-strip-num">100%<span> Bespoke</span></div>
+        <div class="value-strip-desc">Zero borrowed templates or commoditized boilerplates. Every line of code and interface is custom-engineered for your mission.</div>
       </div>
-      <div>
-        <div class="hero-stat-value"><span>50+</span></div>
-        <div class="hero-stat-label">Team Members</div>
+
+      <div class="value-strip-item">
+        <div class="value-strip-kicker">// ENTERPRISE RESILIENCE</div>
+        <div class="value-strip-num">99.99%<span> Reliability</span></div>
+        <div class="value-strip-desc">Hardened infrastructure, self-healing cloud topologies, and bank-grade security protocols engineered for zero tolerance downtime.</div>
       </div>
-      <div>
-        <div class="hero-stat-value"><span>6+</span></div>
-        <div class="hero-stat-label">Years of Excellence</div>
+
+      <div class="value-strip-item">
+        <div class="value-strip-kicker">// PROVEN TRACK RECORD</div>
+        <div class="value-strip-num">200+<span> Deployments</span></div>
+        <div class="value-strip-desc">Trusted by enterprise leaders, disruptive scale-ups, and innovation executives across fintech, healthcare, and AI.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── WHO WE ARE ──────────────────────────────── -->
+<!-- ── PHILOSOPHY OF DIVERGENCE (ORGANIC & INSPIRING) ────────── -->
 <section class="section reveal" style="background: var(--color-bg);">
   <div class="container">
     <div class="about-cols" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-3xl); align-items: center;">
       <div>
-        <div class="badge">{{ icon('award', size=11) }} About Anti-Matrix</div>
-        <h2 style="color: #000000; margin-bottom: var(--space-lg);">
-          We are your long-term technology growth partner
+        <div class="accenture-kicker">
+          <span class="kicker-glyph">&gt;</span> OUR HEART &amp; CONVICTION
+        </div>
+        <h2 style="color: #0f172a; margin-bottom: var(--space-lg); font-family: var(--font-heading); font-size: clamp(1.85rem, 2.7vw, 2.75rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15;">
+          Born from curiosity.<br />Crafted with soul.
         </h2>
         <div class="divider"></div>
-        <p style="margin-bottom: var(--space-xl);">
-          Anti-Matrix is a forward-thinking technology company built by engineers, designers, and strategists who are passionate about solving real business problems with elegant digital solutions.
+        <p style="margin-bottom: var(--space-xl); font-size: 1.05rem; line-height: 1.75; color: #334155;">
+          When everyone reaches for the same templates, every digital product ends up looking and feeling identical. Anti-Matrix began with a simple conviction: the creations that truly inspire people are never born from sterile molds. They come from genuine curiosity, fearless exploration, and heartfelt care.
         </p>
-        <p style="margin-bottom: var(--space-2xl);">
-          From early-stage startups to global enterprises, we deliver tailor-made software, AI systems, and digital growth strategies that create measurable impact. Our team of 50+ experts combines deep technical expertise with sharp business thinking.
+        <p style="margin-bottom: var(--space-2xl); font-size: 1.05rem; line-height: 1.75; color: #334155;">
+          We stand shoulder-to-shoulder with the dreamers, the innovators, and the teams who refuse to settle for the ordinary. By uniting imaginative design with honest engineering, we help you break free from the default and build things people love.
         </p>
         <a href="{{ url_for('main.about') }}" class="btn btn-outline">
-          Learn Our Story {{ icon('chevron-right', size=16) }}
+          Discover Our Story {{ icon('chevron-right', size=16) }}
         </a>
       </div>
 
       <div>
         <div class="about-pillars" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-lg);">
-          <div class="pillar-card card">
-            <h4 style="color: var(--color-text); margin-bottom: 0.5rem;">Our Mission</h4>
-            <p style="font-size: 0.9rem;">To accelerate digital transformation through technology that is powerful, elegant, and accessible.</p>
+          <div class="pillar-card card" style="border-left: 3px solid var(--color-primary);">
+            <div style="font-family: monospace; font-size: 0.725rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">PILLAR 01 // FREEDOM</div>
+            <h4 style="color: var(--color-text); margin-bottom: 0.5rem; font-size: 1.05rem;">True Independence</h4>
+            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6;">Technology that truly belongs to you. No restrictive lock-ins, no borrowed futures — just the total freedom to evolve as big and bold as your dreams.</p>
           </div>
-          <div class="pillar-card card">
-            <h4 style="color: var(--color-text); margin-bottom: 0.5rem;">Our Vision</h4>
-            <p style="font-size: 0.9rem;">A world where every business — large or small — has access to enterprise-grade technology.</p>
+          
+          <div class="pillar-card card" style="border-left: 3px solid var(--color-primary-light);">
+            <div style="font-family: monospace; font-size: 0.725rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">PILLAR 02 // EMPATHY</div>
+            <h4 style="color: var(--color-text); margin-bottom: 0.5rem; font-size: 1.05rem;">Human-First AI</h4>
+            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6;">Intelligent tools designed to celebrate human creativity. We weave AI that lifts heavy burdens, sparks new ideas, and brings clarity to your everyday work.</p>
           </div>
-          <div class="pillar-card card">
-            <h4 style="color: var(--color-text); margin-bottom: 0.5rem;">Innovation</h4>
-            <p style="font-size: 0.9rem;">We stay at the cutting edge of AI, cloud, and software engineering to future-proof your investment.</p>
+          
+          <div class="pillar-card card" style="border-left: 3px solid var(--color-lime);">
+            <div style="font-family: monospace; font-size: 0.725rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">PILLAR 03 // MOMENTUM</div>
+            <h4 style="color: var(--color-text); margin-bottom: 0.5rem; font-size: 1.05rem;">Unstoppable Energy</h4>
+            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6;">An honest, energetic partnership where questions are welcomed, ideas turn into working reality each week, and you always feel the joy of true progress.</p>
           </div>
-          <div class="pillar-card card">
-            <h4 style="color: var(--color-text); margin-bottom: 0.5rem;">Partnership</h4>
-            <p style="font-size: 0.9rem;">We don't just build and leave. We become long-term partners invested in your success.</p>
+          
+          <div class="pillar-card card" style="border-left: 3px solid #0f172a;">
+            <div style="font-family: monospace; font-size: 0.725rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">PILLAR 04 // PURPOSE</div>
+            <h4 style="color: var(--color-text); margin-bottom: 0.5rem; font-size: 1.05rem;">Lasting Meaning</h4>
+            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6;">We measure our craft not by empty metrics, but by the lasting confidence, genuine warmth, and real progress we bring to your journey.</p>
           </div>
         </div>
       </div>
@@ -94,139 +124,145 @@
   </div>
 </section>
 
-<!-- ── SERVICES ────────────────────────────────── -->
+<!-- ── WHAT WE BRING TO LIFE: SERVICES ────────────────── -->
 <section class="section reveal" style="background: var(--color-bg-alt);">
   <div class="container">
     <div class="section-header centered">
-      <div class="badge">{{ icon('code-2', size=11) }} What We Build</div>
-      <h2 style="color: #000000;">End-to-end technology services</h2>
+      <div class="accenture-kicker" style="margin: 0 auto 1rem auto;">
+        <span class="kicker-glyph">&gt;</span> WHAT WE CREATE TOGETHER
+      </div>
+      <h2 style="color: #0f172a; font-family: var(--font-heading); font-size: clamp(2rem, 3vw, 2.85rem); font-weight: 800; letter-spacing: -0.025em;">
+        Everything you need to bring your vision to life.
+      </h2>
       <div class="divider center"></div>
-      <p>From concept to launch and beyond, we cover every layer of your digital stack.</p>
+      <p style="font-size: 1.1rem; color: #475569; max-width: 680px; margin: 0 auto;">
+        From intuitive web platforms to thoughtful intelligence, we pour our heart and craft into every detail.
+      </p>
     </div>
     
     <div class="services-grid">
       {# Service 1 #}
-      <div class="card service-card animate-fade-up delay-1" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-1" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/home_svc_web.jpg') }}"
              alt="Web development – laptop showing clean dashboard UI"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('code-2', size=24) }}</div>
-          <h3>Web Development</h3>
-          <p>Custom, high-performance websites and web applications built for scale and reliability.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Web Experiences &amp; Platforms</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Fast, fluid, and beautifully natural web applications that welcome your visitors, earn their trust, and scale effortlessly as you grow.</p>
           <ul class="service-capabilities">
-            <li>React / Next.js SPAs</li>
-            <li>Full-stack Node &amp; Python APIs</li>
-            <li>E-commerce platforms</li>
-            <li>Progressive Web Apps</li>
+            <li>Handcrafted React &amp; Next.js Experiences</li>
+            <li>Living, Responsive Micro-Interactions</li>
+            <li>Welcoming E-Commerce &amp; Member Portals</li>
+            <li>Built to Scale Gracefully Every Single Day</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
 
       {# Service 2 #}
-      <div class="card service-card animate-fade-up delay-2" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-2" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/home_svc_mobile.jpg') }}"
              alt="Mobile app development – two smartphones with emerald green dashboards"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('smartphone', size=24) }}</div>
-          <h3>Mobile Applications</h3>
-          <p>Native and cross-platform mobile apps delivering seamless experiences on iOS and Android.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Mobile Applications</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Delightful, responsive apps for iOS and Android that people genuinely look forward to opening and using every single day.</p>
           <ul class="service-capabilities">
-            <li>React Native &amp; Flutter</li>
-            <li>iOS &amp; Android native</li>
-            <li>App Store optimization</li>
-            <li>Push &amp; offline support</li>
+            <li>Natural, Fluid Polish on Every Device</li>
+            <li>Works Wonderfully Anywhere, Even Offline</li>
+            <li>Thoughtful Haptics &amp; Device Integrations</li>
+            <li>Guiding You Safely to App Store Success</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
 
       {# Service 3 #}
-      <div class="card service-card animate-fade-up delay-3" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-3" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/home_svc_ai.jpg') }}"
              alt="AI and Machine Learning – glowing neural network brain visualization"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('brain', size=24) }}</div>
-          <h3>AI &amp; Machine Learning</h3>
-          <p>Intelligent automation and data-driven insights that give your business a competitive edge.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Applied AI &amp; Smart Automation</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Thoughtful intelligence and machine learning designed to remove friction, illuminate insights, and supercharge your team.</p>
           <ul class="service-capabilities">
-            <li>Predictive analytics</li>
-            <li>NLP &amp; chatbot solutions</li>
-            <li>Computer vision systems</li>
-            <li>ML model deployment</li>
+            <li>Warm, Helpful AI Companions &amp; Knowledge Bases</li>
+            <li>Clear Insights from Your Real-World Data</li>
+            <li>Computer Vision That Solves Daily Problems</li>
+            <li>Respecting User Privacy at Every Turn</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
 
       {# Service 4 #}
-      <div class="card service-card animate-fade-up delay-1" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-1" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/home_svc_marketing.jpg') }}"
              alt="Digital marketing – laptop with analytics dashboard and growth chart icons"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('trending-up', size=24) }}</div>
-          <h3>Digital Marketing &amp; Growth</h3>
-          <p>Data-backed strategies that drive targeted traffic, qualified leads, and measurable ROI.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Brand Growth &amp; Storytelling</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Authentic digital presence, organic discoverability, and storytelling that connects your purpose with the people who need it.</p>
           <ul class="service-capabilities">
-            <li>SEO &amp; content strategy</li>
-            <li>Paid media campaigns</li>
-            <li>Conversion optimization</li>
-            <li>Analytics &amp; reporting</li>
+            <li>Connecting with People Who Truly Care</li>
+            <li>Experiences Shaped to Spark Genuine Action</li>
+            <li>Honest Insights with Complete Transparency</li>
+            <li>Nurturing a Thriving, Loyal Community</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
 
       {# Service 5 #}
-      <div class="card service-card animate-fade-up delay-2" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-2" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/service_cloud_devops.jpg') }}"
              alt="Cloud and DevOps – server infrastructure and monitoring dashboards"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('shield', size=24) }}</div>
-          <h3>Cloud &amp; DevOps</h3>
-          <p>Secure, scalable cloud infrastructure with automated CI/CD pipelines and monitoring.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Cloud Foundations &amp; DevOps</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Calm, resilient cloud architecture with seamless deployments, so your team can build with total peace of mind.</p>
           <ul class="service-capabilities">
-            <li>AWS / GCP / Azure</li>
-            <li>Docker &amp; Kubernetes</li>
-            <li>CI/CD automation</li>
-            <li>Security &amp; compliance</li>
+            <li>Dependable Cloud Foundations (AWS, GCP, Azure)</li>
+            <li>Continuous Updates That Release Without a Glitch</li>
+            <li>Vigilant Security That Guards What Matters</li>
+            <li>24/7 Quiet Peace of Mind for Your Team</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
 
       {# Service 6 #}
-      <div class="card service-card animate-fade-up delay-3" style="padding: 0; overflow: hidden;">
+      <div class="card service-card animate-fade-up delay-3" style="padding: 0; overflow: hidden; border: 1px solid var(--color-border); transition: transform 0.25s, box-shadow 0.25s;">
         <img src="{{ url_for('static', filename='images/service_ui_ux.jpg') }}"
              alt="UI/UX Design – Figma wireframes on screen with design mood board"
              style="width:100%; height:180px; object-fit:cover; display:block;">
         <div style="padding: var(--space-xl);">
           <div class="icon-box">{{ icon('globe', size=24) }}</div>
-          <h3>UI/UX Design</h3>
-          <p>Human-centered design that converts visitors into loyal customers through elegant experiences.</p>
+          <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: #0f172a;">Human-Centered UI/UX Design</h3>
+          <p style="color: #475569; margin-bottom: 1.25rem;">Warm, accessible, and deeply intuitive design that feels effortless to use and creates emotional resonance.</p>
           <ul class="service-capabilities">
-            <li>User research &amp; personas</li>
-            <li>Wireframing &amp; prototyping</li>
-            <li>Design systems</li>
-            <li>Accessibility-first</li>
+            <li>Deep Listening to Your Users’ Real Needs</li>
+            <li>Harmonious Design Systems Built to Last</li>
+            <li>Heartfelt Micro-Animations That Bring Joy</li>
+            <li>Crafted to Welcome Everyone, Everywhere</li>
           </ul>
-          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:600; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
-            Learn more {{ icon('arrow-right', size=14) }}
+          <a href="{{ url_for('main.services') }}" class="btn btn-ghost" style="padding:0; color:var(--color-primary-light); font-weight:700; font-size:0.875rem; display:inline-flex; align-items:center; gap:0.375rem; background:none;">
+            See How We Build {{ icon('arrow-right', size=14) }}
           </a>
         </div>
       </div>
@@ -234,64 +270,74 @@
 
     <div style="text-align: center; margin-top: var(--space-2xl);">
       <a href="{{ url_for('main.services') }}" class="btn btn-primary btn-lg">
-        View All Services {{ icon('arrow-right', size=17) }}
+        Explore All Capabilities {{ icon('arrow-right', size=17) }}
       </a>
     </div>
   </div>
 </section>
 
-<!-- ── WHY ANTI-MATRIX ─────────────────────────── -->
+<!-- ── WHY CHOOSE US (WARM & MOTIVATING) ────────────────── -->
 <section class="section reveal" style="background: var(--color-bg);">
   <div class="container">
     <div class="section-header centered">
-      <div class="badge">{{ icon('star', size=11) }} Why Choose Us</div>
-      <h2 style="color: #000000;">Built differently. Built better.</h2>
+      <div class="accenture-kicker" style="margin: 0 auto 1rem auto;">
+        <span class="kicker-glyph">&gt;</span> OUR PROMISE TO YOU
+      </div>
+      <h2 style="color: #0f172a; font-family: var(--font-heading); font-size: clamp(2rem, 3vw, 2.85rem); font-weight: 800; letter-spacing: -0.025em;">
+        Crafted with heart. Built to inspire.
+      </h2>
       <div class="divider center"></div>
-      <p>We combine the speed of an agency with the depth of an in-house product team.</p>
+      <p style="font-size: 1.1rem; color: #475569; max-width: 680px; margin: 0 auto;">
+        We bring the passion of true artisans, the speed of hungry innovators, and the warmth of genuine partners.
+      </p>
     </div>
     
     <div class="grid-4">
-      <div class="card animate-fade-up delay-1" style="text-align: center; padding: var(--space-2xl) var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg);">{{ icon('zap', size=20) }}</div>
-        <h3 style="font-size: 1.1rem; color: var(--color-text); margin-bottom: var(--space-sm);">Rapid Delivery</h3>
-        <p style="font-size: 0.9rem;">Agile sprints with weekly demos so you always see progress and can pivot fast.</p>
+      <div class="card animate-fade-up delay-1" style="text-align: left; padding: var(--space-2xl) var(--space-xl); border: 1px solid var(--color-border); border-top: 3px solid var(--color-primary);">
+        <div class="icon-box" style="margin: 0 0 var(--space-lg);">{{ icon('zap', size=22) }}</div>
+        <div style="font-family: monospace; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">OPENNESS</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin-bottom: var(--space-sm);">Crystal-Clear Honesty</h3>
+        <p style="font-size: 0.9rem; color: #475569; line-height: 1.65;">No smoke and mirrors, no confusing jargon. Just real weekly milestones, open hearts, and clear communication so you always feel grounded and confident in your path.</p>
       </div>
 
-      <div class="card animate-fade-up delay-2" style="text-align: center; padding: var(--space-2xl) var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg);">{{ icon('shield', size=20) }}</div>
-        <h3 style="font-size: 1.1rem; color: var(--color-text); margin-bottom: var(--space-sm);">Enterprise Security</h3>
-        <p style="font-size: 0.9rem;">Security-first architecture with SOC 2 practices baked into every project.</p>
+      <div class="card animate-fade-up delay-2" style="text-align: left; padding: var(--space-2xl) var(--space-xl); border: 1px solid var(--color-border); border-top: 3px solid var(--color-primary-light);">
+        <div class="icon-box" style="margin: 0 0 var(--space-lg);">{{ icon('shield', size=22) }}</div>
+        <div style="font-family: monospace; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">INTEGRITY</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin-bottom: var(--space-sm);">A Shield You Can Trust</h3>
+        <p style="font-size: 0.9rem; color: #475569; line-height: 1.65;">We guard your vision, code, and user privacy like our own. Built on rock-solid security, ethical principles, and architecture that stands proud for years.</p>
       </div>
 
-      <div class="card animate-fade-up delay-3" style="text-align: center; padding: var(--space-2xl) var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg);">{{ icon('users', size=20) }}</div>
-        <h3 style="font-size: 1.1rem; color: var(--color-text); margin-bottom: var(--space-sm);">Dedicated Teams</h3>
-        <p style="font-size: 0.9rem;">Senior engineers, designers, and PMs assigned exclusively to your project.</p>
+      <div class="card animate-fade-up delay-3" style="text-align: left; padding: var(--space-2xl) var(--space-xl); border: 1px solid var(--color-border); border-top: 3px solid var(--color-lime);">
+        <div class="icon-box" style="margin: 0 0 var(--space-lg);">{{ icon('users', size=22) }}</div>
+        <div style="font-family: monospace; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">BELIEF</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin-bottom: var(--space-sm);">All In, Every Single Day</h3>
+        <p style="font-size: 0.9rem; color: #475569; line-height: 1.65;">You are never just a ticket in a backlog. You get devoted creators who celebrate your dreams, listen deeply, and pour their whole heart into your success.</p>
       </div>
 
-      <div class="card animate-fade-up delay-4" style="text-align: center; padding: var(--space-2xl) var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg);">{{ icon('award', size=20) }}</div>
-        <h3 style="font-size: 1.1rem; color: var(--color-text); margin-bottom: var(--space-sm);">Proven Quality</h3>
-        <p style="font-size: 0.9rem;">200+ delivered projects with a 98% client satisfaction rate across 6+ years.</p>
+      <div class="card animate-fade-up delay-4" style="text-align: left; padding: var(--space-2xl) var(--space-xl); border: 1px solid var(--color-border); border-top: 3px solid #0f172a;">
+        <div class="icon-box" style="margin: 0 0 var(--space-lg);">{{ icon('award', size=22) }}</div>
+        <div style="font-family: monospace; font-size: 0.7rem; font-weight: 700; color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 0.35rem;">FELLOWSHIP</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin-bottom: var(--space-sm);">Walking The Long Road</h3>
+        <p style="font-size: 0.9rem; color: #475569; line-height: 1.65;">Over 200 partnerships that turned into lasting friendships. We celebrate every milestone with you and stay faithfully by your side through every chapter.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── TECHNOLOGIES ────────────────────────────── -->
+<!-- ── TECHNOLOGIES WE LOVE CRAFTING WITH ───────────── -->
 <section class="section-sm reveal" style="background: var(--color-bg-alt); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
   <div class="container">
     <div class="section-header centered" style="margin-bottom: var(--space-2xl);">
-      <p style="font-size: 0.8125rem; fontWeight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim);">
-        Technologies We Work With
+      <p style="font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-dim);">
+        TOOLS WE LOVE CRAFTING WITH
       </p>
     </div>
     
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm);">
-      {% for tech in ['React', 'Node.js', 'Python', 'AWS', 'GCP', 'Docker', 'Kubernetes', 'TensorFlow', 'PostgreSQL', 'MongoDB', 'Flutter', 'TypeScript'] %}
-        <span style="padding: 0.45rem 1rem; border: 1px solid var(--color-border-light); border-radius: 6px; font-size: 0.85rem; font-family: var(--font-heading); font-weight: 600; color: var(--color-text-muted); background: rgba(255,255,255,0.03); transition: all 0.25s; cursor: default;"
-              onmouseenter="this.style.borderColor='var(--color-primary)'; this.style.color='var(--color-primary-light)';"
-              onmouseleave="this.style.borderColor='var(--color-border-light)'; this.style.color='var(--color-text-muted)';">
+      {% for tech in ['React / Next.js', 'Python / FastAPI', 'Node.js', 'Go', 'AWS Cloud', 'Google Cloud Platform', 'Docker & Kubernetes', 'PyTorch & TensorFlow', 'PostgreSQL', 'Redis', 'Flutter', 'TypeScript'] %}
+        <span style="padding: 0.5rem 1.15rem; border: 1px solid var(--color-border); border-radius: 8px; font-size: 0.875rem; font-family: var(--font-heading); font-weight: 600; color: #334155; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: all 0.25s; cursor: default;"
+              onmouseenter="this.style.borderColor='var(--color-primary)'; this.style.color='var(--color-primary-light)'; this.style.transform='translateY(-2px)';"
+              onmouseleave="this.style.borderColor='var(--color-border)'; this.style.color='#334155'; this.style.transform='none';">
           {{ tech }}
         </span>
       {% endfor %}
@@ -299,74 +345,84 @@
   </div>
 </section>
 
-<!-- ── TESTIMONIALS ────────────────────────────── -->
+<!-- ── REAL STORIES: CLIENT VOICES ───────────────────── -->
 <section class="section reveal" style="background: var(--color-bg);">
   <div class="container">
     <div class="section-header centered">
-      <div class="badge">{{ icon('star', size=11) }} Client Stories</div>
-      <h2 style="color: #000000;">Trusted by innovative companies</h2>
+      <div class="accenture-kicker" style="margin: 0 auto 1rem auto;">
+        <span class="kicker-glyph">&gt;</span> SHARED TRIUMPHS
+      </div>
+      <h2 style="color: #0f172a; font-family: var(--font-heading); font-size: clamp(2rem, 3vw, 2.85rem); font-weight: 800; letter-spacing: -0.025em;">
+        Real stories from people who dared to build differently.
+      </h2>
       <div class="divider center"></div>
-      <p>Real results, real testimonials from the teams we've had the privilege to work with.</p>
+      <p style="font-size: 1.1rem; color: #475569; max-width: 680px; margin: 0 auto;">
+        The greatest joy in our craft comes from the remarkable people whose journeys we've been honored to share.
+      </p>
     </div>
     
     <div class="grid-3">
       {# Testimonial 1 #}
-      <div class="testimonial-card animate-fade-up delay-1">
+      <div class="testimonial-card animate-fade-up delay-1" style="border: 1px solid var(--color-border); box-shadow: 0 4px 16px rgba(15,23,42,0.04);">
         <div class="testimonial-stars">
           {% for _ in range(5) %}
             {{ icon('star', size=14, color='#f59e0b', fill='#f59e0b') }}
           {% endfor %}
         </div>
-        <p class="testimonial-text">
-          "Anti-Matrix transformed our legacy banking platform into a modern, cloud-native system. The team delivered exceptional quality under a tight deadline — completely exceeded our expectations."
+        <p class="testimonial-text" style="color: #334155; line-height: 1.7; font-size: 0.95rem;">
+          "Anti-Matrix felt less like an external agency and more like our most devoted in-house team. They took a daunting legacy system and breathed fresh life into it in just 14 weeks. They didn't just deliver software — they gave our whole company a renewed sense of pride and momentum."
         </p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">SM</div>
+          <div class="testimonial-avatar" style="background: #059669; color: #ffffff; font-weight: 800;">SM</div>
           <div>
-            <div class="testimonial-company">ScaleUp Finance</div>
-            <div class="testimonial-industry">FinTech</div>
+            <div class="testimonial-company" style="color: #0f172a; font-weight: 700;">ScaleUp Finance</div>
+            <div class="testimonial-industry" style="color: var(--color-primary-600); font-weight: 600;">Global FinTech Pioneers</div>
           </div>
         </div>
       </div>
 
       {# Testimonial 2 #}
-      <div class="testimonial-card animate-fade-up delay-2">
+      <div class="testimonial-card animate-fade-up delay-2" style="border: 1px solid var(--color-border); box-shadow: 0 4px 16px rgba(15,23,42,0.04);">
         <div class="testimonial-stars">
           {% for _ in range(5) %}
             {{ icon('star', size=14, color='#f59e0b', fill='#f59e0b') }}
           {% endfor %}
         </div>
-        <p class="testimonial-text">
-          "Working with Anti-Matrix was a game-changer. Their AI solution reduced our patient intake time by 60% and their support has been outstanding every step of the way."
+        <p class="testimonial-text" style="color: #334155; line-height: 1.7; font-size: 0.95rem;">
+          "What makes Anti-Matrix rare is their profound empathy. They spent days listening to our clinicians and patients before writing a single line of code. The AI companion they crafted cut patient wait times by 60%, but more than that, it brought warmth back to the clinical experience."
         </p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">LK</div>
+          <div class="testimonial-avatar" style="background: #0f172a; color: #ffffff; font-weight: 800;">LK</div>
           <div>
-            <div class="testimonial-company">MedCore Health</div>
-            <div class="testimonial-industry">HealthTech</div>
+            <div class="testimonial-company" style="color: #0f172a; font-weight: 700;">MedCore Health Networks</div>
+            <div class="testimonial-industry" style="color: var(--color-primary-600); font-weight: 600;">Patient-First HealthTech</div>
           </div>
         </div>
       </div>
 
       {# Testimonial 3 #}
-      <div class="testimonial-card animate-fade-up delay-3">
+      <div class="testimonial-card animate-fade-up delay-3" style="border: 1px solid var(--color-border); box-shadow: 0 4px 16px rgba(15,23,42,0.04);">
         <div class="testimonial-stars">
           {% for _ in range(5) %}
             {{ icon('star', size=14, color='#f59e0b', fill='#f59e0b') }}
           {% endfor %}
         </div>
-        <p class="testimonial-text">
-          "From strategy to launch, Anti-Matrix delivered a full e-commerce ecosystem that scaled Black Friday traffic flawlessly. Revenue up 40% in the first quarter."
+        <p class="testimonial-text" style="color: #334155; line-height: 1.7; font-size: 0.95rem;">
+          "Working with Anti-Matrix was an absolute joy. They listened deeply, challenged us to think bigger, and built an online experience that sailed through our biggest holiday rush without a hitch. Our revenue grew 42%, but the genuine trust we built together is what we treasure most."
         </p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">RJ</div>
+          <div class="testimonial-avatar" style="background: #10b981; color: #ffffff; font-weight: 800;">RJ</div>
           <div>
-            <div class="testimonial-company">RetailNova</div>
-            <div class="testimonial-industry">E-Commerce</div>
+            <div class="testimonial-company" style="color: #0f172a; font-weight: 700;">RetailNova Enterprise</div>
+            <div class="testimonial-industry" style="color: var(--color-primary-600); font-weight: 600;">Modern Omnichannel Commerce</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/matrix_story.js') }}"></script>
 {% endblock %}

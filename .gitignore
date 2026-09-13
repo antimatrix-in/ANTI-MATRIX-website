@@ -58,3 +58,7 @@ uploads/resumes/*
 
 # Scratch
 scratch/
+
+# Large media
+*.mp4
+*.webm

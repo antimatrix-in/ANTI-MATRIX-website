@@ -84,6 +84,12 @@ def home():
     return render_template('pages/home.html')
 
 
+@main_bp.route('/brand-film')
+def brand_film():
+    return render_template('pages/brand_film.html')
+
+
+
 @main_bp.route('/about')
 def about():
     return render_template('pages/about.html')

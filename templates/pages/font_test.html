@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Font Comparison vs Anti-Matrix Logo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Bruno+Ace&family=Bruno+Ace+SC&family=Chakra+Petch:wght@500;700&family=Michroma&family=Orbitron:wght@600;800;900&family=Oxanium:wght@600;700;800&family=Syncopate:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030806;
+      color: #ffffff;
+      font-family: sans-serif;
+      padding: 40px;
+    }
+    .header {
+      max-width: 1000px;
+      margin: 0 auto 30px auto;
+      background: #000;
+      border: 1px solid rgba(130, 204, 90, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    .grid {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background: rgba(10, 25, 18, 0.7);
+      border: 1px solid rgba(130, 204, 90, 0.25);
+      border-radius: 12px;
+      padding: 24px 30px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-family: monospace;
+      color: #a6fd3a;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .wordmark {
+      font-size: 40px;
+      letter-spacing: 0.16em;
+      margin-bottom: 10px;
+    }
+    .headline {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .w { color: #ffffff; }
+    .g { color: #82cc5a; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{ url_for('static', filename='images/anti_matrix_logo_reference.png') }}" style="height: 110px;" alt="Original Logo" />
+    <div>
+      <div style="color: #a6fd3a; font-family: monospace; font-size: 13px; letter-spacing: 0.1em;">ORIGINAL LOGO TYPOGRAPHY</div>
+      <h2 style="font-size: 24px; margin: 4px 0 8px 0;">Notice Chevron Apex A (Λ), Sharp Vertices & Spacing</h2>
+      <p style="color: #94a3b8; font-size: 14px;">Comparing top candidate Google Fonts directly against the logo reference</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="border-color: #a6fd3a; box-shadow: 0 0 25px rgba(166, 253, 58, 0.15);">
+      <div class="card-title">
+        <span>OPTION 1: BRUNO ACE SC (Exact Chevron 'A' without crossbar, Geometric Cuts)</span>
+        <span style="background: #10b981; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 700;">CHEVRON A MATCH</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Bruno Ace SC', sans-serif;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Bruno Ace SC', sans-serif;">
+        <span class="w">BREAK THE MATRIX. </span><span class="g">CREATE WHAT COMES NEXT.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>OPTION 2: BRUNO ACE (Full Character Set with Lowercase)</span>
+        <span style="color: #888;">Modern Tech</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Bruno Ace', sans-serif;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Bruno Ace', sans-serif;">
+        <span class="w">Break The Matrix. </span><span class="g">Create What Comes Next.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>OPTION 3: ORBITRON (High-Tech Sci-Fi, Geometric Hexagonal Angles)</span>
+        <span style="color: #888;">Standard Crossbar A</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Orbitron', sans-serif; font-weight: 800;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Orbitron', sans-serif; font-weight: 800;">
+        <span class="w">Break The Matrix. </span><span class="g">Create What Comes Next.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>OPTION 4: OXANIUM (45° Chamfered Corners matching Logo Cut)</span>
+        <span style="color: #888;">Chamfered Geometry</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Oxanium', sans-serif; font-weight: 700;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Oxanium', sans-serif; font-weight: 700;">
+        <span class="w">Break The Matrix. </span><span class="g">Create What Comes Next.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>OPTION 5: SYNCOPATE (Ultra-Wide High-End Architectural Sans)</span>
+        <span style="color: #888;">Wide Stance</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Syncopate', sans-serif; font-weight: 700;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Syncopate', sans-serif; font-weight: 700;">
+        <span class="w">BREAK THE MATRIX. </span><span class="g">CREATE WHAT COMES NEXT.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>OPTION 6: AUDIOWIDE (Curved Techno, Crossbar-less A)</span>
+        <span style="color: #888;">Soft Techno</span>
+      </div>
+      <div class="wordmark" style="font-family: 'Audiowide', sans-serif;">
+        <span class="w">ANTI-</span><span class="g">MATRIX</span>
+      </div>
+      <div class="headline" style="font-family: 'Audiowide', sans-serif;">
+        <span class="w">Break The Matrix. </span><span class="g">Create What Comes Next.</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

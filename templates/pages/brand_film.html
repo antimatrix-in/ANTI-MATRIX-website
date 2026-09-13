@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% from 'components/icons.html' import icon %}
+
+{% block title %}ANTI-MATRIX | Corporate Brand Film — Break The Matrix • Think Different • Create The Future{% endblock %}
+
+{% block content %}
+<section class="section brand-film-section" style="background: #050505; min-height: 100vh; padding-top: 110px; padding-bottom: 90px; color: #ffffff;">
+  <div class="container">
+    {# Header kicker & title #}
+    <div style="text-align: center; max-width: 860px; margin: 0 auto 36px auto;" class="animate-fade-up">
+      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 9999px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.12em; color: #34d399; margin-bottom: 20px;">
+        <span>◆</span> CORPORATE BRAND FILM <span>◆</span>
+      </div>
+      <h1 style="color: #ffffff; font-size: clamp(2.2rem, 4.5vw, 3.8rem); font-weight: 800; line-height: 1.15; margin-bottom: 18px; letter-spacing: -0.02em;">
+        Break The Matrix. <span style="background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #84cc16 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Create The Future.</span>
+      </h1>
+      <p style="font-size: clamp(1.05rem, 1.6vw, 1.25rem); color: rgba(255, 255, 255, 0.72); line-height: 1.65; max-width: 740px; margin: 0 auto;">
+        We do not operate inside existing systems. We question them. We break them. We think differently. We build what comes next.
+      </p>
+    </div>
+
+    {# 16:9 Cinema Player Container #}
+    <div style="max-width: 1120px; margin: 0 auto; position: relative;" class="animate-fade-up delay-1">
+      <div style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8), 0 0 45px rgba(16, 185, 129, 0.18); border: 1px solid rgba(255, 255, 255, 0.12); background: #000000; aspect-ratio: 16 / 9;">
+        <video
+          id="brandFilmPlayer"
+          poster="{{ url_for('static', filename='images/anti_matrix_brand_film_poster.jpg') }}"
+          controls
+          playsinline
+          preload="metadata"
+          style="width: 100%; height: 100%; object-fit: cover; display: block;"
+        >
+          <source src="{{ url_for('static', filename='videos/anti_matrix_brand_film.mp4') }}" type="video/mp4">
+          <source src="{{ url_for('static', filename='videos/anti_matrix_brand_film.webm') }}" type="video/webm">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      {# Direct Controls & Download Strip #}
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 24px; padding: 18px 24px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
+          <span style="font-size: 0.92rem; font-weight: 500; color: rgba(255, 255, 255, 0.85);">Master 1080p 60fps • English Narration & 3D Spatial Audio</span>
+        </div>
+        <div style="display: flex; gap: 14px;">
+          <a href="{{ url_for('static', filename='videos/anti_matrix_brand_film.mp4') }}" download="ANTI-MATRIX-Brand-Film.mp4" class="btn btn-outline btn-sm" style="color: #ffffff; border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.06); font-size: 0.85rem;">
+            Download Master MP4
+          </a>
+          <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-sm" style="font-size: 0.85rem;">
+            Build With Us {{ icon('arrow-right', size=15) }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {# 6 Scene Narrative Storyboard Grid #}
+    <div style="max-width: 1120px; margin: 64px auto 0 auto;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="font-size: 0.82rem; font-weight: 600; letter-spacing: 0.12em; color: #34d399; margin-bottom: 8px;">// FILM BLUEPRINT</div>
+        <h2 style="font-size: 1.85rem; font-weight: 700; color: #ffffff;">The 6 Narrative Chapters</h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        {# Scene 1 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">01 // THE MONOTONY</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:00 – 0:06</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            Cold dawn in a metropolitan financial district. Commuters in dark coats move in synchronized lockstep past monolithic glass towers.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            "The world is built on patterns."
+          </div>
+        </div>
+
+        {# Scene 2 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">02 // THE SYSTEM</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:06 – 0:12</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            Endless corporate glass cubicles at dusk. Workers operate quietly within rigid templates and cold fluorescent linear ceiling grids.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            "Patterns become rules. Rules become limits."
+          </div>
+        </div>
+
+        {# Scene 3 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">03 // THE SPARK OF WONDER</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:12 – 0:19</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            Lone creator in a moody studio at night. A physical four-faceted emerald crystal prism refracts green and warm amber light across blueprints.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            "But what if we stopped following them? What if we thought beyond them?"
+          </div>
+        </div>
+
+        {# Scene 4 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">04 // HUMAN CONNECTION</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:19 – 0:27</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            The idea spreads. A diverse team collaborates enthusiastically around a glowing table, passing prototypes and sharing authentic smiles.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            "Not to escape the future... but to create it."
+          </div>
+        </div>
+
+        {# Scene 5 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">05 // BOUNDLESS HORIZON</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:27 – 0:35</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            Creators stand together on an open sky terrace at sunrise, overlooking a vibrant city with vertical gardens and boundless freedom.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            "We break the matrix. We think different. We create the future."
+          </div>
+        </div>
+
+        {# Scene 6 #}
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 22px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">06 // SIGNATURE IDENTITY</span>
+            <span style="color: rgba(255, 255, 255, 0.45); font-size: 0.82rem;">0:35 – 0:43</span>
+          </div>
+          <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.78); line-height: 1.5; margin-bottom: 12px;">
+            The emerald crystal settles with physical weight onto luxury obsidian stone, resolving into the pristine Anti-Matrix brand lockup.
+          </p>
+          <div style="font-style: italic; color: #a6fd3a; font-size: 0.88rem; border-left: 2px solid #10b981; padding-left: 10px;">
+            BREAK THE MATRIX ◆ THINK DIFFERENT ◆ CREATE THE FUTURE
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
