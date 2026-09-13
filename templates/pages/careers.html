@@ -1,503 +1,566 @@
 {% extends 'base.html' %}
 {% from 'components/icons.html' import icon %}
 
-{% block title %}Careers | Anti-Matrix{% endblock %}
+{% block title %}Careers &amp; Internship Programs | Anti-Matrix{% endblock %}
 
 {% block content %}
-<!-- Page Hero -->
-<section class="page-hero" style="padding-bottom: var(--space-2xl);">
-  <div class="container">
-    <div class="badge" style="margin-bottom: var(--space-md); display: inline-flex; align-items: center; gap: 8px;">
-      <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary); display: inline-block;"></span>
-      <span>Careers at Anti-Matrix &bull; {{ jobs|length }} Active Position{{ 's' if jobs|length != 1 else '' }}</span>
-    </div>
+<div class="cr-page-wrapper">
 
-    <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15; margin-bottom: var(--space-md); color: var(--color-text);">
-      Build remarkable technology.<br />
-      <span style="color: var(--color-primary);">Break the matrix with us.</span>
-    </h1>
-
-    <p style="font-size: 1.1rem; color: var(--color-text-dim); max-width: 680px; margin-bottom: var(--space-xl); line-height: 1.7;">
-      Anti-Matrix is a team of software engineers, AI researchers, cloud architects, and product designers solving mission-critical challenges for high-growth enterprises worldwide.
-    </p>
-
-    <div style="display: flex; gap: var(--space-md); flex-wrap: wrap; align-items: center;">
-      <a href="#open-positions" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 0.95rem; font-weight: 600; gap: 8px; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);">
-        View Open Positions {{ icon('arrow-down', size=16) }}
-      </a>
-      <a href="#why-antimatrix" class="btn btn-outline" style="padding: 0.85rem 1.5rem; font-size: 0.95rem; font-weight: 500;">
-        Life &amp; Culture at Anti-Matrix
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ================= 1. CURRENT OPENINGS SECTION ================= -->
-<section id="open-positions" class="section" style="background: var(--color-bg); padding-top: var(--space-2xl); padding-bottom: var(--space-3xl);">
-  <div class="container">
-
-    {% if jobs %}
-      <!-- FEATURED LATEST OPENING SPOTLIGHT BANNER -->
-      {% set featured_job = jobs[0] %}
-      <div class="featured-opening-banner" style="background: #ffffff; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: var(--radius-md); padding: var(--space-2xl); margin-bottom: var(--space-3xl); box-shadow: var(--shadow-card); position: relative;">
-        
-        <!-- Header row -->
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);">
-          <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(5, 150, 105, 0.08); border: 1px solid rgba(5, 150, 105, 0.25); border-radius: 4px; padding: 0.25rem 0.75rem;">
-            {{ icon('star', size=13, color='var(--color-primary)', fill='var(--color-primary)') }}
-            <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-              Featured Priority Opening
-            </span>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
-              {{ icon('clock', size=13, color='var(--color-primary)') }} Actively Reviewing Applications
-            </span>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-2xl); align-items: center;">
-          <div>
-            <h2 style="font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 700; color: var(--color-text); margin-bottom: var(--space-sm); font-family: var(--font-heading); line-height: 1.25; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <span>{{ featured_job.title }}</span>
-              {% if featured_job.is_updated %}
-                <span class="badge-updated" style="font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 4px; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); vertical-align: middle;">Updated</span>
-              {% endif %}
-            </h2>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: var(--space-md);">
-              {% if featured_job.job_id %}
-                <span style="font-size: 0.8rem; font-weight: 700; font-family: monospace; padding: 0.2rem 0.65rem; border-radius: 4px; background: rgba(37, 99, 235, 0.08); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25);">
-                  Job ID: {{ featured_job.job_id }}
-                </span>
-              {% endif %}
-              <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 4px; background: #f1f5f9; color: var(--color-text); border: 1px solid var(--color-border);">
-                {{ featured_job.department }}
-              </span>
-              <span style="font-size: 0.85rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
-                {{ icon('map-pin', size=13, color='var(--color-primary)') }} {{ featured_job.location }}
-              </span>
-              <span style="font-size: 0.85rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
-                {{ icon('briefcase', size=13, color='var(--color-primary)') }} {{ featured_job.employment_type }}
-              </span>
-              {% if featured_job.is_internship %}
-                <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 4px; background: rgba(37, 99, 235, 0.08); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.2);">
-                  {{ icon('clock', size=12) }} 1 or 3 Months
-                </span>
-                <span style="font-size: 0.85rem; color: var(--color-primary); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; background: rgba(5, 150, 105, 0.08); padding: 0.2rem 0.65rem; border-radius: 4px; border: 1px solid rgba(5, 150, 105, 0.2);">
-                  {{ icon('credit-card', size=13) }} Fee: ₹199 / ₹399
-                </span>
-              {% elif featured_job.salary %}
-                <span style="font-size: 0.85rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 5px;">
-                  {{ icon('credit-card', size=13) }} {{ featured_job.salary }}
-                </span>
-              {% endif %}
-            </div>
-
-            <p style="font-size: 0.95rem; color: var(--color-text-dim); line-height: 1.65; margin-bottom: var(--space-lg); max-width: 680px;">
-              {{ featured_job.short_description }}
-            </p>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: var(--space-md);">
-              {% for s in featured_job.get_skills_list() %}
-                <span style="font-size: 0.775rem; color: #334155; background: #f8fafc; border: 1px solid var(--color-border); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 500;">
-                  {{ s }}
-                </span>
-              {% endfor %}
-            </div>
-          </div>
-
-          <!-- Action Box -->
-          <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-xl); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-md);">
-            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.2); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
-              {{ icon('shield', size=22, color='var(--color-primary)') }}
-            </div>
-
-            <div>
-              <div style="font-size: 1rem; font-weight: 700; color: var(--color-text); font-family: var(--font-heading);">Priority Evaluation</div>
-              <div style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 2px;">Direct technical screening within 48 hours</div>
-            </div>
-
-            <a href="{{ url_for('main.apply_job', job_id=featured_job.id) }}" class="btn btn-primary" style="width: 100%; justify-content: center; font-weight: 600; gap: 8px;">
-              Apply Now {{ icon('arrow-right', size=15) }}
-            </a>
-
-            <button type="button" onclick="toggleDetailsPane('role-{{ featured_job.id }}')" class="btn btn-outline btn-sm" style="width: 100%; justify-content: center;">
-              View Full Job Specs
-            </button>
-          </div>
-        </div>
-
-        {# Expanded featured details drawer #}
-        <div id="role-{{ featured_job.id }}" class="job-details-pane card animate-fade-up" style="display: none; margin-top: var(--space-xl); border: 1px solid var(--color-border); background: #ffffff; border-radius: var(--radius-sm); padding: var(--space-xl);">
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-xl);">
-            <div>
-              <h4 style="color: var(--color-text); font-size: 1.15rem; margin-bottom: var(--space-md); font-family: var(--font-heading);">About the Role</h4>
-              <p style="margin-bottom: var(--space-lg); line-height: 1.7; color: var(--color-text-dim);">{{ featured_job.description }}</p>
-              
-              {% if featured_job.responsibilities %}
-                <h4 style="color: var(--color-text); font-size: 1.15rem; margin-bottom: var(--space-md); font-family: var(--font-heading);">Key Responsibilities</h4>
-                <ul class="service-capabilities" style="margin-bottom: var(--space-lg); line-height: 1.7; color: var(--color-text-dim);">
-                  {% for resp in featured_job.get_responsibilities_list() %}
-                    <li>{{ resp }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-
-              {% if featured_job.requirements %}
-                <h4 style="color: var(--color-text); font-size: 1.15rem; margin-bottom: var(--space-md); font-family: var(--font-heading);">Qualifications &amp; Requirements</h4>
-                <ul class="service-capabilities" style="line-height: 1.7; color: var(--color-text-dim);">
-                  {% for req in featured_job.get_requirements_list() %}
-                    <li>{{ req }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            </div>
-
-            <div style="background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md);">
-              {% set feat_code = featured_job.job_code or featured_job.job_id %}
-              {% if feat_code %}
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job Code</div>
-                  <div style="font-family: monospace; font-weight: 700; color: #2563eb; font-size: 1rem;">{{ feat_code }}</div>
-                </div>
-              {% endif %}
-              <div>
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Department</div>
-                <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.department }}</div>
-              </div>
-              <div>
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Location</div>
-                <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.location }}</div>
-              </div>
-              <div>
-                <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Work Arrangement</div>
-                <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.employment_type }}</div>
-              </div>
-              {% if featured_job.is_internship %}
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Internship Duration</div>
-                  <div style="color: #2563eb; font-weight: 700;">1 Month or 3 Months (Selected during application)</div>
-                </div>
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Application Fee</div>
-                  <div style="color: var(--color-primary); font-weight: 800; font-size: 1.15rem;">₹199 / ₹399</div>
-                </div>
-              {% elif featured_job.salary %}
-                <div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Compensation</div>
-                  <div style="color: var(--color-text); font-weight: 600;">{{ featured_job.salary }}</div>
-                </div>
-              {% endif %}
-
-              <a href="{{ url_for('main.apply_job', job_id=featured_job.id) }}" class="btn btn-primary" style="margin-top: var(--space-sm); justify-content: center;">
-                Proceed to Apply &rarr;
-              </a>
-            </div>
-          </div>
-        </div>
+  <!-- ================= 1. HERO SEARCH HEADER (Accenture Inspired) ================= -->
+  <header class="cr-hero-section">
+    <div class="cr-hero-mosaic-corner" aria-hidden="true"></div>
+    <div class="container" style="position: relative; z-index: 2;">
+      <div class="cr-hero-kicker-pill">
+        <span class="gem-dot"></span>
+        <span>CAREERS &amp; INTERNSHIP DIRECTORY</span>
       </div>
 
-      <!-- ALL CURRENT OPENINGS LIST -->
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xl);">
-        <div>
-          <div class="badge" style="margin-bottom: var(--space-xs);">{{ icon('briefcase', size=11) }} All Openings</div>
-          <h2 style="font-size: 1.85rem; font-weight: 800; color: var(--color-white); margin-bottom: 0;">Explore All Active Positions</h2>
-          <p style="color: var(--color-text-dim); font-size: 0.95rem; margin-top: 4px; margin-bottom: 0;">Select a role below to review criteria, responsibilities, and submit your application.</p>
-        </div>
+      <h1 class="cr-hero-title">
+        Explore Active Positions
+      </h1>
 
-        <div style="display: flex; align-items: center; gap: 8px;">
+      <p class="cr-hero-subtitle">
+        Select a role below to review technical requirements, curriculum milestones, and submit your application.
+      </p>
+
+      <!-- Global Search Bar (Accenture Style) -->
+      <div class="cr-search-container">
+        <div class="cr-search-box">
+          <span class="cr-search-icon">
+            {{ icon('search', size=20) }}
+          </span>
           <input
             type="text"
-            id="job-search-input"
-            placeholder="Search roles or skills..."
-            style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; padding: 0.45rem 1rem; font-size: 0.85rem; color: var(--color-white); width: 220px;"
-            oninput="filterJobsList()"
+            id="jobSearchInput"
+            class="cr-search-input"
+            placeholder='Search by role title, department, skill, or keyword (e.g. "Data Analytics", "Python", "React", "AI")...'
+            autocomplete="off"
+            oninput="handleSearchInput()"
           />
+          <button
+            type="button"
+            id="clearSearchBtn"
+            class="cr-search-clear"
+            onclick="clearSearchInput()"
+            style="display: none;"
+            title="Clear search query"
+            aria-label="Clear search"
+          >
+            &times;
+          </button>
         </div>
       </div>
+    </div>
+  </header>
 
-      <div style="display: flex; flex-direction: column; gap: var(--space-md);" id="all-jobs-container">
-        {% for job in jobs %}
-          <div class="job-item-wrapper" data-title="{{ job.title|lower }}" data-skills="{{ (job.skills or '')|lower }}" data-dept="{{ job.department|lower }}">
-            <div
-              class="card job-card job-card-interactive"
-              onclick="toggleDetailsPane('role-{{ job.id }}')"
-              style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: var(--space-lg); transition: all 0.25s; border: 1px solid var(--color-border); background: var(--color-surface);"
-              onmouseover="this.style.borderColor='rgba(16, 185, 129, 0.4)'; this.style.transform='translateY(-2px)';"
-              onmouseout="this.style.borderColor='var(--color-border)'; this.style.transform='translateY(0)';"
-            >
-              <div class="job-info" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                  <div class="job-title" style="font-size: 1.2rem; font-weight: 700; color: var(--color-text); font-family: var(--font-heading);">{{ job.title }}</div>
-                  {% if loop.first %}
-                    <span style="font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(5, 150, 105, 0.1); color: var(--color-primary); border: 1px solid rgba(5, 150, 105, 0.25);">Priority</span>
+  <!-- ================= 2. MAIN 2-COLUMN DIRECTORY LAYOUT ================= -->
+  <main class="cr-main-section">
+    <div class="container">
+      <div class="cr-layout-grid">
+
+        <!-- LEFT SIDEBAR: FILTERS -->
+        <aside class="cr-sidebar" aria-label="Job Filters">
+          <div class="cr-filter-card">
+            <div class="cr-filter-mosaic-top" aria-hidden="true"></div>
+
+            <div class="cr-filter-header">
+              <span class="cr-filter-title">
+                {{ icon('sliders', size=16) }} Filters
+              </span>
+              <button type="button" class="cr-clear-btn" onclick="resetAllFilters()">
+                Clear filters &#8634;
+              </button>
+            </div>
+
+            <!-- Filter Group: Area of Interest / Domain -->
+            <div class="cr-filter-group">
+              <div class="cr-group-heading">Area of Interest</div>
+              <div class="cr-checkbox-list" id="departmentFilterList">
+                {% set departments = [] %}
+                {% for j in jobs %}
+                  {% if j.department not in departments %}
+                    {% set _ = departments.append(j.department) %}
                   {% endif %}
-                  {% if job.is_updated %}
-                    <span class="badge-updated" style="font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">Updated</span>
-                  {% endif %}
+                {% endfor %}
+
+                {% for dept in departments %}
+                  {% set dept_count = jobs|selectattr('department', 'equalto', dept)|list|length %}
+                  <label class="cr-checkbox-item">
+                    <span class="cr-checkbox-label">
+                      <input
+                        type="checkbox"
+                        class="cr-checkbox-input filter-dept-checkbox"
+                        value="{{ dept|lower }}"
+                        onchange="applyJobFilters()"
+                      />
+                      <span>{{ dept }}</span>
+                    </span>
+                    <span class="cr-checkbox-count">{{ dept_count }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Filter Group: Program Duration -->
+            <div class="cr-filter-group">
+              <div class="cr-group-heading">Program Duration</div>
+              <div class="cr-checkbox-list">
+                <label class="cr-checkbox-item">
+                  <span class="cr-checkbox-label">
+                    <input
+                      type="checkbox"
+                      class="cr-checkbox-input filter-duration-checkbox"
+                      value="1_month"
+                      onchange="applyJobFilters()"
+                    />
+                    <span>1 Month Track</span>
+                  </span>
+                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
+                </label>
+                <label class="cr-checkbox-item">
+                  <span class="cr-checkbox-label">
+                    <input
+                      type="checkbox"
+                      class="cr-checkbox-input filter-duration-checkbox"
+                      value="3_months"
+                      onchange="applyJobFilters()"
+                    />
+                    <span>3 Months Track</span>
+                  </span>
+                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Filter Group: Work Arrangement -->
+            <div class="cr-filter-group">
+              <div class="cr-group-heading">Work Arrangement</div>
+              <div class="cr-checkbox-list">
+                <label class="cr-checkbox-item">
+                  <span class="cr-checkbox-label">
+                    <input
+                      type="checkbox"
+                      class="cr-checkbox-input filter-location-checkbox"
+                      value="remote"
+                      checked
+                      onchange="applyJobFilters()"
+                    />
+                    <span>Remote / Flexible</span>
+                  </span>
+                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Small Program Features & Course Details Card -->
+          <div class="cr-features-card">
+            <div class="cr-features-header">
+              {{ icon('award', size=16, color='#059669') }}
+              <span>Included with All Tracks</span>
+            </div>
+            <ul class="cr-features-list">
+              <li>
+                {{ icon('check', size=13) }}
+                <span>Verified Anti-Matrix Employee ID &amp; Portal</span>
+              </li>
+              <li>
+                {{ icon('check', size=13) }}
+                <span>Real-world client project execution</span>
+              </li>
+              <li>
+                {{ icon('check', size=13) }}
+                <span>Direct screening feedback within 48 hours</span>
+              </li>
+              <li>
+                {{ icon('check', size=13) }}
+                <span>Official Offer Letter &amp; QR verification</span>
+              </li>
+              <li>
+                {{ icon('check', size=13) }}
+                <span>Verifiable Internship Certificate</span>
+              </li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- RIGHT FEED: ACTIVE POSITIONS -->
+        <section class="cr-results-feed" aria-label="Open Positions">
+
+          <!-- Results Summary Meta Bar -->
+          <div class="cr-meta-bar">
+            <div class="cr-results-count">
+              <span id="filteredCount" class="cr-count-badge">{{ jobs|length }}</span> Active Position{{ 's' if jobs|length != 1 else '' }} Available
+            </div>
+
+            <div class="cr-sort-wrapper">
+              <label for="jobSortSelect">Sort by:</label>
+              <select id="jobSortSelect" class="cr-sort-select" onchange="sortJobsList(this.value)">
+                <option value="newest">Newest First</option>
+                <option value="code">Job Code (Asc)</option>
+                <option value="title">Role Title (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Job Cards Container -->
+          <div id="jobListContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for job in jobs %}
+              {% set code = job.job_code or job.job_id or ('JB' ~ (1000 + job.id)) %}
+              <article
+                class="cr-job-card"
+                id="card-{{ job.id }}"
+                data-id="{{ job.id }}"
+                data-title="{{ job.title|lower }}"
+                data-dept="{{ job.department|lower }}"
+                data-code="{{ code|lower }}"
+                data-skills="{{ (job.skills or '')|lower }}"
+                data-location="{{ (job.location or '')|lower }}"
+                data-is-internship="{{ 'true' if job.is_internship else 'false' }}"
+                data-created="{{ job.created_at.timestamp() if job.created_at else 0 }}"
+              >
+                <!-- Card Header -->
+                <div class="cr-card-top">
+                  <div class="cr-title-area">
+                    <h3 class="cr-job-title">{{ job.title }}</h3>
+                    {% if loop.first %}
+                      <span class="cr-badge-priority">Priority</span>
+                    {% endif %}
+                    {% if job.is_updated %}
+                      <span class="cr-badge-updated">Updated</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Accenture-style + / - Expand Toggle Button -->
+                  <button
+                    type="button"
+                    class="cr-toggle-btn"
+                    id="toggle-btn-{{ job.id }}"
+                    onclick="toggleJobDrawer('drawer-{{ job.id }}')"
+                    aria-label="Toggle role details for {{ job.title }}"
+                    aria-expanded="false"
+                    title="View role details"
+                  >
+                    +
+                  </button>
                 </div>
 
-                <div class="job-meta" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                  {% set code = job.job_code or job.job_id %}
-                  {% if code %}
-                    <span style="font-size: 0.75rem; font-weight: 700; font-family: monospace; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                      Job Code: {{ code }}
-                    </span>
-                  {% endif %}
-                  <span style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(16,185,129,0.1); color: var(--color-primary-light); border: 1px solid rgba(16,185,129,0.25);">{{ job.department }}</span>
-                  <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('map-pin', size=11) }} {{ job.location }}</span>
-                  <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('clock', size=11) }} {{ job.employment_type }}</span>
+                <!-- ============================================================
+                     USER MARKED COURSE DETAILS STRIP (Image 1 Highlight)
+                     [Job Code: JB####] [DOMAIN] [Remote] [Internship] [1 or 3 Months] [Fee: ₹199 / ₹399]
+                     ============================================================ -->
+                <div class="cr-course-details-strip">
+                  <span class="cr-chip-code">Job Code: {{ code }}</span>
+                  <span class="cr-chip-domain">{{ job.department }}</span>
+                  <span class="cr-chip-meta">{{ icon('map-pin', size=13) }} {{ job.location }}</span>
+                  <span class="cr-chip-meta">{{ icon('briefcase', size=13) }} {{ job.employment_type }}</span>
                   {% if job.is_internship %}
-                    <span style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                      {{ icon('clock', size=11) }} 1 or 3 Months
-                    </span>
-                    <span style="font-size: 0.8rem; color: var(--color-primary-light); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">{{ icon('credit-card', size=11) }} Fee: ₹199 / ₹399</span>
+                    <span class="cr-chip-duration">{{ icon('clock', size=12) }} 1 or 3 Months</span>
+                    <span class="cr-chip-fee">{{ icon('credit-card', size=13) }} Fee: ₹199 / ₹399</span>
                   {% elif job.salary %}
-                    <span style="font-size: 0.8rem; color: var(--color-text-dim); display: inline-flex; align-items: center; gap: 4px;">{{ icon('credit-card', size=11) }} {{ job.salary }}</span>
+                    <span class="cr-chip-fee">{{ icon('credit-card', size=13) }} {{ job.salary }}</span>
                   {% endif %}
                 </div>
 
-                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                <!-- Short Summary Description -->
+                <p class="cr-job-desc">
                   {{ job.short_description }}
                 </p>
 
-                <div class="job-skills" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
+                <!-- Skills Pill List -->
+                <div class="cr-skills-row">
                   {% for s in job.get_skills_list() %}
-                    <span style="font-size: 0.75rem; color: var(--color-text-dim); background: rgba(255,255,255,0.04); border: 1px solid var(--color-border); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">{{ s }}</span>
+                    <span class="cr-skill-pill">{{ s }}</span>
                   {% endfor %}
                 </div>
-              </div>
 
-              <div class="job-actions" style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
-                <a href="{{ url_for('main.apply_job', job_id=job.id) }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation();" style="gap: 6px;">
-                  Apply Now {{ icon('arrow-right', size=13) }}
-                </a>
-                <span class="btn btn-ghost btn-sm" style="font-size: 0.775rem; color: var(--color-text-dim); padding: 0.25rem 0.5rem;">
-                  Details &darr;
-                </span>
-              </div>
-            </div>
+                <!-- Card Bottom Action Row -->
+                <div class="cr-card-footer">
+                  <div class="cr-screening-note">
+                    {{ icon('shield', size=13) }} Direct technical screening within 48 hours
+                  </div>
 
-            {# Expanded job details pane #}
-            <div id="role-{{ job.id }}" class="job-details-pane card animate-fade-up" style="display: none; margin-top: var(--space-sm); border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.04);">
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-xl);">
-                <div>
-                  <h4 style="color: var(--color-white); margin-bottom: var(--space-md); font-family: var(--font-heading);">About the Role</h4>
-                  <p style="margin-bottom: var(--space-lg); line-height: 1.6; color: var(--color-text-dim);">{{ job.description }}</p>
-                  
-                  {% if job.responsibilities %}
-                    <h4 style="color: var(--color-white); margin-bottom: var(--space-md); font-family: var(--font-heading);">Responsibilities</h4>
-                    <ul class="service-capabilities" style="margin-bottom: var(--space-lg); line-height: 1.6;">
-                      {% for resp in job.get_responsibilities_list() %}
-                        <li>{{ resp }}</li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
+                  <div class="cr-card-actions">
+                    <button
+                      type="button"
+                      class="cr-btn-details"
+                      id="details-link-{{ job.id }}"
+                      onclick="toggleJobDrawer('drawer-{{ job.id }}')"
+                    >
+                      <span>Details</span> <span class="cr-details-icon">+</span>
+                    </button>
 
-                  {% if job.requirements %}
-                    <h4 style="color: var(--color-white); margin-bottom: var(--space-md); font-family: var(--font-heading);">Requirements &amp; Qualifications</h4>
-                    <ul class="service-capabilities" style="line-height: 1.6;">
-                      {% for req in job.get_requirements_list() %}
-                        <li>{{ req }}</li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
+                    <a href="{{ url_for('main.apply_job', job_id=job.id) }}" class="cr-btn-apply">
+                      <span>Apply Now</span> <span class="cr-arrow">&rarr;</span>
+                    </a>
+                  </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: var(--space-md); background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg);">
-                  {% set pane_code = job.job_code or job.job_id %}
-                  {% if pane_code %}
-                    <div>
-                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Job Code</div>
-                      <div style="font-family: monospace; font-weight: 700; color: #60a5fa; font-size: 0.95rem;">{{ pane_code }}</div>
+                <!-- Expandable In-Card Specifications Drawer -->
+                <div id="drawer-{{ job.id }}" class="cr-job-drawer" aria-hidden="true">
+                  <div class="cr-drawer-grid">
+                    <div class="cr-drawer-content">
+                      <h4>About the Role</h4>
+                      <p>{{ job.description }}</p>
+
+                      {% if job.responsibilities %}
+                        <h4>Key Responsibilities</h4>
+                        <ul class="cr-drawer-list">
+                          {% for resp in job.get_responsibilities_list() %}
+                            <li>{{ resp }}</li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+
+                      {% if job.requirements %}
+                        <h4>Qualifications &amp; Requirements</h4>
+                        <ul class="cr-drawer-list">
+                          {% for req in job.get_requirements_list() %}
+                            <li>{{ req }}</li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
                     </div>
-                  {% endif %}
-                  <div>
-                    <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Department</div>
-                    <div style="color: var(--color-white); font-weight: 600;">{{ job.department }}</div>
+
+                    <div class="cr-drawer-specs-box">
+                      <div>
+                        <div class="cr-spec-item-label">Job Code</div>
+                        <div class="cr-spec-item-val" style="font-family: monospace; color: #1d4ed8;">{{ code }}</div>
+                      </div>
+                      <div>
+                        <div class="cr-spec-item-label">Department</div>
+                        <div class="cr-spec-item-val">{{ job.department }}</div>
+                      </div>
+                      <div>
+                        <div class="cr-spec-item-label">Work Mode</div>
+                        <div class="cr-spec-item-val">{{ job.location }} ({{ job.employment_type }})</div>
+                      </div>
+                      {% if job.is_internship %}
+                        <div>
+                          <div class="cr-spec-item-label">Program Duration</div>
+                          <div class="cr-spec-item-val" style="color: #2563eb;">1 Month or 3 Months</div>
+                        </div>
+                        <div>
+                          <div class="cr-spec-item-label">Application Fee</div>
+                          <div class="cr-spec-item-val" style="color: #047857; font-size: 1.05rem; font-weight: 800;">₹199 / ₹399</div>
+                        </div>
+                      {% elif job.salary %}
+                        <div>
+                          <div class="cr-spec-item-label">Compensation</div>
+                          <div class="cr-spec-item-val">{{ job.salary }}</div>
+                        </div>
+                      {% endif %}
+
+                      <a href="{{ url_for('main.apply_job', job_id=job.id) }}" class="cr-btn-apply cr-drawer-apply-btn">
+                        Proceed to Application Form &rarr;
+                      </a>
+                    </div>
                   </div>
-                  <div>
-                    <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Location</div>
-                    <div style="color: var(--color-white); font-weight: 600;">{{ job.location }}</div>
-                  </div>
-                  <div>
-                    <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Employment Type</div>
-                    <div style="color: var(--color-white); font-weight: 600;">{{ job.employment_type }}</div>
-                  </div>
-                  {% if job.is_internship %}
-                    <div>
-                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Internship Duration</div>
-                      <div style="color: #60a5fa; font-weight: 700;">1 Month or 3 Months (Selected during application)</div>
-                    </div>
-                    <div>
-                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Application Fee</div>
-                      <div style="color: var(--color-primary-light); font-weight: 700; font-size: 1.15rem;">₹199 / ₹399</div>
-                    </div>
-                  {% elif job.salary %}
-                    <div>
-                      <div style="font-size: 0.75rem; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Compensation</div>
-                      <div style="color: var(--color-primary-light); font-weight: 600;">{{ job.salary }}</div>
-                    </div>
-                  {% endif %}
-                  
-                  <a
-                    href="{{ url_for('main.apply_job', job_id=job.id) }}"
-                    class="btn btn-primary btn-lg"
-                    style="margin-top: var(--space-md); width: 100%; justify-content: center;"
-                  >
-                    Apply Now {{ icon('arrow-right', size=16) }}
-                  </a>
-                  <p style="font-size: 0.775rem; color: var(--color-text-dim); margin: 0;">
-                    Or email CV: <a href="mailto:info@antimatrix.com?subject=Application: {{ job.title }}" style="color: var(--color-primary-light);">info@antimatrix.com</a>
-                  </p>
                 </div>
-              </div>
-            </div>
+              </article>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="card" style="text-align: center; padding: var(--space-2xl); border: 1px dashed var(--color-border);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg);">{{ icon('briefcase', size=24) }}</div>
-        <h3 style="color: var(--color-white); margin-bottom: var(--space-sm);">No Open Positions Currently</h3>
-        <p style="color: var(--color-text-dim); max-width: 500px; margin: 0 auto;">We don't have active public job openings posted right now, but we are always eager to meet exceptional engineers, AI researchers, and designers.</p>
-        <a href="mailto:info@antimatrix.com?subject=Spontaneous Application" class="btn btn-outline" style="margin-top: var(--space-lg);">
-          Send General Application
-        </a>
-      </div>
-    {% endif %}
 
-  </div>
-</section>
+          <!-- Empty State (Hidden by default, shown when 0 results match) -->
+          <div id="crEmptyState" class="cr-empty-state" style="display: none;">
+            <div style="color: #64748b;">
+              {{ icon('search', size=36) }}
+            </div>
+            <h4>No matching positions found</h4>
+            <p>We couldn't find any active roles matching your current search and filter combination.</p>
+            <button type="button" class="cr-btn-details" onclick="resetAllFilters()">
+              Clear Filters &amp; View All Positions
+            </button>
+          </div>
 
-<!-- ================= 2. WHY WORK AT ANTI-MATRIX (CULTURE & PERKS) ================= -->
-<section id="why-antimatrix" class="section reveal" style="background: var(--color-bg-alt); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
-  <div class="container">
-    <div class="section-header centered">
-      <div class="badge">{{ icon('heart', size=11) }} Life at Anti-Matrix</div>
-      <h2 style="color: var(--color-white); font-size: 2rem; font-weight: 800;">Why Engineers &amp; Creators Love Working Here</h2>
-      <div class="divider center"></div>
-      <p style="color: var(--color-text-dim);">We've built an environment where high-caliber builders do their life's work — with autonomy, cutting-edge tools, and meaningful equity.</p>
-    </div>
-    
-    <div class="grid-3">
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('zap', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Remote &amp; Hybrid Culture</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">Work from anywhere with distributed teams, asynchronous communication, and modern tooling built for speed.</p>
-      </div>
+          <!-- Clean Bottom Inquiry Strip -->
+          <div class="cr-bottom-inquiry-strip">
+            Don't see your specific domain or looking for general positions?
+            <a href="mailto:info@antimatrix.com?subject=General Career Application - Anti-Matrix">
+              Send your CV directly to info@antimatrix.com &rarr;
+            </a>
+          </div>
+        </section>
 
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('heart', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Health &amp; Wellness</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">Comprehensive medical insurance coverage plus dedicated fitness, ergonomic workstation, and wellness allowances.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('award', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Continuous Learning</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">Annual stipends for engineering courses, cloud certifications (AWS/GCP), international conferences, and technical books.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('brain', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Leading-Edge Tech Stack</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">Work directly on large-scale AI models, high-performance distributed backends, modern React/TypeScript frontends, and zero-downtime cloud systems.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('clock', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Flexible Autonomous Hours</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">We measure results and code craftsmanship, not minutes logged at a desk. You own your schedule and your milestones.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: var(--space-xl);">
-        <div class="icon-box" style="margin: 0 auto var(--space-lg); width: 44px; height: 44px;">{{ icon('users', size=22) }}</div>
-        <h3 style="font-size: 1.15rem; color: var(--color-white); margin-bottom: var(--space-sm); font-weight: 700;">Transparent Career Progression</h3>
-        <p style="font-size: 0.9rem; color: var(--color-text-dim); line-height: 1.6;">Direct mentorship from senior engineering leaders, clear milestones for advancement, and real ownership of client systems.</p>
       </div>
     </div>
-  </div>
-</section>
+  </main>
+</div>
 
-<!-- ================= 3. APPLICATION & SELECTION JOURNEY ================= -->
-<section class="section" style="background: var(--color-bg);">
-  <div class="container" style="max-width: 960px;">
-    <div class="section-header centered" style="margin-bottom: var(--space-2xl);">
-      <div class="badge">{{ icon('check-circle', size=11) }} Transparent Process</div>
-      <h2 style="color: var(--color-white); font-size: 2rem; font-weight: 800;">Our Hiring &amp; Selection Journey</h2>
-      <div class="divider center"></div>
-      <p style="color: var(--color-text-dim);">Clear, objective, and merit-driven steps from application to your first day.</p>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--space-lg);">
-      <div class="card" style="padding: var(--space-lg); border-top: 3px solid var(--color-primary);">
-        <div style="font-size: 0.75rem; color: var(--color-primary-light); font-weight: 800; text-transform: uppercase;">Step 01</div>
-        <h4 style="color: var(--color-white); margin: var(--space-xs) 0; font-size: 1.05rem;">Apply Online</h4>
-        <p style="font-size: 0.825rem; color: var(--color-text-dim); line-height: 1.6; margin: 0;">Submit your profile, credentials, and resume. An instant Application ID is issued.</p>
-      </div>
-
-      <div class="card" style="padding: var(--space-lg); border-top: 3px solid #60a5fa;">
-        <div style="font-size: 0.75rem; color: #60a5fa; font-weight: 800; text-transform: uppercase;">Step 02</div>
-        <h4 style="color: var(--color-white); margin: var(--space-xs) 0; font-size: 1.05rem;">Review &amp; Verify</h4>
-        <p style="font-size: 0.825rem; color: var(--color-text-dim); line-height: 1.6; margin: 0;">Our engineering leads evaluate project portfolios, GitHub code, and academic alignment.</p>
-      </div>
-
-      <div class="card" style="padding: var(--space-lg); border-top: 3px solid #c084fc;">
-        <div style="font-size: 0.75rem; color: #c084fc; font-weight: 800; text-transform: uppercase;">Step 03</div>
-        <h4 style="color: var(--color-white); margin: var(--space-xs) 0; font-size: 1.05rem;">Technical Dialogue</h4>
-        <p style="font-size: 0.825rem; color: var(--color-text-dim); line-height: 1.6; margin: 0;">Shortlisted candidates participate in practical discussions and architecture problem-solving.</p>
-      </div>
-
-      <div class="card" style="padding: var(--space-lg); border-top: 3px solid #fbbf24;">
-        <div style="font-size: 0.75rem; color: #fbbf24; font-weight: 800; text-transform: uppercase;">Step 04</div>
-        <h4 style="color: var(--color-white); margin: var(--space-xs) 0; font-size: 1.05rem;">Offer &amp; Onboarding</h4>
-        <p style="font-size: 0.825rem; color: var(--color-text-dim); line-height: 1.6; margin: 0;">Official Offer Letters generated with verification code, credentials, and onboarding roadmap.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= 4. GENERAL APPLICATION ================= -->
-<section class="section" style="background: var(--color-bg-alt); border-top: 1px solid var(--color-border);">
-  <div class="container" style="max-width: 720px; margin: 0 auto; text-align: center;">
-    <div class="badge" style="margin: 0 auto var(--space-md);">{{ icon('users', size=11) }} Don't see your role?</div>
-    <h2 style="color: var(--color-white); font-size: 2rem; font-weight: 800; margin-bottom: var(--space-sm);">Send Us a General Application</h2>
-    <p style="margin-bottom: var(--space-2xl); color: var(--color-text-dim); line-height: 1.7;">
-      We're constantly expanding our team with exceptional builders. If you have unique expertise in full-stack systems, machine learning, or cloud engineering, we want to hear from you.
-    </p>
-    <a
-      href="mailto:info@antimatrix.com?subject=General Career Application - Anti-Matrix"
-      class="btn btn-primary btn-lg"
-      style="gap: 8px;"
-    >
-      {{ icon('mail', size=16) }} Send Your Resume to info@antimatrix.com
-    </a>
-  </div>
-</section>
-
+<!-- ================= 3. CLIENT-SIDE SEARCH, FILTER & ACCORDION SCRIPT ================= -->
 <script>
-function toggleDetailsPane(paneId) {
-  var pane = document.getElementById(paneId);
-  if (!pane) return;
-  var isHidden = (pane.style.display === 'none' || !pane.style.display);
-  pane.style.display = isHidden ? 'block' : 'none';
+function toggleJobDrawer(drawerId) {
+  var drawer = document.getElementById(drawerId);
+  if (!drawer) return;
+  var isOpen = drawer.style.display === 'block';
+  var jobId = drawerId.replace('drawer-', '');
+  var toggleBtn = document.getElementById('toggle-btn-' + jobId);
+  var detailsBtn = document.getElementById('details-link-' + jobId);
+
+  if (isOpen) {
+    drawer.style.display = 'none';
+    drawer.setAttribute('aria-hidden', 'true');
+    if (toggleBtn) {
+      toggleBtn.textContent = '+';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.setAttribute('title', 'View role details');
+    }
+    if (detailsBtn) {
+      detailsBtn.innerHTML = '<span>Details</span> <span class="cr-details-icon">+</span>';
+    }
+  } else {
+    drawer.style.display = 'block';
+    drawer.setAttribute('aria-hidden', 'false');
+    if (toggleBtn) {
+      toggleBtn.textContent = '−';
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      toggleBtn.setAttribute('title', 'Hide role details');
+    }
+    if (detailsBtn) {
+      detailsBtn.innerHTML = '<span>Details</span> <span class="cr-details-icon">−</span>';
+    }
+  }
 }
 
-function filterJobsList() {
-  var query = document.getElementById('job-search-input').value.toLowerCase();
-  var items = document.querySelectorAll('.job-item-wrapper');
-  items.forEach(function(item) {
-    var title = item.getAttribute('data-title') || '';
-    var skills = item.getAttribute('data-skills') || '';
-    var dept = item.getAttribute('data-dept') || '';
-    if (title.indexOf(query) !== -1 || skills.indexOf(query) !== -1 || dept.indexOf(query) !== -1) {
-      item.style.display = 'block';
-    } else {
-      item.style.display = 'none';
+function handleSearchInput() {
+  var query = (document.getElementById('jobSearchInput').value || '').trim();
+  var clearBtn = document.getElementById('clearSearchBtn');
+  if (clearBtn) {
+    clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+  }
+  applyJobFilters();
+}
+
+function clearSearchInput() {
+  var input = document.getElementById('jobSearchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  var clearBtn = document.getElementById('clearSearchBtn');
+  if (clearBtn) {
+    clearBtn.style.display = 'none';
+  }
+  applyJobFilters();
+}
+
+function applyJobFilters() {
+  var search = (document.getElementById('jobSearchInput').value || '').trim().toLowerCase();
+  
+  // Selected department checkboxes
+  var deptCheckboxes = document.querySelectorAll('.filter-dept-checkbox:checked');
+  var selectedDepts = [];
+  deptCheckboxes.forEach(function(cb) {
+    selectedDepts.push(cb.value.toLowerCase());
+  });
+
+  // Selected duration checkboxes
+  var durCheckboxes = document.querySelectorAll('.filter-duration-checkbox:checked');
+  var hasDurationFilter = durCheckboxes.length > 0;
+
+  // Selected work arrangement (location) checkboxes
+  var locCheckboxes = document.querySelectorAll('.filter-location-checkbox:checked');
+  var hasLocFilter = locCheckboxes.length > 0;
+
+  var cards = document.querySelectorAll('.cr-job-card');
+  var visibleCount = 0;
+
+  cards.forEach(function(card) {
+    var title = card.getAttribute('data-title') || '';
+    var dept = card.getAttribute('data-dept') || '';
+    var code = card.getAttribute('data-code') || '';
+    var skills = card.getAttribute('data-skills') || '';
+    var location = card.getAttribute('data-location') || '';
+    var isInternship = card.getAttribute('data-is-internship') === 'true';
+
+    // Search query match
+    var matchesSearch = true;
+    if (search.length > 0) {
+      matchesSearch = (
+        title.indexOf(search) !== -1 ||
+        dept.indexOf(search) !== -1 ||
+        code.indexOf(search) !== -1 ||
+        skills.indexOf(search) !== -1 ||
+        location.indexOf(search) !== -1
+      );
     }
+
+    // Department match
+    var matchesDept = true;
+    if (selectedDepts.length > 0) {
+      matchesDept = selectedDepts.indexOf(dept) !== -1;
+    }
+
+    // Duration match (Internship roles support 1 & 3 Months)
+    var matchesDuration = true;
+    if (hasDurationFilter) {
+      matchesDuration = isInternship;
+    }
+
+    // Work arrangement match
+    var matchesLoc = true;
+    if (hasLocFilter) {
+      matchesLoc = location.indexOf('remote') !== -1;
+    }
+
+    if (matchesSearch && matchesDept && matchesDuration && matchesLoc) {
+      card.style.display = 'block';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Update counter
+  var countEl = document.getElementById('filteredCount');
+  if (countEl) {
+    countEl.textContent = visibleCount;
+  }
+
+  // Toggle empty state
+  var emptyState = document.getElementById('crEmptyState');
+  if (emptyState) {
+    emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+}
+
+function resetAllFilters() {
+  clearSearchInput();
+  var checkboxes = document.querySelectorAll('.cr-checkbox-input');
+  checkboxes.forEach(function(cb) {
+    if (cb.classList.contains('filter-location-checkbox')) {
+      cb.checked = true;
+    } else {
+      cb.checked = false;
+    }
+  });
+  applyJobFilters();
+}
+
+function sortJobsList(criteria) {
+  var container = document.getElementById('jobListContainer');
+  if (!container) return;
+  var cards = Array.from(container.querySelectorAll('.cr-job-card'));
+
+  cards.sort(function(a, b) {
+    if (criteria === 'title') {
+      var tA = a.getAttribute('data-title') || '';
+      var tB = b.getAttribute('data-title') || '';
+      return tA.localeCompare(tB);
+    } else if (criteria === 'code') {
+      var cA = a.getAttribute('data-code') || '';
+      var cB = b.getAttribute('data-code') || '';
+      return cA.localeCompare(cB);
+    } else {
+      // Newest
+      var dA = parseFloat(a.getAttribute('data-created') || '0');
+      var dB = parseFloat(b.getAttribute('data-created') || '0');
+      return dB - dA;
+    }
+  });
+
+  cards.forEach(function(card) {
+    container.appendChild(card);
   });
 }
 </script>
