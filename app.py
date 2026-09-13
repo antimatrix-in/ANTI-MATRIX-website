@@ -103,6 +103,13 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
         
+        # Ensure default internship benefits exist (seeds only if empty)
+        try:
+            from services.internship_benefit_service import ensure_default_internship_benefits
+            ensure_default_internship_benefits()
+        except Exception as e:
+            logger.warning(f"Internship benefits initialization note: {e}")
+
         # Log database backend safely without exposing credentials or hosts
         backend_name = db.engine.dialect.name.upper()
         logger.info(f"DATABASE CONFIGURATION DETECTED: {backend_name}")
@@ -186,6 +193,34 @@ def create_app(config_name=None):
                         )
                     '''))
                     conn.commit()
+
+                # Safe database-level uniqueness index check for candidate email and phone
+                try:
+                    with db.engine.connect() as conn:
+                        dup_email_res = conn.execute(text('''
+                            SELECT LOWER(TRIM(email)) FROM job_applications
+                            GROUP BY LOWER(TRIM(email)) HAVING count(*) > 1
+                        ''')).fetchall()
+                        dup_phone_res = conn.execute(text('''
+                            SELECT TRIM(phone) FROM job_applications
+                            GROUP BY TRIM(phone) HAVING count(*) > 1
+                        ''')).fetchall()
+
+                        if dup_email_res:
+                            logger.warning(f"Existing duplicate emails detected in database: {[r[0] for r in dup_email_res]}. Preserving all records and skipping unique email index.")
+                        else:
+                            if dialect_is_sqlite:
+                                conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_email ON job_applications (email)'))
+                            else:
+                                conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_email ON job_applications (LOWER(TRIM(email)))'))
+
+                        if dup_phone_res:
+                            logger.warning(f"Existing duplicate phones detected in database: {[r[0] for r in dup_phone_res]}. Preserving all records and skipping unique phone index.")
+                        else:
+                            conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_job_applications_phone ON job_applications (phone)'))
+                        conn.commit()
+                except Exception as uq_err:
+                    logger.warning(f"Notice on candidate uniqueness index: {uq_err}")
 
             if 'employee_documents' in inspector.get_table_names():
                 emp_doc_col_objs = inspector.get_columns('employee_documents')

@@ -49,6 +49,9 @@
       <a href="{{ url_for('admin.money_management') }}" class="admin-nav-tab">
         {{ icon('wallet', size=15) }} Money Management
       </a>
+      <a href="{{ url_for('admin.internship_benefits') }}" class="admin-nav-tab">
+        {{ icon('award', size=15) }} Internship Benefits
+      </a>
     </div>
 
     <!-- Filter & Search Controls Bar -->
@@ -213,9 +216,6 @@
                         {{ icon('file-text', size=14) }}
                       </a>
                     {% endif %}
-                    <a href="{{ url_for('admin.application_detail', app_id=app.id) }}" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;">
-                      Review Details
-                    </a>
                   </div>
                 </td>
               </tr>

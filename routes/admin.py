@@ -13,7 +13,8 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 from models import (
     db, JobPosting, JobApplication, Payment, User, Employee,
-    DocumentTemplate, EmailTemplate, EmployeeDocument, MoneyTransaction
+    DocumentTemplate, EmailTemplate, EmployeeDocument, MoneyTransaction,
+    InternshipBenefit
 )
 
 from services.offer_letter_service import (
@@ -1200,17 +1201,23 @@ def update_application_status(app_id):
     new_status = request.form.get('status', '').strip()
     valid_statuses = [
         'New', 'Reviewed', 'Shortlisted', 'Offer Completed', 'Hired', 'Rejected',
-        'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'OFFER_COMPLETED', 'HIRED', 'REJECTED'
+        'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'OFFER_COMPLETED', 'HIRED', 'REJECTED',
+        'Applied', 'applied', 'Under Review', 'under_review', 'shortlisted'
     ]
 
     if new_status in valid_statuses:
         status_map = {
             'New': 'APPLIED',
             'APPLIED': 'APPLIED',
+            'Applied': 'APPLIED',
+            'applied': 'APPLIED',
             'Reviewed': 'UNDER_REVIEW',
             'UNDER_REVIEW': 'UNDER_REVIEW',
+            'Under Review': 'UNDER_REVIEW',
+            'under_review': 'UNDER_REVIEW',
             'Shortlisted': 'SHORTLISTED',
             'SHORTLISTED': 'SHORTLISTED',
+            'shortlisted': 'SHORTLISTED',
             'Offer Completed': 'OFFER_COMPLETED',
             'OFFER_COMPLETED': 'OFFER_COMPLETED',
             'Hired': 'HIRED',
@@ -1226,6 +1233,9 @@ def update_application_status(app_id):
     else:
         flash('Invalid status provided.', 'danger')
 
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'create_employee' or 'employees/create' in (request.referrer or ''):
+        return redirect(url_for('admin.create_employee', app_id=application.id))
     return redirect(request.referrer or url_for('admin.application_detail', app_id=application.id))
 
 
@@ -1237,8 +1247,11 @@ def download_document(app_id, doc_type):
     as_attachment = request.args.get('download', '0') == '1'
 
     if doc_type == 'resume':
-        folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', current_app.config['UPLOAD_FOLDER'])
+        folder = current_app.config.get('UPLOAD_FOLDER_RESUMES', current_app.config.get('UPLOAD_FOLDER', os.path.join(current_app.root_path, 'uploads', 'resumes')))
         filename = application.resume_filename
+        if application.resume_path and os.path.exists(application.resume_path):
+            folder = os.path.dirname(application.resume_path)
+            filename = os.path.basename(application.resume_path)
     elif doc_type == 'aadhaar':
         folder = current_app.config.get('UPLOAD_FOLDER_DOCUMENTS', os.path.join(current_app.root_path, 'uploads', 'documents'))
         filename = application.aadhaar_filename
@@ -1306,13 +1319,17 @@ def update_application_payment_status(app_id):
     """Admin action to update payment status for an application (e.g. after manual Google Form / QR verification)."""
     application = db.session.get(JobApplication, app_id) or abort(404)
     new_payment_status = (request.form.get('payment_status') or '').strip().lower()
-    valid_statuses = ['pending', 'paid', 'failed']
+    valid_statuses = ['pending', 'verified', 'paid', 'failed']
     if new_payment_status in valid_statuses:
         application.payment_status = new_payment_status
         db.session.commit()
         flash(f"Payment status for candidate {application.full_name} updated to '{new_payment_status.upper()}'.", 'success')
     else:
         flash('Invalid payment status provided.', 'danger')
+
+    redirect_to = request.form.get('redirect_to')
+    if redirect_to == 'create_employee' or 'employees/create' in (request.referrer or ''):
+        return redirect(url_for('admin.create_employee', app_id=application.id))
     return redirect(url_for('admin.application_detail', app_id=application.id))
 
 
@@ -1323,6 +1340,8 @@ def create_employee():
     Admin Manual Employee Creation Workflow:
     - Select an existing Application ID from the database
     - Displays candidate details (Application ID, Name, Email, Job, Job Code, Department, Duration, College)
+    - Admin Application Status: Applied, Under Review, Shortlisted
+    - Admin payment verification gate: Payment must be 'verified' or 'paid' before employee creation
     - If employee already exists: shows existing Employee ID and prevents duplicate creation
     - If new: generates unique Employee ID (AM####) and secure temporary password
     - Encrypts and securely stores temporary credentials in EmployeeOnboardingCredential for Internship Portal activation
@@ -1344,20 +1363,85 @@ def create_employee():
         existing_employee = selected_app.employee
 
     if request.method == 'POST':
-        app_id = request.form.get('application_id', type=int)
+        data = request.get_json() if request.is_json else request.form
+        app_id_raw = data.get('application_id') if data else None
+        try:
+            app_id = int(app_id_raw) if app_id_raw is not None else None
+        except (ValueError, TypeError):
+            app_id = None
+
         if not app_id:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({'error': 'Please select an application record.', 'success': False}), 400
             flash('Please select an application record.', 'danger')
             return redirect(url_for('admin.create_employee'))
 
         application = db.session.get(JobApplication, app_id)
         if not application:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({'error': 'Selected application record not found.', 'success': False}), 404
             flash('Selected application record not found.', 'danger')
             return redirect(url_for('admin.create_employee'))
+
+        # Check if this request is updating the payment status from the dropdown
+        action = data.get('action') if data else None
+        if action == 'update_payment_status':
+            new_status = (data.get('payment_status') or '').strip().lower()
+            if new_status in ['pending', 'verified', 'paid', 'failed']:
+                application.payment_status = new_status
+                application.updated_at = datetime.now(timezone.utc)
+                db.session.commit()
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'success': True, 'payment_status': new_status}), 200
+                flash(f"Payment status for candidate {application.full_name} updated to '{new_status.capitalize()}'.", 'success')
+            else:
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'error': 'Invalid payment status provided.', 'success': False}), 400
+                flash('Invalid payment status provided.', 'danger')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        # Check if this request is updating the application status from the dropdown
+        if action == 'update_application_status':
+            status_val = (data.get('status') or data.get('application_status') or '').strip()
+            status_mapping = {
+                'applied': ('APPLIED', 'Applied'),
+                'new': ('APPLIED', 'Applied'),
+                'under_review': ('UNDER_REVIEW', 'Under Review'),
+                'reviewed': ('UNDER_REVIEW', 'Under Review'),
+                'under review': ('UNDER_REVIEW', 'Under Review'),
+                'shortlisted': ('SHORTLISTED', 'Shortlisted'),
+            }
+            mapped = status_mapping.get(status_val.lower().replace(' ', '_')) or status_mapping.get(status_val.lower())
+            if mapped:
+                db_val, display_val = mapped
+                application.status = db_val
+                application.application_status = db_val
+                application.updated_at = datetime.now(timezone.utc)
+                db.session.commit()
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'success': True, 'application_status': display_val, 'status': db_val}), 200
+                flash(f"Application status for candidate {application.full_name} updated to '{display_val}'.", 'success')
+            else:
+                if request.is_json or request.headers.get('Accept') == 'application/json':
+                    return jsonify({'error': 'Invalid application status provided.', 'success': False}), 400
+                flash('Invalid application status provided.', 'danger')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
 
         # Idempotency / Duplicate Employee Check
         existing_emp = Employee.query.filter_by(application_id=application.id).first()
         if existing_emp:
             flash(f"Employee Already Exists for this application. Employee ID: {existing_emp.employee_id}.", 'info')
+            return redirect(url_for('admin.create_employee', app_id=application.id))
+
+        # Verified Payment Gate - Critical backend enforcement
+        payment_st = (application.payment_status or '').strip().lower()
+        if payment_st not in ['verified', 'paid']:
+            if request.is_json or request.headers.get('Accept') == 'application/json':
+                return jsonify({
+                    'error': 'Payment must be verified before creating employee credentials.',
+                    'success': False
+                }), 400
+            flash('Payment must be verified before creating employee credentials.', 'danger')
             return redirect(url_for('admin.create_employee', app_id=application.id))
 
         try:
@@ -2624,5 +2708,227 @@ def clear_all_money_transactions():
     return redirect(url_for('admin.money_management'))
 
 
+# =============================================================================
+# ADMIN INTERNSHIP BENEFITS MANAGEMENT ROUTES
+# =============================================================================
+
+@admin_bp.route('/internship-benefits', methods=['GET'])
+@admin_required
+def internship_benefits():
+    """Admin view: List all configured internship benefits / descriptions."""
+    from services.internship_benefit_service import ensure_default_internship_benefits
+    ensure_default_internship_benefits()
+
+    benefits_list = InternshipBenefit.query.order_by(
+        InternshipBenefit.display_order.asc(),
+        InternshipBenefit.id.asc()
+    ).all()
+
+    total_configs = len(benefits_list)
+    active_configs = sum(1 for b in benefits_list if b.is_active)
+
+    return render_template(
+        'admin/internship_benefits.html',
+        benefits=benefits_list,
+        total_configs=total_configs,
+        active_configs=active_configs
+    )
 
 
+@admin_bp.route('/internship-benefits/add', methods=['GET', 'POST'])
+@admin_required
+def add_internship_benefit():
+    """Admin view: Add/configure internship benefits with real-time live preview."""
+    from services.internship_benefit_service import save_or_update_internship_benefit
+
+    # Get already configured durations to inform admin
+    existing_records = InternshipBenefit.query.all()
+    configured_durations = {b.duration_clean for b in existing_records}
+
+    if request.method == 'POST':
+        duration = (request.form.get('duration') or '').strip()
+        title = (request.form.get('title') or '').strip()
+        subtitle = (request.form.get('subtitle') or '').strip()
+        badge_text = (request.form.get('badge_text') or '').strip()
+        is_active = request.form.get('is_active') == 'on' or request.form.get('is_active') == 'true'
+
+        # Collect items: from dynamic inputs 'benefit_items[]' or textarea 'benefits_text'
+        benefit_items = request.form.getlist('benefit_items[]')
+        benefits_text = request.form.get('benefits_text') or ''
+
+        items = []
+        if benefit_items:
+            items = [item.strip() for item in benefit_items if item.strip()]
+        elif benefits_text:
+            items = [line.strip() for line in benefits_text.split('\n') if line.strip()]
+
+        if not duration:
+            flash("Please select an Internship Duration (1 Month or 3 Months).", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='add',
+                benefit=None,
+                form_data=request.form,
+                configured_durations=configured_durations
+            )
+
+        if not items:
+            flash("Please enter at least one benefit point.", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='add',
+                benefit=None,
+                form_data=request.form,
+                configured_durations=configured_durations
+            )
+
+        try:
+            saved_benefit, is_new = save_or_update_internship_benefit(
+                duration=duration,
+                title=title,
+                benefits_items=items,
+                subtitle=subtitle,
+                badge_text=badge_text,
+                is_active=is_active
+            )
+            if is_new:
+                flash(f"New {saved_benefit.duration_label} benefits configured successfully!", "success")
+            else:
+                flash(f"Existing {saved_benefit.duration_label} benefits updated successfully (duplicates prevented)!", "success")
+
+            return redirect(url_for('admin.internship_benefits'))
+        except Exception as e:
+            flash(f"Error saving internship benefits: {str(e)}", "danger")
+
+    return render_template(
+        'admin/internship_benefit_form.html',
+        mode='add',
+        benefit=None,
+        form_data={},
+        configured_durations=configured_durations
+    )
+
+
+@admin_bp.route('/internship-benefits/<int:benefit_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_internship_benefit(benefit_id):
+    """Admin view: Edit existing internship benefits with real-time live preview."""
+    from services.internship_benefit_service import save_or_update_internship_benefit
+
+    benefit = db.session.get(InternshipBenefit, benefit_id) or abort(404)
+
+    if request.method == 'POST':
+        duration = (request.form.get('duration') or benefit.duration).strip()
+        title = (request.form.get('title') or '').strip()
+        subtitle = (request.form.get('subtitle') or '').strip()
+        badge_text = (request.form.get('badge_text') or '').strip()
+        is_active = request.form.get('is_active') == 'on' or request.form.get('is_active') == 'true'
+
+        benefit_items = request.form.getlist('benefit_items[]')
+        benefits_text = request.form.get('benefits_text') or ''
+
+        items = []
+        if benefit_items:
+            items = [item.strip() for item in benefit_items if item.strip()]
+        elif benefits_text:
+            items = [line.strip() for line in benefits_text.split('\n') if line.strip()]
+
+        if not items:
+            flash("Please enter at least one benefit point.", "danger")
+            return render_template(
+                'admin/internship_benefit_form.html',
+                mode='edit',
+                benefit=benefit,
+                form_data=request.form
+            )
+
+        try:
+            saved_benefit, _ = save_or_update_internship_benefit(
+                duration=duration,
+                title=title,
+                benefits_items=items,
+                subtitle=subtitle,
+                badge_text=badge_text,
+                is_active=is_active,
+                benefit_id=benefit.id
+            )
+            flash(f"{saved_benefit.duration_label} benefits updated successfully!", "success")
+            return redirect(url_for('admin.internship_benefits'))
+        except Exception as e:
+            flash(f"Error updating internship benefits: {str(e)}", "danger")
+
+    return render_template(
+        'admin/internship_benefit_form.html',
+        mode='edit',
+        benefit=benefit,
+        form_data={
+            'duration': benefit.duration,
+            'title': benefit.title,
+            'subtitle': benefit.subtitle or '',
+            'badge_text': benefit.badge_text or '',
+            'is_active': benefit.is_active
+        }
+    )
+
+
+@admin_bp.route('/internship-benefits/<int:benefit_id>/delete', methods=['POST'])
+@admin_required
+def delete_internship_benefit(benefit_id):
+    """Admin action: Delete an internship benefit configuration."""
+    benefit = db.session.get(InternshipBenefit, benefit_id) or abort(404)
+    label = benefit.duration_label
+    try:
+        db.session.delete(benefit)
+        db.session.commit()
+        flash(f"{label} benefits configuration has been deleted.", "info")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting benefit configuration: {str(e)}", "danger")
+
+    return redirect(url_for('admin.internship_benefits'))
+
+
+@admin_bp.route('/internship-benefits/reset-defaults', methods=['POST'])
+@admin_required
+def reset_default_internship_benefits():
+    """Admin action: Safe utility to initialize standard default benefits if table is empty or missing defaults."""
+    from services.internship_benefit_service import ensure_default_internship_benefits, DEFAULT_1_MONTH_BENEFITS, DEFAULT_3_MONTH_BENEFITS
+
+    # If already exists, notify admin without destructive reset
+    existing_1m = InternshipBenefit.query.filter_by(duration='1_month').first()
+    existing_3m = InternshipBenefit.query.filter_by(duration='3_months').first()
+
+    added = 0
+    if not existing_1m:
+        b1 = InternshipBenefit(
+            duration='1_month',
+            title='1-Month Internship',
+            subtitle='Accelerated hands-on program with core industry deliverables.',
+            badge_text='Fast-Track',
+            is_active=True,
+            display_order=1
+        )
+        b1.set_benefits_list(DEFAULT_1_MONTH_BENEFITS)
+        db.session.add(b1)
+        added += 1
+
+    if not existing_3m:
+        b3 = InternshipBenefit(
+            duration='3_months',
+            title='3-Month Internship',
+            subtitle='In-depth project development with structured evaluation and mentorship.',
+            badge_text='Comprehensive',
+            is_active=True,
+            display_order=2
+        )
+        b3.set_benefits_list(DEFAULT_3_MONTH_BENEFITS)
+        db.session.add(b3)
+        added += 1
+
+    if added > 0:
+        db.session.commit()
+        flash(f"Created {added} standard default internship benefit configuration(s).", "success")
+    else:
+        flash("Both 1-Month and 3-Month configurations already exist. Existing records were preserved safely.", "info")
+
+    return redirect(url_for('admin.internship_benefits'))
