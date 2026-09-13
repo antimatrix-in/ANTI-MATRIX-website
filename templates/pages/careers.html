@@ -245,23 +245,6 @@
                   </button>
                 </div>
 
-                <!-- ============================================================
-                     USER MARKED COURSE DETAILS STRIP (Image 1 Highlight)
-                     [Job Code: JB####] [DOMAIN] [Remote] [Internship] [1 or 3 Months] [Fee: ₹199 / ₹399]
-                     ============================================================ -->
-                <div class="cr-course-details-strip">
-                  <span class="cr-chip-code">Job Code: {{ code }}</span>
-                  <span class="cr-chip-domain">{{ job.department }}</span>
-                  <span class="cr-chip-meta">{{ icon('map-pin', size=13) }} {{ job.location }}</span>
-                  <span class="cr-chip-meta">{{ icon('briefcase', size=13) }} {{ job.employment_type }}</span>
-                  {% if job.is_internship %}
-                    <span class="cr-chip-duration">{{ icon('clock', size=12) }} 1 or 3 Months</span>
-                    <span class="cr-chip-fee">{{ icon('credit-card', size=13) }} Fee: ₹199 / ₹399</span>
-                  {% elif job.salary %}
-                    <span class="cr-chip-fee">{{ icon('credit-card', size=13) }} {{ job.salary }}</span>
-                  {% endif %}
-                </div>
-
                 <!-- Short Summary Description -->
                 <p class="cr-job-desc">
                   {{ job.short_description }}
@@ -342,7 +325,7 @@
                         </div>
                         <div>
                           <div class="cr-spec-item-label">Application Fee</div>
-                          <div class="cr-spec-item-val" style="color: #047857; font-size: 1.05rem; font-weight: 800;">₹199 / ₹399</div>
+                          <div class="cr-spec-item-val" style="color: #047857; font-size: 1.05rem; font-weight: 800;">Fee: ₹199 / ₹399</div>
                         </div>
                       {% elif job.salary %}
                         <div>
