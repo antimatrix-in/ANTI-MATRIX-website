@@ -206,13 +206,69 @@ img { max-width: 100%; height: auto; }
   font-weight: 700;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28), 0 1px 2px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  will-change: transform, box-shadow;
+  perspective: 600px;
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+              box-shadow 0.35s ease,
+              border-color 0.3s ease,
+              color 0.3s ease;
+}
+
+/* Accenture-Style Dark Sweep (Left to Right) */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(105deg, #051c14 0%, #03120c 60%, #072e20 100%);
+  transform: translateX(-102%);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.btn-primary:hover::before {
+  transform: translateX(0%);
+}
+
+/* Futuristic Light Sweep Sheen */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -80%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(166, 253, 58, 0.18) 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(166, 253, 58, 0.18) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg) translateX(-100%);
+  transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.btn-primary:hover::after {
+  transform: rotate(25deg) translateX(380%);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  box-shadow: 0 8px 22px rgba(5, 150, 105, 0.38);
-  color: #000000;
-  transform: translateY(-2px);
+  color: #ffffff !important;
+  border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 10px 26px -4px rgba(5, 150, 105, 0.45),
+              0 0 20px rgba(52, 211, 153, 0.35);
 }
 
 .btn-outline {
@@ -3164,18 +3220,73 @@ textarea.form-control {
   align-items: center;
   gap: 6px;
   box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
-  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  will-change: transform, box-shadow;
+  perspective: 600px;
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+              box-shadow 0.35s ease,
+              border-color 0.3s ease;
+}
+
+/* Accenture-Style Dark Sweep (Left to Right) */
+.cr-btn-apply::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(105deg, #041a12 0%, #02110b 60%, #062b1e 100%);
+  transform: translateX(-102%);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.cr-btn-apply:hover::before {
+  transform: translateX(0%);
+}
+
+/* Futuristic Light Sweep Sheen */
+.cr-btn-apply::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -80%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(166, 253, 58, 0.18) 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(166, 253, 58, 0.18) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg) translateX(-100%);
+  transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cr-btn-apply:hover::after {
+  transform: rotate(25deg) translateX(380%);
 }
 
 .cr-btn-apply:hover {
-  background: #047857;
-  border-color: #047857;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
-  transform: translateY(-1px);
+  border-color: rgba(52, 211, 153, 0.65);
+  box-shadow: 0 8px 24px -3px rgba(5, 150, 105, 0.45),
+              0 0 16px rgba(52, 211, 153, 0.3);
 }
 
 .cr-btn-apply .cr-arrow {
   transition: transform var(--transition-fast);
+  position: relative;
+  z-index: 2;
 }
 
 .cr-btn-apply:hover .cr-arrow {

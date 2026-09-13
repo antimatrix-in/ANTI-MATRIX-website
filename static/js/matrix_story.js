@@ -26,14 +26,14 @@
     // Mouse tracking with lerp smoothing
     let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
-    // Anti-Matrix Brand Crystal Colors (from official identity)
+    // Anti-Matrix Brand Diamond Colors (from official identity reference Image 2)
     const CRYSTAL_COLORS = {
-      topLeft: '#82cc5a',     // Medium vibrant emerald
-      bottomLeft: '#619427',  // Deep rich emerald
-      topRight: '#a6fd3a',    // Bright electric lime highlight
-      bottomRight: '#88e44a', // Vivid spring green
-      glow: 'rgba(166, 253, 58, 0.35)',
-      deepGlow: 'rgba(16, 185, 129, 0.18)'
+      topLeft: '#457a00',     // Dark Forest Green (Top-Left)
+      topRight: '#bfecac',    // Pale Mint / Sage (Top-Right)
+      bottomLeft: '#7ed957',  // Medium Vibrant Green (Bottom-Left)
+      bottomRight: '#9eff1f', // Radiant Electric Lime (Bottom-Right)
+      glow: 'rgba(158, 255, 31, 0.35)',
+      deepGlow: 'rgba(69, 122, 0, 0.2)'
     };
 
     // Particles emerging from grid into crystal
@@ -221,29 +221,29 @@
       ctx.restore();
     }
 
-    // 2. The Iconic 4-Facet Anti-Matrix Crystal
+    // 2. The Official Anti-Matrix Diamond Logo Symbol (Image 2)
     function drawAntiMatrixCrystal(time, cx, cy) {
       ctx.save();
 
-      // Floating oscillation & gentle pitch/yaw rotation
-      const floatY = Math.sin(time * 1.2) * 9;
-      const floatX = Math.cos(time * 0.8) * 4;
-      const rotZ = Math.sin(time * 0.5) * 0.04 + mouse.x * 0.08;
-      const scalePulse = 1 + Math.sin(time * 1.5) * 0.025;
+      // Gentle organic float & subtle reactive mouse tilt
+      const floatY = Math.sin(time * 1.2) * 8;
+      const floatX = Math.cos(time * 0.8) * 3;
+      const rotZ = Math.sin(time * 0.5) * 0.03 + mouse.x * 0.05;
+      const scalePulse = 1 + Math.sin(time * 1.5) * 0.02;
 
-      const crystalCenterX = cx + floatX + mouse.x * 18;
-      const crystalCenterY = cy + floatY + mouse.y * 12;
+      const crystalCenterX = cx + floatX + mouse.x * 16;
+      const crystalCenterY = cy + floatY + mouse.y * 10;
 
       ctx.translate(crystalCenterX, crystalCenterY);
       ctx.rotate(rotZ);
       ctx.scale(scalePulse, scalePulse);
 
-      // Deep Ambient Radiance / Volumetric Backglow
-      const glowRadius = 140;
+      // Soft Futuristic Ambient Glow behind diamond
+      const glowRadius = 150;
       const ambientGlow = ctx.createRadialGradient(0, 0, 10, 0, 0, glowRadius);
-      ambientGlow.addColorStop(0, 'rgba(166, 253, 58, 0.28)');
-      ambientGlow.addColorStop(0.4, 'rgba(130, 204, 90, 0.14)');
-      ambientGlow.addColorStop(0.8, 'rgba(16, 185, 129, 0.04)');
+      ambientGlow.addColorStop(0, 'rgba(158, 255, 31, 0.30)');
+      ambientGlow.addColorStop(0.35, 'rgba(126, 217, 87, 0.15)');
+      ambientGlow.addColorStop(0.7, 'rgba(69, 122, 0, 0.05)');
       ambientGlow.addColorStop(1, 'transparent');
 
       ctx.fillStyle = ambientGlow;
@@ -251,93 +251,96 @@
       ctx.arc(0, 0, glowRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Crystal Dimensions (Anti-Matrix logo diamond proportion)
-      const baseWidth = 52;
-      const baseHeight = 64;
-      const gap = 2.4; // Seam between the 4 crystalline facets
-      const specularShift = Math.sin(time * 2.0) * 0.3;
+      // Exact Diamond Geometry from Image 2 (Equilateral Rhombus / Square rotated 45 deg)
+      const size = 58; // Half-diagonal width & height (symmetrical diamond)
 
-      // Helper function to draw a multifaceted facet
-      function renderFacet(p1, p2, p3, baseColor, highlightColor, shadowColor) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(p1[0], p1[1]);
-        ctx.lineTo(p2[0], p2[1]);
-        ctx.lineTo(p3[0], p3[1]);
-        ctx.closePath();
-
-        // Facet gradient for jewel-like refraction
-        const grad = ctx.createLinearGradient(p1[0], p1[1], p3[0], p3[1]);
-        grad.addColorStop(0, highlightColor);
-        grad.addColorStop(0.55, baseColor);
-        grad.addColorStop(1, shadowColor);
-
-        ctx.fillStyle = grad;
-        ctx.shadowColor = 'rgba(166, 253, 58, 0.45)';
-        ctx.shadowBlur = 12;
-        ctx.fill();
-
-        // Facet Beveled Crisp Edge Highlight
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Facet 1: Top-Left (Vibrant Emerald)
-      renderFacet(
-        [-gap, -baseHeight],
-        [-baseWidth, -gap],
-        [-gap, -gap],
-        CRYSTAL_COLORS.topLeft,
-        '#bbf870',
-        '#5d9630'
-      );
-
-      // Facet 2: Bottom-Left (Deep Rich Emerald)
-      renderFacet(
-        [-gap, -gap],
-        [-baseWidth, gap],
-        [-gap, baseHeight],
-        CRYSTAL_COLORS.bottomLeft,
-        '#7bb53c',
-        '#3a6314'
-      );
-
-      // Facet 3: Top-Right (Electric Lime Highlight - Key Spark)
-      renderFacet(
-        [gap, -baseHeight],
-        [gap, -gap],
-        [baseWidth, -gap],
-        CRYSTAL_COLORS.topRight,
-        '#ffffff',
-        '#8dd924'
-      );
-
-      // Facet 4: Bottom-Right (Vivid Spring Green)
-      renderFacet(
-        [gap, -gap],
-        [gap, baseHeight],
-        [baseWidth, gap],
-        CRYSTAL_COLORS.bottomRight,
-        '#aef46e',
-        '#569b22'
-      );
-
-      // Refractive Prismatic Sparkle Beam across the crystal
+      // Facet 1: Top-Left (Dark Forest Green #457a00)
       ctx.save();
-      const gleamAngle = time * 0.9;
-      const gleamX = Math.cos(gleamAngle) * 35;
-      const gleamY = Math.sin(gleamAngle) * 45;
-
-      const sparkleGrad = ctx.createRadialGradient(gleamX, gleamY, 0, gleamX, gleamY, 24);
-      sparkleGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      sparkleGrad.addColorStop(0.3, 'rgba(166, 253, 58, 0.65)');
-      sparkleGrad.addColorStop(1, 'transparent');
-
-      ctx.fillStyle = sparkleGrad;
       ctx.beginPath();
-      ctx.arc(gleamX, gleamY, 24, 0, Math.PI * 2);
+      ctx.moveTo(0, -size);
+      ctx.lineTo(-size, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = CRYSTAL_COLORS.topLeft;
+      ctx.shadowColor = 'rgba(69, 122, 0, 0.45)';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.strokeStyle = CRYSTAL_COLORS.topLeft;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Facet 2: Top-Right (Pale Mint Green #bfecac)
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = CRYSTAL_COLORS.topRight;
+      ctx.shadowColor = 'rgba(191, 236, 172, 0.35)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.strokeStyle = CRYSTAL_COLORS.topRight;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Facet 3: Bottom-Left (Medium Vibrant Green #7ed957)
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(-size, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = CRYSTAL_COLORS.bottomLeft;
+      ctx.shadowColor = 'rgba(126, 217, 87, 0.45)';
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.strokeStyle = CRYSTAL_COLORS.bottomLeft;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Facet 4: Bottom-Right (Radiant Electric Lime #9eff1f)
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(size, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = CRYSTAL_COLORS.bottomRight;
+      ctx.shadowColor = 'rgba(158, 255, 31, 0.55)';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.strokeStyle = CRYSTAL_COLORS.bottomRight;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // Subtle, elegant living light sweep across the surface (Anti-Matrix break-free motif)
+      ctx.save();
+      const sheenAngle = time * 0.85;
+      const sheenX = Math.cos(sheenAngle) * 32;
+      const sheenY = Math.sin(sheenAngle) * 32;
+
+      const sheenGrad = ctx.createRadialGradient(sheenX, sheenY, 0, sheenX, sheenY, 28);
+      sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+      sheenGrad.addColorStop(0.35, 'rgba(158, 255, 31, 0.22)');
+      sheenGrad.addColorStop(1, 'transparent');
+
+      // Clip sheen strictly to the diamond shape
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(-size, 0);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.fillStyle = sheenGrad;
+      ctx.beginPath();
+      ctx.arc(sheenX, sheenY, 28, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 

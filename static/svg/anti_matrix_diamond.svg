@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <!-- Anti-Matrix 4-Quadrant Diamond Symbol -->
+  <!-- Top-Left Facet: Dark Forest Green -->
+  <polygon points="100,0 0,100 100,100" fill="#457a00" stroke="#457a00" stroke-width="0.5"/>
+  <!-- Top-Right Facet: Pale Mint Green -->
+  <polygon points="100,0 200,100 100,100" fill="#bfecac" stroke="#bfecac" stroke-width="0.5"/>
+  <!-- Bottom-Left Facet: Medium Vibrant Green -->
+  <polygon points="0,100 100,200 100,100" fill="#7ed957" stroke="#7ed957" stroke-width="0.5"/>
+  <!-- Bottom-Right Facet: Radiant Electric Lime -->
+  <polygon points="200,100 100,200 100,100" fill="#9eff1f" stroke="#9eff1f" stroke-width="0.5"/>
+</svg>

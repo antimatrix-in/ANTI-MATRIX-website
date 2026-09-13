@@ -233,4 +233,92 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ── 4. Premium Cursor-Reactive Magnetic & 3D Button Interaction ─────────────
+  function initMagneticButtons() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
+
+    const selector = '.btn-primary, .cr-btn-apply, .btn-hero-primary';
+    const buttons = document.querySelectorAll(selector);
+
+    buttons.forEach((btn) => {
+      if (btn.dataset.magneticInit) return;
+      btn.dataset.magneticInit = 'true';
+
+      let rect = null;
+      let isHovered = false;
+      let currentX = 0;
+      let currentY = 0;
+      let targetX = 0;
+      let targetY = 0;
+      let currentRotX = 0;
+      let currentRotY = 0;
+      let targetRotX = 0;
+      let targetRotY = 0;
+      let rafId = null;
+
+      const render = () => {
+        if (!isHovered) {
+          // Smooth spring damping return to origin
+          currentX += (0 - currentX) * 0.16;
+          currentY += (0 - currentY) * 0.16;
+          currentRotX += (0 - currentRotX) * 0.16;
+          currentRotY += (0 - currentRotY) * 0.16;
+
+          if (Math.abs(currentX) < 0.05 && Math.abs(currentY) < 0.05) {
+            btn.style.transform = '';
+            rafId = null;
+            return;
+          }
+        } else {
+          // Responsive fluid magnetic chase
+          currentX += (targetX - currentX) * 0.22;
+          currentY += (targetY - currentY) * 0.22;
+          currentRotX += (targetRotX - currentRotX) * 0.22;
+          currentRotY += (targetRotY - currentRotY) * 0.22;
+        }
+
+        btn.style.transform = `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0) rotateX(${currentRotX.toFixed(2)}deg) rotateY(${currentRotY.toFixed(2)}deg)`;
+        rafId = requestAnimationFrame(render);
+      };
+
+      btn.addEventListener('mouseenter', () => {
+        rect = btn.getBoundingClientRect();
+        isHovered = true;
+        if (!rafId) {
+          rafId = requestAnimationFrame(render);
+        }
+      });
+
+      btn.addEventListener('mousemove', (e) => {
+        if (!rect) rect = btn.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const deltaX = mouseX - rect.width / 2;
+        const deltaY = mouseY - rect.height / 2;
+
+        // Subtle, elegant magnetic pull (max ~6.5px) & 3D tilt (max ~4.5deg)
+        targetX = Math.max(-6.5, Math.min(6.5, deltaX * 0.14));
+        targetY = Math.max(-6.5, Math.min(6.5, deltaY * 0.14));
+        targetRotX = Math.max(-4.5, Math.min(4.5, -deltaY * 0.09));
+        targetRotY = Math.max(-4.5, Math.min(4.5, deltaX * 0.09));
+
+        if (!rafId) {
+          rafId = requestAnimationFrame(render);
+        }
+      });
+
+      btn.addEventListener('mouseleave', () => {
+        isHovered = false;
+        targetX = 0;
+        targetY = 0;
+        targetRotX = 0;
+        targetRotY = 0;
+        rect = null;
+      });
+    });
+  }
+
+  initMagneticButtons();
 });
