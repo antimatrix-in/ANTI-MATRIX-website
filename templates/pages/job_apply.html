@@ -75,6 +75,26 @@
   .hlptxt a{color:#059669;font-weight:600}
   .docs-fc{border:1.5px solid #bfdbfe !important;background:#f0f9ff !important}
   .docs-badge{font-size:.7rem;font-weight:700;background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:2px 8px}
+  .dur-selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.35rem}
+  @media(max-width:640px){.dur-selector-grid{grid-template-columns:1fr}}
+  .dur-option-card{position:relative;display:flex;flex-direction:column;padding:1.1rem 1.25rem;background:#fff;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all .2s ease;user-select:none}
+  .dur-option-card:hover{border-color:#cbd5e1;background:#f8fafc;transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.04)}
+  .dur-radio-input{position:absolute;opacity:0;pointer-events:none}
+  .dur-card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:.45rem}
+  .dur-title-group{display:flex;align-items:center;gap:10px}
+  .dur-radio-custom{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;background:#fff}
+  .dur-radio-dot{width:8px;height:8px;border-radius:50%;background:transparent;transition:all .2s}
+  .dur-card-title{font-size:1.05rem;font-weight:800;color:#0f172a;line-height:1.2}
+  .dur-card-badge{font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+  .dur-badge-1m{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0}
+  .dur-badge-3m{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+  .dur-card-desc{font-size:.825rem;color:#64748b;line-height:1.45;margin:0;padding-left:28px}
+  .dur-card-1m.is-selected{border-color:#059669;background:linear-gradient(180deg,#ffffff 0%,#f0fdf4 100%);box-shadow:0 0 0 1px #059669,0 4px 14px rgba(5,150,105,.08)}
+  .dur-card-1m.is-selected .dur-radio-custom{border-color:#059669}
+  .dur-card-1m.is-selected .dur-radio-dot{background:#059669}
+  .dur-card-3m.is-selected{border-color:#2563eb;background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);box-shadow:0 0 0 1px #2563eb,0 4px 14px rgba(37,99,235,.08)}
+  .dur-card-3m.is-selected .dur-radio-custom{border-color:#2563eb}
+  .dur-card-3m.is-selected .dur-radio-dot{background:#2563eb}
   @media(max-width:900px){.agrid{grid-template-columns:1fr}.asb{position:static}.row2,.row3{grid-template-columns:1fr}}
   @media(max-width:600px){.ahc,.fcard{padding:1.25rem}}
 </style>
@@ -180,9 +200,9 @@
                       {% endif %}
                     </ul>
                   </div>
-                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: inline-flex; align-items: center; gap: 5px; color: #059669; font-weight: 700; font-size: 0.8rem;">
-                      {{ icon('credit-card', size=12) }} Fee: ₹199
+                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; align-items: center;">
+                    <span style="display: inline-flex; align-items: center; color: #059669; font-weight: 700; font-size: 0.8rem; line-height: 1.4;">
+                      *Application Charge - ₹129 should be paid before the internship
                     </span>
                   </div>
                 </div>
@@ -226,9 +246,9 @@
                       {% endif %}
                     </ul>
                   </div>
-                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: inline-flex; align-items: center; gap: 5px; color: #2563eb; font-weight: 700; font-size: 0.8rem;">
-                      {{ icon('credit-card', size=12) }} Fee: ₹399
+                  <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(148, 163, 184, 0.35); display: flex; align-items: center;">
+                    <span style="display: inline-flex; align-items: center; color: #2563eb; font-weight: 700; font-size: 0.8rem; line-height: 1.4;">
+                      *Application and courier charge - ₹399 should be paid before the internship
                     </span>
                   </div>
                 </div>
@@ -291,14 +311,31 @@
               </div>
             </div>
             <div class="fgrp">
-              <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; padding: 0.5rem 0;">
-                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
-                  <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if form_data.get('duration') == '1_month' %}checked{% endif %} required onchange="handleDurationSelection('1_month')" />
-                  <span>1 Month <span style="font-size: 0.8rem; font-weight: 700; color: #059669; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹199</span></span>
+              <div class="dur-selector-grid">
+                <!-- 1 Month Option Card -->
+                <label for="duration_1_month" class="dur-option-card dur-card-1m {% if form_data.get('duration') == '1_month' or not form_data.get('duration') %}is-selected{% endif %}" id="card-duration-1m">
+                  <input type="radio" name="duration" id="duration_1_month" value="1_month" {% if form_data.get('duration') == '1_month' or not form_data.get('duration') %}checked{% endif %} required onchange="handleDurationSelection('1_month')" class="dur-radio-input" />
+                  <div class="dur-card-header">
+                    <div class="dur-title-group">
+                      <span class="dur-radio-custom"><span class="dur-radio-dot"></span></span>
+                      <span class="dur-card-title">1 Month</span>
+                    </div>
+                    <span class="dur-card-badge dur-badge-1m">Fast-Track</span>
+                  </div>
+                  <p class="dur-card-desc">Accelerated hands-on program with core industry deliverables</p>
                 </label>
-                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
-                  <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if form_data.get('duration') == '3_months' %}checked{% endif %} required onchange="handleDurationSelection('3_months')" />
-                  <span>3 Months <span style="font-size: 0.8rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; margin-left: 4px;">₹399</span></span>
+
+                <!-- 3 Months Option Card -->
+                <label for="duration_3_months" class="dur-option-card dur-card-3m {% if form_data.get('duration') == '3_months' %}is-selected{% endif %}" id="card-duration-3m">
+                  <input type="radio" name="duration" id="duration_3_months" value="3_months" {% if form_data.get('duration') == '3_months' %}checked{% endif %} required onchange="handleDurationSelection('3_months')" class="dur-radio-input" />
+                  <div class="dur-card-header">
+                    <div class="dur-title-group">
+                      <span class="dur-radio-custom"><span class="dur-radio-dot"></span></span>
+                      <span class="dur-card-title">3 Months</span>
+                    </div>
+                    <span class="dur-card-badge dur-badge-3m">Comprehensive</span>
+                  </div>
+                  <p class="dur-card-desc">In-depth project development with structured evaluation and mentorship</p>
                 </label>
               </div>
               <span class="ferr" id="err-duration"></span>
@@ -394,14 +431,20 @@ function handleDurationSelection(dur) {
   var docsCard = document.getElementById('identity-docs-card');
   var aadhaarInp = document.getElementById('aadhaar-input');
   var heroBadge = document.getElementById('hero-fee-badge');
+  var card1 = document.getElementById('card-duration-1m');
+  var card3 = document.getElementById('card-duration-3m');
   
   if (dur === '3_months') {
+    if (card1) card1.classList.remove('is-selected');
+    if (card3) card3.classList.add('is-selected');
     if (feeEl) feeEl.textContent = '₹399';
     if (durEl) durEl.textContent = '3 Months • One-time processing fee';
     if (docsCard) docsCard.style.display = 'block';
     if (aadhaarInp) aadhaarInp.setAttribute('required', 'required');
     if (heroBadge) heroBadge.innerHTML = '{{ icon('credit-card',size=11) }} Fee: ₹399';
   } else {
+    if (card3) card3.classList.remove('is-selected');
+    if (card1) card1.classList.add('is-selected');
     if (feeEl) feeEl.textContent = '₹199';
     if (durEl) durEl.textContent = '1 Month • One-time processing fee';
     if (docsCard) docsCard.style.display = 'none';

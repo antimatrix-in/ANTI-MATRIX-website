@@ -4,6 +4,93 @@
 {% block title %}Careers &amp; Internship Programs | Anti-Matrix{% endblock %}
 
 {% block content %}
+<style>
+  /* Desktop View: Keep normal expanded sidebar layout */
+  @media (min-width: 901px) {
+    .cr-filter-body {
+      display: block !important;
+    }
+    .cr-filter-chevron-mobile,
+    .cr-filter-badge-mobile {
+      display: none !important;
+    }
+  }
+
+  /* Mobile View: Convert filter section to compact dropdown so opened interns appear first */
+  @media (max-width: 900px) {
+    .cr-layout-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 1rem !important;
+    }
+    .cr-sidebar {
+      width: 100% !important;
+      margin-bottom: 0.25rem !important;
+      position: static !important;
+    }
+    .cr-features-card {
+      display: none !important; /* Hide perks card on mobile so opened interns appear first */
+    }
+    .cr-filter-card {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+    .cr-filter-header {
+      cursor: pointer;
+      user-select: none;
+      padding: 0.85rem 1.1rem !important;
+      background: #ffffff;
+      transition: background 0.15s ease;
+    }
+    .cr-filter-header:hover {
+      background: #f8fafc;
+    }
+    .cr-filter-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cr-filter-chevron-mobile {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cr-filter-card.is-open .cr-filter-chevron-mobile {
+      transform: rotate(180deg);
+    }
+    .cr-filter-body {
+      display: none;
+      border-top: 1px solid #f1f5f9;
+      background: #ffffff;
+      padding-bottom: 0.5rem;
+    }
+    .cr-filter-card.is-open .cr-filter-body {
+      display: block;
+      animation: crFadeIn 0.2s ease-out;
+    }
+    .cr-filter-badge-mobile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: #059669;
+      padding: 1px 6px;
+      border-radius: 9999px;
+      line-height: 1.2;
+    }
+  }
+
+  @keyframes crFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
 <div class="cr-page-wrapper">
 
   <!-- ================= 1. HERO SEARCH HEADER (Accenture Inspired) ================= -->
@@ -63,92 +150,100 @@
           <div class="cr-filter-card">
             <div class="cr-filter-mosaic-top" aria-hidden="true"></div>
 
-            <div class="cr-filter-header">
-              <span class="cr-filter-title">
-                {{ icon('sliders', size=16) }} Filters
-              </span>
-              <button type="button" class="cr-clear-btn" onclick="resetAllFilters()">
+            <div class="cr-filter-header" onclick="handleFilterHeaderClick(event)">
+              <div class="cr-filter-title-wrap">
+                <span class="cr-filter-title">
+                  {{ icon('sliders', size=16) }} Filters
+                </span>
+                <span class="cr-filter-badge-mobile" id="mobileActiveFiltersCount" style="display: none;"></span>
+                <span class="cr-filter-chevron-mobile" id="crFilterChevron" aria-hidden="true">
+                  {{ icon('chevron-down', size=14) }}
+                </span>
+              </div>
+              <button type="button" class="cr-clear-btn" onclick="event.stopPropagation(); resetAllFilters()">
                 Clear filters &#8634;
               </button>
             </div>
 
-            <!-- Filter Group: Area of Interest / Domain -->
-            <div class="cr-filter-group">
-              <div class="cr-group-heading">Area of Interest</div>
-              <div class="cr-checkbox-list" id="departmentFilterList">
-                {% set departments = [] %}
-                {% for j in jobs %}
-                  {% if j.department not in departments %}
-                    {% set _ = departments.append(j.department) %}
-                  {% endif %}
-                {% endfor %}
+            <div class="cr-filter-body" id="crFilterBody">
+              <!-- Filter Group: Area of Interest / Domain -->
+              <div class="cr-filter-group">
+                <div class="cr-group-heading">Area of Interest</div>
+                <div class="cr-checkbox-list" id="departmentFilterList">
+                  {% set departments = [] %}
+                  {% for j in jobs %}
+                    {% if j.department not in departments %}
+                      {% set _ = departments.append(j.department) %}
+                    {% endif %}
+                  {% endfor %}
 
-                {% for dept in departments %}
-                  {% set dept_count = jobs|selectattr('department', 'equalto', dept)|list|length %}
+                  {% for dept in departments %}
+                    {% set dept_count = jobs|selectattr('department', 'equalto', dept)|list|length %}
+                    <label class="cr-checkbox-item">
+                      <span class="cr-checkbox-label">
+                        <input
+                          type="checkbox"
+                          class="cr-checkbox-input filter-dept-checkbox"
+                          value="{{ dept|lower }}"
+                          onchange="applyJobFilters()"
+                        />
+                        <span>{{ dept }}</span>
+                      </span>
+                      <span class="cr-checkbox-count">{{ dept_count }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Filter Group: Program Duration -->
+              <div class="cr-filter-group">
+                <div class="cr-group-heading">Program Duration</div>
+                <div class="cr-checkbox-list">
                   <label class="cr-checkbox-item">
                     <span class="cr-checkbox-label">
                       <input
                         type="checkbox"
-                        class="cr-checkbox-input filter-dept-checkbox"
-                        value="{{ dept|lower }}"
+                        class="cr-checkbox-input filter-duration-checkbox"
+                        value="1_month"
                         onchange="applyJobFilters()"
                       />
-                      <span>{{ dept }}</span>
+                      <span>1 Month Track</span>
                     </span>
-                    <span class="cr-checkbox-count">{{ dept_count }}</span>
+                    <span class="cr-checkbox-count">{{ jobs|length }}</span>
                   </label>
-                {% endfor %}
+                  <label class="cr-checkbox-item">
+                    <span class="cr-checkbox-label">
+                      <input
+                        type="checkbox"
+                        class="cr-checkbox-input filter-duration-checkbox"
+                        value="3_months"
+                        onchange="applyJobFilters()"
+                      />
+                      <span>3 Months Track</span>
+                    </span>
+                    <span class="cr-checkbox-count">{{ jobs|length }}</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <!-- Filter Group: Program Duration -->
-            <div class="cr-filter-group">
-              <div class="cr-group-heading">Program Duration</div>
-              <div class="cr-checkbox-list">
-                <label class="cr-checkbox-item">
-                  <span class="cr-checkbox-label">
-                    <input
-                      type="checkbox"
-                      class="cr-checkbox-input filter-duration-checkbox"
-                      value="1_month"
-                      onchange="applyJobFilters()"
-                    />
-                    <span>1 Month Track</span>
-                  </span>
-                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
-                </label>
-                <label class="cr-checkbox-item">
-                  <span class="cr-checkbox-label">
-                    <input
-                      type="checkbox"
-                      class="cr-checkbox-input filter-duration-checkbox"
-                      value="3_months"
-                      onchange="applyJobFilters()"
-                    />
-                    <span>3 Months Track</span>
-                  </span>
-                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Filter Group: Work Arrangement -->
-            <div class="cr-filter-group">
-              <div class="cr-group-heading">Work Arrangement</div>
-              <div class="cr-checkbox-list">
-                <label class="cr-checkbox-item">
-                  <span class="cr-checkbox-label">
-                    <input
-                      type="checkbox"
-                      class="cr-checkbox-input filter-location-checkbox"
-                      value="remote"
-                      checked
-                      onchange="applyJobFilters()"
-                    />
-                    <span>Remote / Flexible</span>
-                  </span>
-                  <span class="cr-checkbox-count">{{ jobs|length }}</span>
-                </label>
+              <!-- Filter Group: Work Arrangement -->
+              <div class="cr-filter-group">
+                <div class="cr-group-heading">Work Arrangement</div>
+                <div class="cr-checkbox-list">
+                  <label class="cr-checkbox-item">
+                    <span class="cr-checkbox-label">
+                      <input
+                        type="checkbox"
+                        class="cr-checkbox-input filter-location-checkbox"
+                        value="remote"
+                        checked
+                        onchange="applyJobFilters()"
+                      />
+                      <span>Remote / Flexible</span>
+                    </span>
+                    <span class="cr-checkbox-count">{{ jobs|length }}</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -500,10 +595,31 @@ function applyJobFilters() {
     countEl.textContent = visibleCount;
   }
 
+  // Mobile active filters badge
+  var activeBadge = document.getElementById('mobileActiveFiltersCount');
+  if (activeBadge) {
+    var activeTotal = selectedDepts.length + (hasDurationFilter ? durCheckboxes.length : 0);
+    if (activeTotal > 0) {
+      activeBadge.textContent = activeTotal;
+      activeBadge.style.display = 'inline-flex';
+    } else {
+      activeBadge.style.display = 'none';
+    }
+  }
+
   // Toggle empty state
   var emptyState = document.getElementById('crEmptyState');
   if (emptyState) {
     emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+}
+
+function handleFilterHeaderClick(event) {
+  if (window.innerWidth <= 900) {
+    var card = document.querySelector('.cr-filter-card');
+    if (card) {
+      card.classList.toggle('is-open');
+    }
   }
 }
 
@@ -517,6 +633,8 @@ function resetAllFilters() {
       cb.checked = false;
     }
   });
+  var activeBadge = document.getElementById('mobileActiveFiltersCount');
+  if (activeBadge) activeBadge.style.display = 'none';
   applyJobFilters();
 }
 
