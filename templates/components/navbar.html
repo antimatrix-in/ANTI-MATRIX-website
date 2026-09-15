@@ -163,7 +163,7 @@
           </div>
         </div>
       {% else %}
-        <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Log In</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-nav-login btn-sm">Log In</a>
         <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-sm">Get Started</a>
       {% endif %}
     </div>
@@ -224,7 +224,7 @@
         {{ icon('log-out', size=14) }} Log Out
       </a>
     {% else %}
-      <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm" style="justify-content: center;">Log In</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-nav-login btn-sm" style="justify-content: center;">Log In</a>
       <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-sm" style="justify-content: center;">Get Started</a>
     {% endif %}
   </div>

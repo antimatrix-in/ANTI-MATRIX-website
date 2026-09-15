@@ -2,6 +2,30 @@
 {% from 'components/icons.html' import icon %}
 
 {% macro render_footer(show_cta=true) %}
+<style>
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.2fr;
+    gap: var(--space-3xl);
+    margin-bottom: var(--space-3xl);
+  }
+  @media (max-width: 900px) {
+    .footer-grid {
+      grid-template-columns: 1fr !important;
+      gap: var(--space-2xl) !important;
+    }
+    .footer-bottom-links {
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 0.75rem 1.25rem !important;
+    }
+    .footer-bottom {
+      flex-direction: column !important;
+      text-align: center !important;
+      gap: var(--space-md) !important;
+    }
+  }
+</style>
 <footer class="footer-wrapper" aria-label="Site footer">
   <div class="container">
     
@@ -26,7 +50,7 @@
 
     {# Main Footer Links & Info #}
     <div class="footer">
-      <div class="footer-grid" style="grid-template-columns: 1.5fr 1fr 1.2fr;">
+      <div class="footer-grid">
 
         {# Brand column #}
         <div class="footer-brand">
