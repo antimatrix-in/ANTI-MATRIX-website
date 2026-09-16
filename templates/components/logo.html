@@ -1,23 +1,23 @@
 {# Logo Component Macro matching Logo.jsx #}
-{% macro render_logo(light=false, size='md', to='/', stacked=false) %}
-{% set heights = {'sm': 40, 'md': 52, 'lg': 72, 'xl': 96} %}
-{% set stacked_heights = {'sm': 64, 'md': 88, 'lg': 120, 'xl': 160} %}
-{% set h = stacked_heights.get(size, 88) if stacked else heights.get(size, 52) %}
+{% macro render_logo(light=false, size='md', to='/', stacked=false, class='') %}
+{% set heights = {'sm': 44, 'md': 62, 'lg': 96, 'xl': 128} %}
+{% set max_heights = {'sm': 48, 'md': 66, 'lg': 110, 'xl': 140} %}
+{% set max_widths = {'sm': 180, 'md': 260, 'lg': 340, 'xl': 420} %}
+{% set h = heights.get(size, 62) %}
+{% set mh = max_heights.get(size, 66) %}
+{% set mw = max_widths.get(size, 260) %}
 
-{% if stacked %}
-  {% set logo_src = url_for('static', filename='images/logo_stacked_light.png') if not light else url_for('static', filename='images/logo_stacked_dark.png') %}
-{% else %}
-  {% set logo_src = url_for('static', filename='images/logo.png') if not light else url_for('static', filename='images/logo_dark.png') %}
-{% endif %}
+{% set logo_src = url_for('serve_assets', filename='logo.png') %}
 
 {% if to %}
-<a href="{{ to }}" aria-label="Anti-Matrix Home" style="text-decoration: none; display: inline-flex;">
+<a href="{{ to }}" aria-label="Anti-Matrix Home" class="brand-logo-link {{ class }}" style="text-decoration: none; display: inline-flex; align-items: center;">
 {% endif %}
-  <div style="display: inline-flex; align-items: center; justify-content: center; user-select: none;">
+  <div class="brand-logo-container" style="display: inline-flex; align-items: center; justify-content: center; user-select: none;">
     <img
       src="{{ logo_src }}"
       alt="Anti-Matrix Logo"
-      style="height: {{ h }}px; width: auto; object-fit: contain; display: block;"
+      class="brand-logo-img brand-logo-{{ size }}"
+      style="height: {{ h }}px; max-height: {{ mh }}px; width: auto; max-width: {{ mw }}px; object-fit: contain; display: block;"
     />
   </div>
 {% if to %}

@@ -660,6 +660,52 @@ textarea.form-control {
   padding: 0 2.5rem;
 }
 
+/* Brand Logo (Preserves Aspect Ratio & Zero Distortion) */
+.brand-logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.brand-logo-link:hover {
+  opacity: 0.92;
+}
+
+.brand-logo-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  max-height: var(--nav-height, 80px);
+}
+
+.brand-logo-img {
+  width: auto;
+  height: auto;
+  max-height: 66px;
+  max-width: 260px;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .brand-logo-img.brand-logo-md {
+    height: 48px !important;
+    max-height: 52px !important;
+    max-width: 190px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-logo-img.brand-logo-md {
+    height: 42px !important;
+    max-height: 46px !important;
+    max-width: 165px !important;
+  }
+}
+
 .nav-links {
   display: flex;
   align-items: center;

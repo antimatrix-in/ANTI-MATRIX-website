@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timezone
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory, abort
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from config import config, INTERNSHIP_FEES, INTERNSHIP_PRICING
@@ -84,6 +84,21 @@ def create_app(config_name=None):
             'message': 'Your API is running',
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+
+    @app.route('/assets/<path:filename>', methods=['GET'])
+    def serve_assets(filename):
+        assets_dir = os.path.join(app.root_path, 'assets')
+        target_path = os.path.join(assets_dir, filename)
+        if os.path.exists(target_path):
+            return send_from_directory(assets_dir, filename)
+        static_assets_dir = os.path.join(app.root_path, 'static', 'assets')
+        if os.path.exists(os.path.join(static_assets_dir, filename)):
+            return send_from_directory(static_assets_dir, filename)
+        if filename == 'logo.png':
+            fallback_dir = os.path.join(app.root_path, 'static', 'images')
+            if os.path.exists(os.path.join(fallback_dir, 'logo.png')):
+                return send_from_directory(fallback_dir, 'logo.png')
+        abort(404)
 
 
     # Error Handlers
