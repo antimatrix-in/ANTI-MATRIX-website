@@ -134,6 +134,46 @@
           color: #7e22ce;
           border: 1px solid #e9d5ff;
         }
+        .benefit-pricing-badge {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 2px;
+          padding: 0.28rem 0.8rem;
+          border-radius: 9999px;
+          font-family: var(--font-heading, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: -0.01em;
+          white-space: nowrap;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          user-select: none;
+        }
+        .benefit-pricing-badge:hover {
+          transform: translateY(-1px);
+        }
+        .badge-price-1m {
+          background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+          color: #ffffff;
+          box-shadow: 0 3px 10px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .badge-price-3m {
+          background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+          color: #ffffff;
+          box-shadow: 0 3px 10px rgba(37, 99, 235, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .benefit-price-currency {
+          font-size: 0.825rem;
+          font-weight: 700;
+          opacity: 0.92;
+          margin-right: 1px;
+        }
+        .benefit-price-val {
+          font-size: 1.125rem;
+          font-weight: 800;
+          letter-spacing: -0.01em;
+        }
         .benefit-card-title {
           font-size: 1.05rem;
           font-weight: 800;
@@ -178,14 +218,6 @@
           min-width: 0;
           line-height: 1.5;
         }
-        .benefit-card-footer {
-          margin-top: 1.25rem;
-          padding-top: 0.85rem;
-          border-top: 1px dashed rgba(148, 163, 184, 0.35);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
         @media (max-width: 768px) {
           .apply-manual-container {
             padding: 0 var(--space-md) !important;
@@ -225,11 +257,14 @@
                 <span class="benefit-duration-badge badge-1m">
                   {{ icon('calendar', size=11) }} 1-MONTH INTERNSHIP
                 </span>
-                {% if b1 and b1.badge_text %}
-                  <span class="benefit-tag tag-1m">{{ b1.badge_text }}</span>
-                {% else %}
-                  <span class="benefit-tag tag-1m">Fast-Track</span>
-                {% endif %}
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                  {% if b1 and b1.badge_text and b1.badge_text not in ['Fast-Track', '1-Month', '1 Month'] %}
+                    <span class="benefit-tag tag-1m">{{ b1.badge_text }}</span>
+                  {% endif %}
+                  <span class="benefit-pricing-badge badge-price-1m" title="1-Month Internship Program Fee">
+                    <span class="benefit-price-currency">₹</span><span class="benefit-price-val">1,499</span>
+                  </span>
+                </div>
               </div>
 
               <div class="benefit-card-title">
@@ -282,12 +317,6 @@
                 {% endif %}
               </ul>
             </div>
-
-            <div class="benefit-card-footer">
-              <span style="display: inline-flex; align-items: center; color: #059669; font-weight: 700; font-size: 0.8rem; line-height: 1.4;">
-                *Application Charge - ₹129 should be paid before the internship
-              </span>
-            </div>
           </div>
 
           <!-- 3-MONTH INTERNSHIP CARD -->
@@ -298,11 +327,14 @@
                 <span class="benefit-duration-badge badge-3m">
                   {{ icon('calendar', size=11) }} 3-MONTH INTERNSHIP
                 </span>
-                {% if b3 and b3.badge_text %}
-                  <span class="benefit-tag tag-3m">{{ b3.badge_text }}</span>
-                {% else %}
-                  <span class="benefit-tag tag-3m">Comprehensive</span>
-                {% endif %}
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                  {% if b3 and b3.badge_text and b3.badge_text not in ['Comprehensive', '3-Month', '3 Months'] %}
+                    <span class="benefit-tag tag-3m">{{ b3.badge_text }}</span>
+                  {% endif %}
+                  <span class="benefit-pricing-badge badge-price-3m" title="3-Month Internship Program Fee">
+                    <span class="benefit-price-currency">₹</span><span class="benefit-price-val">3,499</span>
+                  </span>
+                </div>
               </div>
 
               <div class="benefit-card-title">
@@ -358,12 +390,6 @@
                   </li>
                 {% endif %}
               </ul>
-            </div>
-
-            <div class="benefit-card-footer">
-              <span style="display: inline-flex; align-items: center; color: #2563eb; font-weight: 700; font-size: 0.8rem; line-height: 1.4;">
-                *Application and courier charge - ₹399 should be paid before the internship
-              </span>
             </div>
           </div>
 
